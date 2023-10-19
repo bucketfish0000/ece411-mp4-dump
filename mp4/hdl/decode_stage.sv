@@ -1,20 +1,17 @@
 module decode_stage
 (
-    input logic clk;
-    input logic rst;
-    input logic reg_load;
-    input rv32i_word rd_data;
-    
-    input rv32i_word instruction;
-    input rv32i_reg rs1;
-    input rv32i_reg rs2;
-    input rv32i_reg rd;
-    output rv32i_word rs1_data;
-    output rv32i_word rs2_data;
-    output 
+    input logic clk,
+    input logic rst,
+    input logic reg_load,
+    input rv32i_word rd_data,
+,
+    input rv32i_word instruction,
+    input rv32i_reg rs1,
+    input rv32i_reg rs2,
+    input rv32i_reg rd,
+    output rv32i_word rs1_data,
+    output rv32i_word rs2_data
 )
-
-
 
     regfile regfile
     (.clk(clk),.rst(rst), .load(reg_load),
