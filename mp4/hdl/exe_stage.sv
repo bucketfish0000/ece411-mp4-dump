@@ -6,11 +6,10 @@ import rv32i_types::*;
     input logic [0:0] ctrl_w_DE?,
     input logic [31:0] rs1_data,
     input logic [31:0] rs2_data,
-    input logic [31:0] PC_x,
+    input logic [31:0] pc_x,
     input logic [0:0] astrisk_imm?,
     input logic [31:0] mem_fwd_data,
     output logic [31:0] exe_fwd_data
-    output logic [0:0] ctrl_w_EX?,
     output logic [31:0] rs2_out,
     output logic [31:0] alu_out
     output logic br_en
@@ -54,7 +53,7 @@ import rv32i_types::*;
 
         unique case (alumux1_sel)
             alumux::rs1_out: alumux1_o = rs1_out;
-            alumux::pc_out: alumux1_o = PC_x;
+            alumux::pc_out: alumux1_o = pc_x;
         endcase
 
         unique case (alumux2_sel)
