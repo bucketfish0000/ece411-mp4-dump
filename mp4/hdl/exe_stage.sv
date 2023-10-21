@@ -5,6 +5,7 @@ import cpuIO::*;
     input clk,
     input rst,
     input cw_execute ctrl_w_EXE,
+    // input logic mem_stage_rdy,
     input logic [31:0] rs1_data,
     input logic [31:0] rs2_data,
     input logic [31:0] pc_x,
@@ -17,11 +18,18 @@ import cpuIO::*;
     input [31:0] j_imm,
     output logic [31:0] rs2_out,
     output logic [31:0] alu_out,
+    // output logic exe_stage_rdy,
     output logic br_en
 );
     logic [31:0] rs1_o, rs2_o, alumux1_o, alumux2_o, cmpmux_o;
 
     assign rs2_out = rs2_o;
+
+    // always_comb begin : exe_ctrl
+    //     exe_stage_rdy = 1'b1;
+    //     if(mem_stage_rdy == 1)
+    //         exe_state_rdy = 1'b0;
+    // end
 
     cmp cmp_logic(
         .cmpop(ctrl_w_EXE.cmpop),
