@@ -1,11 +1,12 @@
 module mem_stage
 import rv32i_types::*;
+import cpuIO::*;
 (
     input clk,
     input rst, 
-    input logic [31:0] exe_fwd_data,
+    input logic [31:0] alu_out,
     input logic [31:0] rs2_out,
-    input logic [0:0] ctrl_w_EX,
+    input cw_mem ctrl_w_EX,
     input logic [31:0] pc_x,
     input logic load_data_out,
     input logic load_mar,
@@ -15,15 +16,16 @@ import rv32i_types::*;
     logic [31:0] marmux_o;
     logic marmux_sel;
 
-    assign marmux_sel = ctrl_w_EX[0:0];
-
     always_comb begin : mem_mux
-        unique case (marmux_sel)
+        unique case (ctrl_w_EX.mar_sel)
             marmux::pc_out: marmux_o = pc_x;
-            marmux::alu_out: marmux_o = exe_fwd_data;
+            marmux::alu_out: marmux_o = alu_out;
         endcase
     end
 
+    always_comb begin : mem_ctrl
+        
+    end
 
     //we could include these registers in the pipeline 
     //register..., but then this stage is just a mux...
