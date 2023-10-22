@@ -1,7 +1,7 @@
 /*GO and READY signals:
     GO(Output): 
-        -If high, you can start/continue to do work then update the pipeline register right after you.
-        -If low, hold your output constant, don't load the pipeline register right after you.
+        -If high, the data you need is ready, do work then update the pipeline register right after you.
+        -If low, the data you need isn't ready, hold your output constant, don't load the pipeline register right after you.
     READY(Input):
         -If you give me high that means that you've updated your pipeline register and are ready for more work.
         -If you give me low that means your pipeline register hasn't been updated AND/OR you are still work on something.
@@ -54,143 +54,132 @@ import cpuIO::*;
     output cw_output cw_cpu //is cw_output for this???
 );
 
-logic [5:0] rdy;
+// logic [5:0] rdy;
+logic [4:0] rdy;
 
-assign rdy = {if_1_rdy, /*if_2_rdy*/ 1'b0, de_rdy, exe_rdy, mem_rdy, wb_rdy}
+assign rdy = {if_1_rdy, /*if_2_rdy,*/ de_rdy, exe_rdy, mem_rdy, wb_rdy}
 
 //always comb or always ff???
 always_comb begin : go_ctrl
-    case(rdy)
-        6'b000000: begin //start OR waiting on I_cache
-            if_1_go = 1'b1;
-            // if_2_go = 1'b0;
-            de_go = 1'b0;
-            exe_go = 1'b0;
-            mem_go = 1'b0;
-            wb_go = 1'b0;
-        end
-        6'b100000: begin //if_1 finished
-            if_1_go = 1'b1;
-            // if_2_go = 1'b1;
-            // de_go = 1'b0; !!! cp2 make sure to uncomment
-            de_go = 1'b1; // !!! delete in cp2
-            exe_go = 1'b0;
-            mem_go = 1'b0;
-            wb_go = 1'b0;
-        end
+    if(rst) begin
+        if_1_go = 1'b0;
+        // if_2_go = 1'b0;
+        de_go = 1'b0;
+        exe_go = 1'b0;
+        mem_go = 1'b0;
+        wb_go = 1'b0;
+    end
+    else begin
+            // 0  miss I => rdy = 000000 -> go = 100000             x
+            //    5 cycle penalty                                   x
+            // 5  i_resp => rdy = 100000 -> go = 110000             x
+            // 6  miss I => rdy = 010000 -> go = 101000             x
+            // 7  wait on I => rdy = 001000 -> go = 100100          x
+            // 8  wait I / miss D => rdy = 000100 -> go = 100010    x
+            // 9  wait I/D => rdy = 000100 -> go = 100010           x
+            // 10 wait I/D => rdy = 000100 -> go = 100010           x
+            // 11 resp I / wait D => rdy = 100100 -> go = 110010    x
+            // 12 hit I / wait D => rdy = 110100 -> go = 111010     x
+            // 13 resp I/D => rdy = 111110 -> go = 111111           x
+            // 14 hit I / miss D => rdy = 111101 -> go = 111110     !!! need to makes sure this would work from here
+            // 15 wait D => rdy = 111100 -> go = 000010
+            // 16 wait D => rdy = 111100 -> go = 000010
+            // 17 wait D => rdy = 111100 -> go = 000010
+            // 18 wait D => rdy = 111100 -> go = 000010
+            // 19 resp D => rdy = 111110 -> go = 111111
+            // 20 hit I / hit D => rdy = 111101 -> go = 000010
+            // 21 resp I/D => rdy = 111110 -> go = 011111
+            // 22 hit D => rdy = 011101 -> go = 000010
+            // 23 resp D => rdy = 011110 -> go = 001111
+            // 24 hit D => rdy = 001101 -> go = 000010
+            // 25 resp D => rdy = 001110 -> go = 000111
+            // 26 hit D => rdy = 000101 -> go = 000010
+            // 27 resp D => rdy = 000110 -> go = 000011
+            // 28 hit D => rdy = 000001 -> go = 000010
+            // 29 resp D => rdy = 000010 -> go = 000001
+            // 30 END => rdy = 000001 -> go = 000000
 
-        /*---cp2 cases---*/
-        6'b010000: begin //if_2 finished, but waiting on I_cache
 
-        end
-        6'b110000: begin //if_2 finished
-            if_1_go = 1'b1;
+        if_1_go = 1'b1;
+
+        /*---cp2---*/
+        if(rdy[5]) begin
             if_2_go = 1'b1;
-            de_go = 1'b1;
-            exe_go = 1'b0;
-            mem_go = 1'b0;
-            wb_go = 1'b0;
         end
-        6'b111000: begin //de finished
-            if_1_go = 1'b1;
-            if_2_go = 1'b1;
-            de_go = 1'b1;
-            exe_go = 1'b1; 
-            mem_go = 1'b0;
-            wb_go = 1'b0;
-        end
-        6'b111100: begin //exe finished
-            if_1_go = 1'b1;
-            if_2_go = 1'b1;
-            de_go = 1'b1;
-            exe_go = 1'b1;
-            mem_go = 1'b1;
-            wb_go = 1'b0;
-        end
-        6'b111110: begin //mem finished
-            if_1_go = 1'b1;
-            if_2_go = 1'b1;
-            de_go = 1'b1;
-            exe_go = 1'b1;
-            mem_go = 1'b1;
-            wb_go = 1'b1;
-        end
-        6'b111111: begin //all finished
-            if_1_go = 1'b1;
-            if_2_go = 1'b1;
-            de_go = 1'b1;
-            exe_go = 1'b1;
-            mem_go = 1'b1;
-            wb_go = 1'b1;
-        end
-        6'b111101: begin //mem not ready to continue
-            if_1_go = 1'b0;
+        else begin
             if_2_go = 1'b0;
+        end
+
+        if(rdy[4]) begin //cp1: if_1 ready --- cp2: if_2 ready
+            de_go = 1'b1;
+        end
+        else begin
             de_go = 1'b0;
+        end
+
+        if(rdy[3]) begin //de ready
+            exe_go = 1'b1;
+        end
+        else begin
             exe_go = 1'b0;
+        end
+
+        if((rdy[2]) || (mem_read_D || mem_write_D)) begin //exe ready
             mem_go = 1'b1;
-            wb_go = 1'b0;
         end
-
-        /*---cp1 cases---*/
-        // 6'b101000: begin //de finished OR waiting for memory to continue?
-        //     if_1_go = 1'b1;
-        //     // if_2_go = 1'b1;
-        //     de_go = 1'b1;
-        //     exe_go = 1'b1;
-        //     mem_go = 1'b0;
-        //     wb_go = 1'b0;
-        // end
-        // 6'b101100: begin //exe finished
-        //     if_1_go = 1'b1;
-        //     // if_2_go = 1'b1;
-        //     de_go = 1'b1;
-        //     exe_go = 1'b1;
-        //     mem_go = 1'b1;
-        //     wb_go = 1'b0;
-        // end
-        // 6'b101110: begin //mem finished
-        //     if_1_go = 1'b1;
-        //     // if_2_go = 1'b1;
-        //     de_go = 1'b1;
-        //     exe_go = 1'b1;
-        //     mem_go = 1'b1;
-        //     wb_go = 1'b1;
-        // end
-        // 6'b101111: begin //all finished
-        //     if_1_go = 1'b1;
-        //     // if_2_go = 1'b1;
-        //     de_go = 1'b1;
-        //     exe_go = 1'b1;
-        //     mem_go = 1'b1;
-        //     wb_go = 1'b1;
-        // end
-        // 6'b101101: begin //mem not ready to continue
-        //     if_1_go = 1'b1;
-        //     // if_2_go = 1'b1;
-        //     de_go = 1'b1;
-        //     exe_go = 1'b0; //keep exe_mem output constant
-        //     mem_go = 1'b1;
-        //     wb_go = 1'b0; //data from mem not ready, don't load into regfile
-        // end
-        // 6'b101010: begin //mem ready to continue again
-        //     if_1_go = 1'b1;
-        //     // if_2_go = 1'b1;
-        //     de_go = 1'b1;
-        //     exe_go = 1'b1;
-        //     mem_go = 1'b1;
-        //     wb_go = 1'b1;
-        // end
-
-        default: begin //something has gone terribly wrong
-            if_1_go = 1'b0;
-            // if_2_go = 1'b0;
-            de_go = 1'b0;
-            exe_go = 1'b0;
+        else begin
             mem_go = 1'b0;
+        end
+
+        if(rdy[1]) begin //mem ready
+            wb_go = 1'b1;
+        end
+        else begin
             wb_go = 1'b0;
         end
-    endcase
+
+        // if(rdy[0]) begin //wb ready
+        //     //...nobody cares about you
+        // end
+        // else begin
+        //     //...and they never will
+        // end
+    end
+
+    /*
+        Hypothetical
+        
+        start:
+            0  miss I => rdy = 000000 -> go = 100000
+               5 cycle penalty
+            5  i_resp => rdy = 100000 -> go = 110000
+            6  miss I => rdy = 010000 -> go = 101000
+            7  wait on I => rdy = 001000 -> go = 100100
+            8  wait I / miss D => rdy = 000100 -> go = 100010
+            9  wait I/D => rdy = 000100 -> go = 100010
+            10 wait I/D => rdy = 000100 -> go = 100010
+            11 resp I / wait D => rdy = 100100 -> go = 110010
+            12 hit I / wait D => rdy = 110100 -> go = 111010
+            13 resp I/D => rdy = 111110 -> go = 111101
+            14 resp I / miss D => rdy = 111101 -> go = 111110
+            15 wait D => rdy = 111100 -> go = 000010
+            16 wait D => rdy = 111100 -> go = 000010
+            17 wait D => rdy = 111100 -> go = 000010
+            18 wait D => rdy = 111100 -> go = 000010
+            19 resp D => rdy = 111110 -> go = 111111
+            20 hit I / hit D => rdy = 111101 -> go = 000010
+            21 resp I/D => rdy = 111110 -> go = 011111
+            22 hit D => rdy = 011101 -> go = 000010
+            23 resp D => rdy = 011110 -> go = 001111
+            24 hit D => rdy = 001101 -> go = 000010
+            25 resp D => rdy = 001110 -> go = 000111
+            26 hit D => rdy = 000101 -> go = 000010
+            27 resp D => rdy = 000110 -> go = 000011
+            28 hit D => rdy = 000001 -> go = 000010
+            29 resp D => rdy = 000010 -> go = 000001
+            30 END => rdy = 000001 -> go = 000000
+        end
+    */
 end
 
 
