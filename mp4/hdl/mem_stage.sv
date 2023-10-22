@@ -38,6 +38,8 @@ import cpuIO::*;
         // mem_stage_rdy_temp <= 1'b1;
     endfunction
 
+
+    //should this be always_comb??? otherwise will be off by a cycle right?
     always_ff @ (posedge clk, posedge rst) begin : mem_ctrl
         if(rst) begin
             do_default();
