@@ -51,13 +51,17 @@ import cpuIO::*;
     output logic wb_go,
 
     /*---cpu_cw---*/
-    output cw_output cw_cpu //is cw_output for this???
+    output cw_output cw_cpu //is cw_output for this??? //YES
 );
 
 // logic [5:0] rdy;
 logic [4:0] rdy;
 
 assign rdy = {if_1_rdy, /*if_2_rdy,*/ de_rdy, exe_rdy, mem_rdy, wb_rdy}
+
+////func def////
+
+
 
 //always comb or always ff???
 always_comb begin : go_ctrl
@@ -70,6 +74,8 @@ always_comb begin : go_ctrl
         wb_go = 1'b0;
     end
     else begin
+
+        // NERD...
             // 0  miss I => rdy = 000000 -> go = 100000             x
             //    5 cycle penalty                                   x
             // 5  i_resp => rdy = 100000 -> go = 110000             x

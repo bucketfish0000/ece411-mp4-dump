@@ -5,8 +5,11 @@ package cpuIO;
     import alumux::*;
     import regfilemux::*;
     import rsmux::*;
-    typedef struct {
 
+    typedef struct {
+        cw_execute exe;
+        cw_mem mem;
+        cw_writeback wb;
     } cw_output;
     
     typedef struct {
@@ -34,4 +37,14 @@ package cpuIO;
 
 
 
-endpackage cpuIO
+endpackage : cpuIO
+
+package immdiates;
+typedef struct {
+    rv32i_word i_imm;
+    rv32i_word u_imm;
+    rv32i_word b_imm;
+    rv32i_word s_imm;
+    rv32i_word j_imm;
+} imm;
+endpackage : immdiates
