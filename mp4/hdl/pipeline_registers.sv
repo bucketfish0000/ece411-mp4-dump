@@ -17,9 +17,67 @@ module fet_dec_reg
 
 endmodule : fet_dec_reg
 
-module dec_exe_reg(
+module dec_exe_reg
+    import rv32i_types::*;
+    import cpuIO::*;
+(
+    input logic clk,
+    input logic rst,
+    input logic load,
 
+    input rv32i_opcode opcode_in,
+    input imm imm_in,
+    input logic [2:0] func3_in,
+    input logic [6:0] func7_in,
+    
+    output rv32i_opcode opcode_out,
+    output imm imm_out,
+    output logic [2:0] func3_out,
+    output logic [6:0] func7_out,
+
+    input control_word cw_in,
+    output control_word cw_out
 );
+
+    rv32i_opcode opcode_data;
+    imm imm_data;
+    logic [2:0] func3_data;
+    logic [6:0] func7_data;
+    control_word cw_data;
+
+    always_ff (@posedge clk)
+    begin
+        if (rst) begin
+            opcode_data<=7'b0000000;
+            imm_data<=0;
+            func3_data<=0;
+            func7_data<=0;
+            cw_data<=0;
+        end
+        else if (load) begin
+            opcode_data<=opcode_in;
+            imm_data<=imm_in;
+            func3_data<=func3_in;
+            func7_data<=func7_in;
+            cw_data<=cw_in;
+        end
+        else begin
+            opcode_data<=opcode_data;
+            imm_data<=imm_data;
+            func3_data<=func3_data;
+            func7_data<=func7_data;
+            cw_data<=cw_data;
+        end
+    end 
+
+    always_comb (@posedge clk)
+    begin
+        opcode_out=opcode_data;
+        imm_out=imm_data;
+        func3_out=func3_data;
+        func7_out=func7_data;
+        cw_out=cw_data;
+    end
 
 endmodule : dec_exe_reg
 
@@ -185,9 +243,17 @@ import cpuIO::*;
 endmodule : exe_mem_reg
 
 module mem_wb_reg
-
+    import rv32i_types::*;
+    import cpuIO::*;
 (
+    input clk,
+    input rst,
+    input load,
 
+    
+
+    input cw_in,
+    output cw_out
 );
 
 endmodule : mem_wb_reg

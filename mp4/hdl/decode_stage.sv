@@ -6,6 +6,7 @@ module decode_stage
     input logic rst,
     input logic reg_load,
     input rv32i_word rd_data,
+    input rv32i_reg rd_sel,
 
     input rv32i_word instruction,
 
@@ -16,6 +17,7 @@ module decode_stage
     output imm imm,
     output logic[2:0] func3,
     output logic[6:0] func7,
+    output rv32i_reg rd_out,
     output logic ready
 )
     
@@ -30,6 +32,7 @@ module decode_stage
     output rv32i_reg rs2,
 */
     rv32i_reg rd,rs1,rs2;
+    assign rd_out = rd;
 
     //decode logic 
     begin decode_logic
@@ -55,7 +58,7 @@ module decode_stage
     .in(reg_in),
     .src_a(rs1), 
     .src_b(rs2), 
-    .dest(rd),
+    .dest(rd_sel),
     .reg_a(rs1_data), 
     .reg_b(rs2_data)
     );
