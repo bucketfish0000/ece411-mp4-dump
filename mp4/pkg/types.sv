@@ -10,7 +10,7 @@ package cpuIO;
         cw_execute exe;
         cw_mem mem;
         cw_writeback wb;
-    } cw_output;
+    } control_word;
     
     typedef struct {
         rsmux::rs1_sel_t rs1_sel;
@@ -27,6 +27,7 @@ package cpuIO;
         logic mem_write_d;
         marmux::marmux_sel_t mar_sel;
     } cw_mem;
+
     typedef struct {
 
     } cw_writeback;

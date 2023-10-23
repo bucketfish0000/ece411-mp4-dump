@@ -50,7 +50,7 @@ decode_stage decode(
     .clk(clk),.rst(rst),
     .reg_load(),//???
     .rd_data(),//???
-
+    .rd_sel(),//
     .instruction(instr_decode),
     .rs1_data(),
     .rs2_data(),
