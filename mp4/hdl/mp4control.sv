@@ -51,7 +51,7 @@ import cpuIO::*;
     output logic wb_go,
 
     /*---cpu_cw---*/
-    output cw_output cw_cpu //is cw_output for this??? //YES
+    output control_word cw_cpu //is cw_output for this??? //YES
 );
 
 // logic [5:0] rdy;
