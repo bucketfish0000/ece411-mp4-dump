@@ -7,9 +7,9 @@ package cpuIO;
     import rsmux::*;
 
     typedef struct {
-        cw_execute exe;
-        cw_mem mem;
-        cw_writeback wb;
+        rv32i_types::rv32i_opcode opcode;
+        logic [2:0] funct3;
+        logic [6:0] funct7;
     } control_word;
     
     typedef struct {
@@ -27,7 +27,6 @@ package cpuIO;
         logic mem_write_d;
         marmux::marmux_sel_t mar_sel;
     } cw_mem;
-
     typedef struct {
 
     } cw_writeback;
@@ -38,14 +37,4 @@ package cpuIO;
 
 
 
-endpackage : cpuIO
-
-package immdiates;
-typedef struct {
-    rv32i_word i_imm;
-    rv32i_word u_imm;
-    rv32i_word b_imm;
-    rv32i_word s_imm;
-    rv32i_word j_imm;
-} imm;
-endpackage : immdiates
+endpackage cpuIO
