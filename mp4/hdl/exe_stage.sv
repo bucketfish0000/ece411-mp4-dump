@@ -4,7 +4,7 @@ import cpuIO::*;
 (
     input clk,
     input rst,
-    input cw_output ctrl_w_EXE,
+    input control_word ctrl_w_EXE,
     input logic [31:0] rs1_data,
     input logic [31:0] rs2_data,
     input logic [31:0] pc_x,

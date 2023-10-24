@@ -13,8 +13,8 @@ import cpuIO::*;
     input logic [31:0] rs2_out_i, //from exe_stage
     input logic [31:0] u_imm_i, //from DE_EXE pipeline reg
     input rv32i_opcode opcode_i; //from DE_EXE pipeline reg
-    input cw_output ctrl_w_DE, //from DE_EXE pipeline reg
-    output cw_output ctrl_w_MEM, //to mem_stage / MEM_WB pipeline reg
+    input control_word ctrl_w_DE, //from DE_EXE pipeline reg
+    output control_word ctrl_w_MEM, //to mem_stage / MEM_WB pipeline reg
     output logic [31:0] exe_fwd_data, //to exe_stage / mem_stage / MEM_WB pipeline reg
     output logic [31:0] mem_pc_x, //to MEM_WB pipeline reg
     output logic [31:0] rs2_out_o, //to mem_stage
@@ -24,7 +24,7 @@ import cpuIO::*;
     output logic exe_rdy; //to cpu_ctrl
 );
     logic [31:0] fwd_r_EX, pc_x_r, rs2_out_r, u_imm_r;
-    cw_output ctrl_w_r;
+    control_word ctrl_w_r;
     logic br_en_r;
 
     //always_comb or always_ff??
