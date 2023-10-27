@@ -15,8 +15,9 @@
     **NOTE: Use internal logic from the associated stage, previous stages ready signal, and cpu go signal to decide when to signal you are 
             ready/when to update the pipeline register.
 */
-module mp4control
+module mp4control;
 import rv32i_types::*;
+import rv32i_mux_types::*;
 import cpuIO::*;
 (
     input clk,
@@ -56,13 +57,18 @@ import cpuIO::*;
     output logic wb_go,
 
     /*---cpu_cw---*/
-    output control_word cw_cpu 
+    output control_word cw_cpu, 
+    output cw_execute cw_exe,
+    output cw_mem cw_memory,
+    output cw_writeback cw_wb 
 );
 
 // logic [5:0] rdy;
 logic [4:0] rdy;
 
 assign rdy = {if_1_rdy, /*if_2_rdy,*/ de_rdy, exe_rdy, mem_rdy, wb_rdy}
+
+//how know when load pc? Gonna need testing to see for sure
 
 //always comb or always ff???
 always_comb begin : go_ctrl
@@ -126,9 +132,11 @@ always_comb begin : go_ctrl
         // start if cp1: if_1 ready --- cp2: if_2 ready
         // if r/w D => continue only if exe can continue
         if((rdy[4]) && !((mem_read_D || mem_write_D) && (rdy[3:1] == 3'b110))) begin
+            ld_pc = 1'b1;//might be in if_2 for cp2
             de_go = 1'b1;
         end
         else begin
+            ld_pc = 1'b0;
             de_go = 1'b0;
         end
 
@@ -141,7 +149,7 @@ always_comb begin : go_ctrl
         end
 
         //start if exe ready, if r/w D => continue writing
-        if((rdy[2]) || (mem_read_D || mem_write_D)) begin
+        if(((rdy[2]) || (mem_read_D || mem_write_D))) begin
             mem_go = 1'b1;
         end
         else begin
@@ -149,7 +157,7 @@ always_comb begin : go_ctrl
         end
 
         //start if mem ready
-        if(rdy[1]) begin //mem ready
+        if((rdy[1])) begin //mem ready
             wb_go = 1'b1;
         end
         else begin
@@ -162,6 +170,8 @@ always_comb begin : go_ctrl
         // else begin
         //     //...and they never will
         // end
+
+        //if()
     end
 end
 
@@ -169,22 +179,369 @@ function void set_def();
     cw_cpu.opcode = 7'b0;
     cw_cpu.funct3 = 3'b0;
     cw_cpu.funct7 = 7'b0;
+    cw_exe.cmp_sel = cmpmux::rs2_out;
+    cw_exe.alumux1_sel = alumux::rs1_out;
+    cw_exe.alumux2_sel = alumux::i_imm;
+    cw_exe.rs1_sel = rsmux::rs1_data;
+    cw_exe.rs2_sel = rsmux::rs2_data;
+    cw_exe.cmpop = branch_funct3_t::beq;
+    cw_exe.aluop = alu_ops::alu_add;
+    cw_memory.mem_read_d = 1'b0;
+    cw_memory.mem_write_d = 1'b0;
+    cw_memory.mem_byte_enable = 4'b0000;
+    cw_memory.mar_sel = marmux_sel_t::pc_out;
+    cw_wb.regfilemux_sel = regfilemux_sel_t::alu_out;
 endfunction
 
 always_comb begin : cpu_cw
     if(rst) begin
         set_def();
     end
-    else if(rdy[4]/*rdy[5]*/) begin
+    else if(rdy[4]) begin
         cw_cpu.opcode = opcode;
         cw_cpu.funct3 = func3;
         cw_cpu.funct7 = func7;
+
+        unique case(opcode)
+            op_lui: begin
+                //exe doesn't do anyting here
+
+                //mem doesn't do anything here
+
+                //writeback
+                cw_wb.regfilemux_sel = regfilemux::u_imm;
+
+                //fetch
+                pcmux_sel = pcmux::pc_plus4;
+                
+            end
+
+            op_auipc: begin
+                //exe
+                cw_exe.aluop = alu_ops::alu_add;
+                cw_exe.alumux1_sel = alumux::pc_out;
+                cw_exe.alumux2_sel = alumux::u_imm;
+
+                //mem doesn't do anything here
+
+                //writeback
+                cw_wb.regfilemux_sel = regfilemux::alu_out;
+
+                //fetch
+                pcmux_sel = pcmux::pc_plus4;
+            end
+
+            op_jal: begin
+                //exe
+                cw_exe.aluop = alu_ops::alu_add;
+                cw_exe.alumux1_sel = alumux::pc_out;
+                cw_exe.alumux2_sel = alumux::j_imm;
+
+                //mem doesn't do anything here
+
+                //writeback
+                cw_wb.regfilemux_sel = regfilemux::pc_plus4;
+
+                //fetch
+                pcmux_sel = pcmux::alu_out;
+            end
+
+            op_jalr: begin
+                //exe
+                cw_exe.aluop = alu_ops::alu_add;
+                cw_exe.alumux1_sel = alumux::rs1_out;
+                cw_exe.alumux2_sel = alumux::i_imm;
+
+                //mem doesn't do anything here
+
+                //writeback
+                cw_wb.regfilemux_sel = regfilemux::pc_plus4;
+
+                //fetch
+                pcmux_sel = pcmux::alu_mod2;
+            end
+
+            op_br: begin
+                //exe
+                cw_exe.cmp_sel = cmpmux::rs2_out;
+                unique case(func3)
+                    3'b000: cw_exe.cmpop = branch_funct3_t::beq;
+
+                    3'b001: cw_exe.cmpop = branch_funct3_t::bne;
+
+                    3'b100: cw_exe.cmpop = branch_funct3_t::blt;
+
+                    3'b101: cw_exe.cmpop = branch_funct3_t::bge;
+
+                    3'b110: cw_exe.cmpop = branch_funct3_t::bltu;
+
+                    3'b111: cw_exe.cmpop = branch_funct3_t::bgeu;
+
+                    default: ;
+                endcase
+
+                if(br_en) begin
+                    cw_exe.aluop = alu_ops::alu_add;
+                    cw_exe.alumux1_sel = alumux::pc_out;
+                    cw_exe.alumux2_sel = alumux::b_imm;
+
+                    //mem doesn't do anything here
+
+                    //writeback doesn't do anything here
+
+                    //fetch
+                    pcmux_sel = pcmux::alu_out;
+                end
+                else begin
+                    pcmux_sel = pcmux::pc_plus4;
+                end
+            end
+
+            op_load: begin
+                //exe
+                cw_exe.aluop = alu_ops::add;
+                cw_exe.alumux1_sel = alumux::rs1_out;
+                cw_exe.alumux2_sel = alumux::i_imm;
+
+                //mem
+                cw_memory.mem_read_d = 1'b1;
+                cw_memory.mem_byte_enable = rmask;
+
+                //writeback    
+                case (funct3)
+                    3'b000: begin   //lb
+                        cw_wb.regfilemux_sel = regfilemux::lb; //lb 
+                    end
+                    3'b001: begin   //lh
+                        cw_wb.regfilemux_sel = regfilemux::lh; //lh
+                    end
+                    3'b010: begin   //lw
+                        cw_wb.regfilemux_sel = regfilemux::lw; //lw
+                    end
+                    3'b100: begin   //lbu
+                        cw_wb.regfilemux_sel = regfilemux::lbu; //lbu
+                    end
+                    3'b101: begin   //lhu
+                        cw_wb.regfilemux_sel = regfilemux::lhu; //lhu
+                    end
+                    default: ;
+                endcase
+
+                //fetch
+                pcmux_sel = pcmux::pc_plus4;
+            end
+
+            op_store: begin
+                //exe
+                cw_exe.aluop = alu_ops::add;
+                cw_exe.alumux1_sel = alumux::rs1_out;
+                cw_exe.alumux2_sel = alumux::s_imm;
+
+                //mem
+                cw_memory.mem_write_d = 1'b1;
+                cw_memory.mem_byte_enable = wmask;
+
+                //writeback doesn't do anything here
+
+                //fetch
+                pcmux_sel = pcmux::pc_plus4;
+            end
+
+            op_imm: begin
+                case(func3):
+                    3'b000: begin
+                        //exe
+                        cw_exe.aluop = alu_ops::alu_add;
+                        cw_exe.alumux1_sel = alumux::rs1_out;
+                        cw_exe.alumux2_sel = alumux::i_imm;
+                   
+                        //writeback
+                        cw_wb.regfilemux_sel = regfilemux::alu_out;
+                    end
+                     
+                    3'b001: begin
+                        //exe
+                        cw_exe.aluop = alu_ops::alu_sll;
+                        cw_exe.alumux1_sel = alumux::rs1_out;
+                        cw_exe.alumux2_sel = alumux::i_imm;
+
+                        //writeback
+                        cw_wb.regfilemux_sel = regfilemux::alu_out;
+                    end
+
+                    3'b010: begin
+                        //exe
+                        cw_exe.cmpop = branch_funct3_t::blt;
+                        cw_exe.cmp_sel = cmpmux::i_imm;
+
+                        //writeback
+                        cw_wb.regfilemux_sel = regfilemux::br_en;
+                    end
+
+                    3'b011: begin
+                        //exe
+                        cw_exe.cmpop = branch_funct3_t::bltu;
+                        cw_exe.cmp_sel = cmpmux::i_imm;
+
+                        //writeback
+                        cw_wb.regfilemux_sel = regfilemux::br_en;
+                    end
+
+                    3'b100: begin
+                        //exe
+                        cw_exe.aluop = alu_ops::alu_xor;
+                        cw_exe.alumux1_sel = alumux::rs1_out;
+                        cw_exe.alumux2_sel = alumux::i_imm;
+
+                        //writeback
+                        cw_wb.regfilemux_sel = regfilemux::alu_out;
+                    end
+
+                    3'b101: begin
+                        //exe
+                        if(func7[5]) begin
+                            cw_exe.aluop = alu_ops::alu_sra;
+                        end
+                        else begin
+                            cw_exe.aluop = alu_ops::alu_srl;
+                        end
+                        cw_exe.alumux1_sel = alumux::rs1_out;
+                        cw_exe.alumux2_sel = alumux::i_imm;
+
+                        //writeback
+                        cw_wb.regfilemux_sel = regfilemux::alu_out;
+                    end
+
+                    3'b110: begin
+                        //exe
+                        cw_exe.aluop = alu_ops::alu_or;
+                        cw_exe.alumux1_sel = alumux::rs1_out;
+                        cw_exe.alumux2_sel = alumux::i_imm;
+
+                        //writeback
+                        cw_wb.regfilemux_sel = regfilemux::alu_out;
+                    end
+                    
+                    3'b111: begin
+                        //exe
+                        cw_exe.aluop = alu_ops::alu_and;
+                        cw_exe.alumux1_sel = alumux::rs1_out;
+                        cw_exe.alumux2_sel = alumux::i_imm;
+
+                        //writeback
+                        cw_wb.regfilemux_sel = regfilemux::alu_out;
+                    end
+                endcase
+
+                //mem doesn't do anything here
+
+                //fetch
+                pcmux_sel = pcmux::pc_plus4;
+            end
+
+            op_reg: begin
+                case(func3):
+                    3'b000: begin
+                        //exe
+                        if(func7[5]) begin
+                            cw_exe.aluop = alu_ops::alu_sub;
+                        end
+                        else begin
+                            cw_exe.aluop = alu_ops::alu_add;
+                        end
+                        cw_exe.alumux1_sel = alumux::rs1_out;
+                        cw_exe.alumux2_sel = alumux::rs2_out;
+
+                        //writeback
+                        cw_wb.regfilemux_sel = regfilemux::alu_out;
+                    end
+                    
+                    3'b001 begin
+                        //exe
+                        cw_exe.aluop = alu_ops::alu_sll;
+                        cw_exe.alumux1_sel = alumux::rs1_out;
+                        cw_exe.alumux2_sel = alumux::rs2_out;
+
+                        //writeback
+                        cw_wb.regfilemux_sel = regfilemux::alu_out;
+                    end
+
+                    3'b010: begin
+                        //exe
+                        cw_exe.cmpop = branch_funct3_t::blt;
+                        cw_exe.cmp_sel = cmpmux::rs2_out;
+
+                        //writeback
+                        cw_wb.regfilemux_sel = regfilemux::br_en;
+                    end
+
+                    3'b011: begin
+                        //exe
+                        cw_exe.cmpop = branch_funct3_t::bltu;
+                        cw_exe.cmp_sel = cmpmux::rs2_out;
+
+                        //writeback
+                        cw_wb.regfilemux_sel = regfilemux::br_en;
+                    end
+
+                    3'b100: begin
+                        //exe
+                        cw_exe.aluop = alu_ops::alu_xor;
+                        cw_exe.alumux1_sel = alumux::rs1_out;
+                        cw_exe.alumux2_sel = alumux::rs2_out;
+
+                        //writeback
+                        cw_wb.regfilemux_sel = regfilemux::alu_out;
+                    end
+
+                    3'b101: begin
+                        //exe
+                        if(func7[5]) begin
+                            cw_exe.aluop = alu_ops::alu_sra;
+                        end
+                        else begin
+                            cw_exe.aluop = alu_ops::alu_srl;
+                        end
+                        cw_exe.alumux1_sel = alumux::rs1_out;
+                        cw_exe.alumux2_sel = alumux::rs2_out;
+
+                        //writeback
+                        cw_wb.regfilemux_sel = regfilemux::alu_out;
+                    end
+
+                    3'b110: begin
+                        //exe
+                        cw_exe.aluop = alu_ops::alu_or;
+                        cw_exe.alumux1_sel = alumux::rs1_out;
+                        cw_exe.alumux2_sel = alumux::rs2_out;
+
+                        //writeback
+                        cw_wb.regfilemux_sel = regfilemux::alu_out;
+                    end
+
+                    3'b111: begin
+                        //exe
+                        cw_exe.aluop = alu_ops::alu_and;
+                        cw_exe.alumux1_sel = alumux::rs1_out;
+                        cw_exe.alumux2_sel = alumux::rs2_out;
+
+                        //writeback
+                        cw_wb.regfilemux_sel = regfilemux::alu_out;
+                    end
+                endcase
+
+                //mem doesn't do anything here
+
+                //fetch
+                pcmux_sel = pcmux::pc_plus4;
+            end
+
+            default: ;
+        endcase
     end
     else begin
         set_def();
     end
 end
-
-
 
 endmodule : mp4control

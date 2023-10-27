@@ -1,6 +1,7 @@
 //output is what ever previous input was, then a posedge output is "current" input aka new previous input
-module exe_mem_reg
+module exe_mem_reg;
 import rv32i_types::*;
+import rv32i_mux_types::*;
 import cpuIO::*;
 (
     input clk, //from datapath
@@ -13,8 +14,10 @@ import cpuIO::*;
     input logic [31:0] rs2_out_i, //from exe_stage
     input logic [31:0] u_imm_i, //from DE_EXE pipeline reg
     input rv32i_opcode opcode_i; //from DE_EXE pipeline reg
-    input control_word ctrl_w_DE, //from DE_EXE pipeline reg
-    output control_word ctrl_w_MEM, //to mem_stage / MEM_WB pipeline reg
+    input cw_mem ctrl_w_MEM_i, //from DE_EXE pipeline reg
+    input cw_writeback ctrl_w_WB_i, //from DE_EXE pipeline reg
+    output cw_mem ctrl_w_MEM_o, //to mem_stage / MEM_WB pipeline reg
+    output cw_writeback ctrl_w_WB_o, //to MEM_WB pipeline reg
     output logic [31:0] exe_fwd_data, //to exe_stage / mem_stage / MEM_WB pipeline reg
     output logic [31:0] mem_pc_x, //to MEM_WB pipeline reg
     output logic [31:0] rs2_out_o, //to mem_stage
@@ -24,7 +27,8 @@ import cpuIO::*;
     output logic exe_rdy; //to cpu_ctrl
 );
     logic [31:0] fwd_r_EX, pc_x_r, rs2_out_r, u_imm_r;
-    control_word ctrl_w_r;
+    cw_mem ctrl_w_mem_r;
+    cw_writeback ctrl_w_wb_r;
     logic br_en_r;
 
     //always_comb or always_ff??
@@ -87,19 +91,47 @@ import cpuIO::*;
     //control word for MEM 
     always_ff @ (posedge clk, posedge rst) begin : ctrl_w_MEM_register
         if(rst)begin
-            ctrl_w_MEM.opcode <= rv32i_opcode::op_lui;
-            ctrl_w_r.opcode <= rv32i_opcode::op_lui;
-            ctrl_w_MEM.funct3 <= 3'b000;
-            ctrl_w_r.funct3 <= 3'b000;
-            ctrl_w_MEM.funct7 <= 3'b000;
-            ctrl_w_r.funct7 <= 3'b000;
+            ctrl_w_mem_r.mem_read_d <= 1'b0;
+            ctrl_w_mem_r.mem_write_d <= 1'b1;
+            ctrl_w_mem_r.mem_byte_enable <= 4'b000;
+            ctrl_w_mem_r.mar_sel <= marmux::pc_out;
+
+            ctrl_w_MEM_o.mem_read_d <= 1'b0;
+            ctrl_w_MEM_o.mem_write_d <= 1'b1;
+            ctrl_w_MEM_o.mem_byte_enable <= 4'b000;
+            ctrl_w_MEM_o.mar_sel <= marmux::pc_out;
         end
         else if(exe_go == 1) begin
-            ctrl_w_MEM <= ctrl_w_DE;
-            ctrl_w_r <= ctrl_w_DE;
+            ctrl_w_mem_r.mem_read_d <= ctrl_w_MEM_i.mem_read_d;
+            ctrl_w_mem_r.mem_write_d <= ctrl_w_MEM_i.mem_write_d;
+            ctrl_w_mem_r.mem_byte_enable <= ctrl_w_MEM_i.mem_byte_enable;
+            ctrl_w_mem_r.mar_sel <= ctrl_w_MEM_i.mar_sel;
+            
+            ctrl_w_MEM_o.mem_read_d <= ctrl_w_MEM_i.mem_read_d;
+            ctrl_w_MEM_o.mem_write_d <= ctrl_w_MEM_i.mem_write_d;
+            ctrl_w_MEM_o.mem_byte_enable <= ctrl_w_MEM_i.mem_byte_enable;
+            ctrl_w_MEM_o.mar_sel <= ctrl_w_MEM_i.mar_sel;
         end
         else begin
-            ctrl_w_MEM <= ctrl_w_r;
+            ctrl_w_MEM_o.mem_read_d <= ctrl_w_mem_r.mem_read_d;
+            ctrl_w_MEM_o.mem_write_d <= ctrl_w_mem_r.mem_write_d;
+            ctrl_w_MEM_o.mem_byte_enable <= ctrl_w_mem_r.mem_byte_enable;
+            ctrl_w_MEM_o.mar_sel <= ctrl_w_mem_r.mar_sel;
+        end
+    end
+
+    //control word for WB 
+    always_ff @ (posedge clk, posedge rst) begin : ctrl_w_MEM_register
+        if(rst)begin
+            ctrl_w_wb_r.regfilemux_sel <= regfilemux::alu_out;
+            ctrl_w_WB_o.regfilemux_sel <= regfilemux::alu_out;
+        end
+        else if(exe_go == 1) begin
+            ctrl_w_wb_r.regfilemux_sel <= ctrl_w_WB_i.regfilemux_sel;
+            ctrl_w_WB_o.regfilemux_sel <= ctrl_w_WB_i.regfilemux_sel;
+        end
+        else begin
+            ctrl_w_WB_o.regfilemux_sel <= ctrl_w_wb_r.regfilemux_sel;
         end
     end
 
