@@ -25,10 +25,12 @@ package cpuIO;
     typedef struct {
         logic mem_read_d;
         logic mem_write_d;
+        logic [3:0] mem_byte_enable;
         marmux::marmux_sel_t mar_sel;
     } cw_mem;
-    typedef struct {
 
+    typedef struct {
+        regfilemux::regfilemux_sel_t regfilemux_sel;
     } cw_writeback;
 
     typedef struct {
