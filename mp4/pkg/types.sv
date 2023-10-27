@@ -30,6 +30,7 @@ package cpuIO;
     } cw_mem;
 
     typedef struct {
+        logic ld_reg;
         regfilemux::regfilemux_sel_t regfilemux_sel;
     } cw_writeback;
 
