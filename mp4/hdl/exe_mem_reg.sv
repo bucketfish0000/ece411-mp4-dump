@@ -13,7 +13,6 @@ import cpuIO::*;
     input logic [31:0] exe_pc_x, //from DE_EXE pipeline reg
     input logic [31:0] rs2_out_i, //from exe_stage
     input logic [31:0] u_imm_i, //from DE_EXE pipeline reg
-    input rv32i_opcode opcode_i; //from DE_EXE pipeline reg
     input cw_mem ctrl_w_MEM_i, //from DE_EXE pipeline reg
     input cw_writeback ctrl_w_WB_i, //from DE_EXE pipeline reg
     output cw_mem ctrl_w_MEM_o, //to mem_stage / MEM_WB pipeline reg
@@ -22,7 +21,6 @@ import cpuIO::*;
     output logic [31:0] mem_pc_x, //to MEM_WB pipeline reg
     output logic [31:0] rs2_out_o, //to mem_stage
     output logic [31:0] u_imm_o, //to MEM_WB pipeline reg
-    output rv32i_opcode opcode_o, //to MEM_WB pipeline reg / mem_stage
     output logic br_en_o, //to ctrl??? / MEM_WB pipeline reg
     output logic exe_rdy; //to cpu_ctrl
 );
