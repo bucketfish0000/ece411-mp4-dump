@@ -25,7 +25,8 @@ package cpuIO;
     typedef struct {
         logic mem_read_d;
         logic mem_write_d;
-        logic [3:0] mem_byte_enable;
+        store_funct3_t store_funct3;
+        load_funct3_t load_funct3;
         marmux::marmux_sel_t mar_sel;
     } cw_mem;
 
