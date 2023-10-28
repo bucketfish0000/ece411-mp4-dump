@@ -18,7 +18,8 @@ import cpuIO::*;
     input [31:0] j_imm,
     output logic [31:0] rs2_out,
     output logic [31:0] alu_out,
-    output logic br_en
+    output logic br_en,
+    output logic exe_rdy //to ctrl / EXE_MEM reg
 );
     logic [31:0] rs1_o, rs2_o, alumux1_o, alumux2_o, cmpmux_o;
     cmpmux_sel_t cmp_sel;
@@ -28,6 +29,16 @@ import cpuIO::*;
     rs2_sel_t rs2_sel;
     
     assign rs2_out = rs2_o;
+
+    //always_ff or always_comb??
+    always_ff @(posedge clk, posedge rst) begin : exe_rdy_ctrl
+        if(rst)
+            exe_rdy <= 1'b0;
+        else if((de_exe_valid == 1) && (de_exe_rdy == 1)) //when sees these signals by the time rdy goes high operation will be done(1 cycle)
+            exe_rdy <= 1'b1;
+        else
+            exe_rdy <= 1'b0;
+    end
 
     cmp cmp_logic(
         .cmpop(ctrl_w_EXE.cmpop),
