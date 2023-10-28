@@ -143,6 +143,112 @@ always_comb begin : ld_ctrl
     end
 end
 
+// /***************** USED BY RVFIMON --- ONLY MODIFY WHEN TOLD *****************/
+// logic trap;
+// logic [3:0] rmask, wmask;
+// /*****************************************************************************/
+
+branch_funct3_t branch_funct3;
+store_funct3_t store_funct3;
+load_funct3_t load_funct3;
+arith_funct3_t arith_funct3;
+
+assign arith_funct3 = arith_funct3_t'(funct3);
+assign branch_funct3 = branch_funct3_t'(funct3);
+assign load_funct3 = load_funct3_t'(funct3);
+assign store_funct3 = store_funct3_t'(funct3);;
+
+// always_comb
+// begin : trap_check
+//     trap = '0;
+//     rmask = '0;
+//     wmask = '0;
+//     mem_addr = mem_address;
+
+//     case (opcode)
+//         op_lui: begin
+            
+//         end
+        
+//         op_auipc: begin
+            
+//         end
+        
+//         op_imm: begin
+            
+//         end
+        
+//         op_reg: begin
+            
+//         end
+        
+//         op_jal: begin
+            
+//         end
+         
+//         op_jalr: begin
+            
+//         end
+
+//         op_br: begin
+//             case (branch_funct3)
+//                 beq: begin
+                    
+//                 end
+//                 bne: begin
+                    
+//                 end
+//                 blt: begin
+                    
+//                 end
+//                 bge: begin
+                    
+//                 end
+//                 bltu: begin
+                    
+//                 end
+//                 bgeu: begin
+                        
+//                 end
+//                 default: trap = '1;
+//             endcase
+//         end
+
+//         //!!! Send mar_in through this first before sending it to mar !!!
+//         op_load: begin
+//             case (load_funct3)
+//                 lw: rmask = 4'b1111;
+//                 lh, lhu: begin
+//                     rmask = (4'b0011) << (mem_address%4); /* Modify for MP1 Final */ //correct???
+//                     mem_addr = mem_address - (mem_address%4);
+//                 end
+//                 lb, lbu: begin
+//                     rmask = (4'b0001) << (mem_address%4); /* Modify for MP1 Final */ //correct???
+//                     mem_addr = mem_address - (mem_address%4);
+//                 end
+//                 default: trap = '1;
+//             endcase
+//         end
+
+//         op_store: begin
+//             case (store_funct3)
+//                 sw: wmask = 4'b1111;
+//                 sh: begin
+//                     wmask = (4'b0011) << (mem_address%4); /* Modify for MP1 Final */ //correct???
+//                     mem_addr = mem_address - (mem_address%4);
+//                 end
+//                 sb: begin
+//                     wmask = (4'b0001) << (mem_address%4); /* Modify for MP1 Final */ //correct???
+//                     mem_addr = mem_address - (mem_address%4);
+//                 end
+//                 default: trap = '1;
+//             endcase
+//         end
+
+//         default: trap = '1;
+//     endcase
+// end
+
 function void set_def();
     cw_cpu.opcode = 7'b0;
     cw_cpu.funct3 = 3'b0;
@@ -156,7 +262,6 @@ function void set_def();
     cw_exe.aluop = alu_ops::alu_add;
     cw_memory.mem_read_d = 1'b0;
     cw_memory.mem_write_d = 1'b0;
-    cw_memory.mem_byte_enable = 4'b0000;
     cw_memory.mar_sel = marmux_sel_t::pc_out;
     cw_wb.ld_reg = 1'b0;
     cw_wb.regfilemux_sel = regfilemux_sel_t::alu_out;
@@ -278,7 +383,6 @@ always_comb begin : cpu_cw
 
                 //mem
                 cw_memory.mem_read_d = 1'b1;
-                cw_memory.mem_byte_enable = rmask;
 
                 //writeback
                 cw_wb.ld_reg = 1'b1;    
@@ -313,7 +417,6 @@ always_comb begin : cpu_cw
 
                 //mem
                 cw_memory.mem_write_d = 1'b1;
-                cw_memory.mem_byte_enable = wmask;
 
                 //writeback doesn't do anything here
 

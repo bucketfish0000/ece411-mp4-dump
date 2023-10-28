@@ -10,7 +10,7 @@ import cpuIO::*;
     input logic exe_mem_ld, //from cpu_ctrl
     input logic exe_rdy,
     input logic de_exe_valid,
-    input logic [31:0] alu_out, //from exe_stage
+    input logic [31:0] alu_out_i, //from exe_stage
     input logic [31:0] exe_pc_x, //from DE_EXE pipeline reg
     input logic [31:0] rs2_out_i, //from exe_stage
     input logic [31:0] u_imm_i, //from DE_EXE pipeline reg
@@ -20,17 +20,18 @@ import cpuIO::*;
     output cw_writeback ctrl_w_WB_o, //to MEM_WB pipeline reg
     output logic [31:0] exe_fwd_data, //to exe_stage / mem_stage / MEM_WB pipeline reg
     output logic [31:0] mem_pc_x, //to MEM_WB pipeline reg
-    output logic [31:0] rs2_out_o, //to mem_stage
     output logic [31:0] u_imm_o, //to MEM_WB pipeline reg
     output logic br_en_o, //to ctrl??? / MEM_WB pipeline reg
     output logic exe_mem_valid, //to ctrl / MEM_WB pipeline reg
-    output logic exe_mem_rdy, //to MEM_WB pipeline reg?
+    output logic exe_mem_rdy, //to MEM_WB pipeline reg
 
     //include these here bc they need to be loaded at same time as EXE_MEM
     output logic [31:0] mem_address_d, //to data cache
-    output logic [31:0] mem_wdata_d //to data cache
+    output logic [31:0] mem_wdata_d, //to data cache
+    output logic [3:0] mem_byte_enable //to data cache
 );
-    logic [31:0] fwd_r_EX, pc_x_r, rs2_out_r, u_imm_r;
+    logic [31:0] fwd_r_EX, pc_x_r, u_imm_r;
+    logic [3:0] mem_byte_enable_r
     cw_mem ctrl_w_mem_r;
     cw_writeback ctrl_w_wb_r;
     logic br_en_r, valid_r, ready_r;
@@ -42,8 +43,8 @@ import cpuIO::*;
             fwd_r_EX <= 32'b0;
         end
         else if((exe_mem_ld == 1) && (de_exe_valid == 1)) begin
-            exe_fwd_data <= alu_out;
-            fwd_r_EX <= alu_out;
+            exe_fwd_data <= alu_out_i;
+            fwd_r_EX <= alu_out_i;
         end
         else begin
             exe_fwd_data <= fwd_r_EX;
@@ -65,49 +66,39 @@ import cpuIO::*;
         end
     end
 
-    //rs2_out reg
-    always_ff @ (posedge clk, posedge rst) begin : rs2_out_register
-        if(rst)begin
-            rs2_out_o <= 32'b0;
-            rs2_out_r <= 32'b0;
-        end
-        else if((exe_mem_ld == 1) && (de_exe_valid == 1)) begin
-            rs2_out_o <= rs2_out_i;
-            rs2_out_r <= rs2_out_i;
-        end
-        else begin
-            rs2_out_o <= rs2_out_r;
-        end
-    end
-
     //control word for MEM 
     always_ff @ (posedge clk, posedge rst) begin : ctrl_w_MEM_register
         if(rst)begin
             ctrl_w_mem_r.mem_read_d <= 1'b0;
-            ctrl_w_mem_r.mem_write_d <= 1'b1;
-            ctrl_w_mem_r.mem_byte_enable <= 4'b000;
+            ctrl_w_mem_r.mem_write_d <= 1'b0;
+            ctrl_w_mem_r.load_funct3 <= load_funct3_t::lw;
+            ctrl_w_mem_r.store_funct3 <= store_funct3_t::sw;
             ctrl_w_mem_r.mar_sel <= marmux::pc_out;
 
             ctrl_w_MEM_o.mem_read_d <= 1'b0;
-            ctrl_w_MEM_o.mem_write_d <= 1'b1;
-            ctrl_w_MEM_o.mem_byte_enable <= 4'b000;
+            ctrl_w_MEM_o.mem_write_d <= 1'b0;
+            ctrl_w_MEM_o.load_funct3 <= load_funct3_t::lw;
+            ctrl_w_MEM_o.store_funct3 <= store_funct3_t::sw;
             ctrl_w_MEM_o.mar_sel <= marmux::pc_out;
         end
         else if(exe_mem_ld == 1) begin
             ctrl_w_mem_r.mem_read_d <= ctrl_w_MEM_i.mem_read_d;
             ctrl_w_mem_r.mem_write_d <= ctrl_w_MEM_i.mem_write_d;
-            ctrl_w_mem_r.mem_byte_enable <= ctrl_w_MEM_i.mem_byte_enable;
+            ctrl_w_mem_r.load_funct3 <= ctrl_w_MEM_i.load_funct3;
+            ctrl_w_mem_r.store_funct3 <= ctrl_w_MEM_i.store_funct3;
             ctrl_w_mem_r.mar_sel <= ctrl_w_MEM_i.mar_sel;
             
             ctrl_w_MEM_o.mem_read_d <= ctrl_w_MEM_i.mem_read_d;
             ctrl_w_MEM_o.mem_write_d <= ctrl_w_MEM_i.mem_write_d;
-            ctrl_w_MEM_o.mem_byte_enable <= ctrl_w_MEM_i.mem_byte_enable;
+            ctrl_w_MEM_o.load_funct3 <= ctrl_w_MEM_i.load_funct3;
+            ctrl_w_MEM_o.store_funct3 <= ctrl_w_MEM_i.store_funct3;
             ctrl_w_MEM_o.mar_sel <= ctrl_w_MEM_i.mar_sel;
         end
         else begin
             ctrl_w_MEM_o.mem_read_d <= ctrl_w_mem_r.mem_read_d;
             ctrl_w_MEM_o.mem_write_d <= ctrl_w_mem_r.mem_write_d;
-            ctrl_w_MEM_o.mem_byte_enable <= ctrl_w_mem_r.mem_byte_enable;
+            ctrl_w_MEM_o.load_funct3 <= ctrl_w_mem_r.load_funct3;
+            ctrl_w_MEM_o.store_funct3 <= ctrl_w_mem_r.store_funct3;
             ctrl_w_MEM_o.mar_sel <= ctrl_w_mem_r.mar_sel;
         end
     end
@@ -188,11 +179,14 @@ import cpuIO::*;
     end
 
     //include these here bc they need to be loaded at same time as EXE_MEM
-
-    logic [31:0] marmux_o;
+    //also have rvfi signals here, mem_byte_enable is only able to be calculated once
+    //we have address(which is only available after exe computes it)
+    logic [31:0] marmux_o, mem_addr;
+    logic trap;
+    logic [3:0] rmask, wmask; 
 
     always_comb begin : mem_mux
-        unique case (ctrl_w_MEM.mar_sel)
+        unique case (ctrl_w_MEM_i.mar_sel)
             marmux::pc_out: marmux_o = exe_pc_x;
             marmux::alu_out: marmux_o = alu_out;
         endcase
@@ -201,16 +195,80 @@ import cpuIO::*;
     mem_data_out mdo_reg(
         .clk(clk),
         .reset(rst),
-        .load_data_out((exe_mem_ld == 1) && (de_exe_valid == 1)),//don't load until mem r/w finish
+        .load_data_out((exe_mem_ld == 1) && (de_exe_valid == 1) && ((ctrl_w_MEM_i.mem_read_d) || (ctrl_w_MEM_i.mem_write_d))),
         .mdo_in(rs2_out_i),
         .mdo_out(mem_wdata_d)
     );
 
+    always_comb begin : calc_addr
+        rmask = 4'b0000;
+        wmask = 4'b0000;
+        mem_addr = marmux_o;
+        trap = 1'b0;
+
+        if(ctrl_w_MEM_i.mem_read_d) begin
+            case (ctrl_w_MEM_i.load_funct3)
+                lw: begin
+                    rmask = 4'b1111;
+                end
+                lh, lhu: begin
+                    rmask = (4'b0011) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
+                    mem_addr = marmux_o - (marmux_o%4);
+                end
+                lb, lbu: begin
+                    rmask = (4'b0001) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
+                    mem_addr = marmux_o - (marmux_o%4);
+                end
+                default: trap = '1;
+            endcase
+        end
+        else if(ctrl_w_MEM_i.mem_write_d) begin
+            case (ctrl_w_MEM_i.store_funct3)
+                sw: begin
+                    wmask = 4'b1111;
+                end
+                sh: begin
+                    wmask = (4'b0011) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
+                    mem_addr = marmux_o - (marmux_o%4);
+                end
+                sb: begin
+                    wmask = (4'b0001) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
+                    mem_addr = marmux_o - (marmux_o%4);
+                end
+                default: trap = '1;
+            endcase
+        end
+        else begin
+            //if not ld or st, don't really care what outputs are so just leave as default
+        end
+    end
+
+    //mem_byte_enable register
+    always_ff @ (posedge clk, posedge rst) begin : mem_byte_enable_register
+        if(rst)begin
+            mem_byte_enable <= 4'b0000;
+            mem_byte_enable_r <= 4'b0000;
+        end
+        else if((exe_mem_ld == 1) && (de_exe_valid == 1) && ((ctrl_w_MEM_i.mem_read_d) || (ctrl_w_MEM_i.mem_write_d))) begin
+            if(ctrl_w_MEM_i.mem_read_d) begin
+                mem_byte_enable <= rmask;
+                mem_byte_enable_r <= rmask;
+            end
+            else if(ctrl_w_MEM_i.mem_write_d) begin
+                mem_byte_enable <= wmask;
+                mem_byte_enable_r <= wmask;
+            end
+        end
+        else begin
+            mem_byte_enable <= mem_byte_enable_r;
+        end
+    end
+
     mar mar_reg(
         .clk(clk),
         .reset(rst),
-        .load_mar((exe_mem_ld == 1) && (de_exe_valid == 1)),//don't load until mem r/w finish
-        .mar_in(marmux_o),
+        .load_mar((exe_mem_ld == 1) && (de_exe_valid == 1) && ((ctrl_w_MEM_i.mem_read_d) || (ctrl_w_MEM_i.mem_write_d))),
+        .mar_in(mem_addr),
         .mar_out(mem_address_d)
     );
 
