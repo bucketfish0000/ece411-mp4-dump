@@ -40,7 +40,7 @@ import cpuIO::*;
         .aluop(ctrl_w_EXE.aluop),
         .a(alumux1_o), 
         .b(alumux2_o),
-        .f(alu_out)
+        .f(alu_out) 
     );
 
     always_comb begin : exe_mux

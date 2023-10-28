@@ -23,10 +23,12 @@ rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb;
 logic fetch_ready,decode_ready, exec_ready, mem_ready, wb_ready;
 
 rv32i_word instr_fetch;
+logic load_pc;
 
 fetch_stage fetch(
     .clk(clk),.rst(rst),
     .icache_resp(icache_resp),
+    .load_pc(load_pc)
     .pcmux_sel(pcmux_sel),
     .exec_fwd_data(/*???*/),
     .instr_in(icache_out),
@@ -59,6 +61,41 @@ decode_stage decode(
     .func3(),
     .func7(),
     .ready(decode_ready)
+);
+
+dec_exe_reg dec_exe_reg(
+    .clk(clk),.rst(rst),
+    .load(dec_exe_load),
+    .opcode_in(),
+    .imm_in(),
+    .func3_in(),
+    .func7_in(), 
+    .opcode_out(),
+    .imm_out(),
+    .func3_out(),
+    .func7_out(),
+    .cw_in(),
+    .cw_out()
+);
+
+exe_stage execute(
+
+);
+
+exe_mem_reg exe_mem_reg(
+
+);
+
+mem_stage memory(
+
+);
+
+mem_wb_reg mem_wb_reg(
+
+);
+
+wb_stage writeback(
+
 );
 
 endmodule : mp4datapath

@@ -4,6 +4,7 @@ module fetch_stage
     input logic clk,
     input logic rst,
     input logic icache_resp,
+    input logic load_pc,
 
     input pcmux_sel_t pcmux_sel,
     input rv32i_word exec_fwd_data,
@@ -21,7 +22,7 @@ module fetch_stage
     assign pc_out = pc;
     assign instr_out = instr_in;
 
-    register PC(.clk(clk),.rst(rst),.load(icache_resp) .in(pc_in),.out(pc));
+    register PC(.clk(clk),.rst(rst),.load(load_pc) .in(pc_in),.out(pc));
 
     
 
