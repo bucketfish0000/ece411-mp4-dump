@@ -29,14 +29,14 @@ import rv32i_types::*;
             logic           monitor_valid;
             logic   [63:0]  monitor_order;
             logic   [31:0]  monitor_inst;
-            logic   [4:0]   monitor_rs1_addr;
-            logic   [4:0]   monitor_rs2_addr;
-            logic   [31:0]  monitor_rs1_rdata;
-            logic   [31:0]  monitor_rs2_rdata;
-            logic   [4:0]   monitor_rd_addr;
-            logic   [31:0]  monitor_rd_wdata;
-            logic   [31:0]  monitor_pc_rdata;
-            logic   [31:0]  monitor_pc_wdata;
+            logic   [4:0]   monitor_rs1_addr, rs1_address;
+            logic   [4:0]   monitor_rs2_addr, rs2_address;
+            logic   [31:0]  monitor_rs1_rdata, rs1_rdata;
+            logic   [31:0]  monitor_rs2_rdata, rs2_rdata;
+            logic   [4:0]   monitor_rd_addr, rd_addr;
+            logic   [31:0]  monitor_rd_wdata, rd_wdata;
+            logic   [31:0]  monitor_pc_rdata, pc_rdata;
+            logic   [31:0]  monitor_pc_wdata, pc_wdata;
             logic   [31:0]  monitor_mem_addr, mem_addr_d;
             logic   [3:0]   monitor_mem_rmask, rmask;
             logic   [3:0]   monitor_mem_wmask, wmask;
@@ -51,6 +51,10 @@ import rv32i_types::*;
             cw_execute exe_ctrl_word;
             cw_mem mem_ctrl_word;
             cw_writeback wb_ctrl_word;
+            rv32i_opcode opcode;
+            logic[2:0] func3;
+            logic[6:0] func7;
+            logic br_en;
 
 
     mp4control control(
@@ -61,18 +65,18 @@ import rv32i_types::*;
         //...none?
 
         /*---de signals---*/
-        .opcode(),
-        .func3(),
-        .func7(),
+        .opcode(opcode),
+        .func3(func3),
+        .func7(func7),
         //anything else...?
 
         /*---exe signals---*/
-        .br_en(),
+        .br_en(br_en),
         //...anything else?
 
         /*---mem_stage signals---*/
-        .mem_read_D(),
-        .mem_write_D(),
+        .mem_read_D(mem_r_d),
+        .mem_write_D(mem_w_d),
         //...anything else?
 
         /*---ready signals---*/
@@ -126,6 +130,21 @@ import rv32i_types::*;
         .cw_memory(mem_ctrl_word),
         .cw_wb(wb_ctrl_word),
 
+        .opcode(opcode),
+        .func3(func3),
+        .func7(func7),
+
+        .rs1_addr(rs1_address),
+        .rs2_addr(rs2_address),
+        .rs1_rdata(rs1_rdata),
+        .rs2_rdata(rs2_rdata),
+        .rd_addr(rd_addr),
+        .rd_wdata(rd_wdata),
+        .pc_rdata(pc_rdata),
+        .pc_wdata(pc_wdata),
+
+        .br_en(br_en),
+
         .if_rdy(if_rdy),
         .de_rdy(de_rdy),
         .exe_rdy(exe_rdy),
@@ -145,8 +164,8 @@ import rv32i_types::*;
         .mem_address_d(mem_addr_d),
         .mem_byte_enable(),
 
-        .wmask(wmask),
-        .rmask(rmask)
+        .rmask(rmask),
+        .wmask(wmask)
     );
 
     
@@ -161,17 +180,17 @@ import rv32i_types::*;
     // Fill this out
     // Only use hierarchical references here for verification
     // **DO NOT** use hierarchical references in the actual design!
-    assign monitor_valid     = ;
-    assign monitor_order     = ;
-    assign monitor_inst      = ;
-    assign monitor_rs1_addr  = ;
-    assign monitor_rs2_addr  = ;
-    assign monitor_rs1_rdata = ;
-    assign monitor_rs2_rdata = ;
-    assign monitor_rd_addr   = ;
-    assign monitor_rd_wdata  = ;
-    assign monitor_pc_rdata  = ;
-    assign monitor_pc_wdata  = ;
+    assign monitor_valid     = ; //???
+    assign monitor_order     = ; //???
+    assign monitor_inst      = imem_rdata; //???
+    assign monitor_rs1_addr  = rs1_address;
+    assign monitor_rs2_addr  = rs2_address;
+    assign monitor_rs1_rdata = rs1_rdata;
+    assign monitor_rs2_rdata = rs2_rdata;
+    assign monitor_rd_addr   = rd_addr;
+    assign monitor_rd_wdata  = rd_wdata;
+    assign monitor_pc_rdata  = pc_rdata;
+    assign monitor_pc_wdata  = pc_wdata;
     assign monitor_mem_addr  = mem_addr_d;
     assign monitor_mem_rmask = rmask;
     assign monitor_mem_wmask = wmask;
