@@ -24,7 +24,7 @@ module dec_exe_reg
     input logic clk,
     input logic rst,
     input logic load,
-
+.
     input rv32i_opcode opcode_in,
     input imm imm_in,
     input logic [2:0] func3_in,
@@ -70,7 +70,7 @@ module dec_exe_reg
         end
     end 
 
-    always_comb (@posedge clk)
+    always_comb
     begin
         opcode_out=opcode_data;
         imm_out=imm_data;
@@ -255,5 +255,7 @@ module mem_wb_reg
     input cw_in,
     output cw_out
 );
+
+
 
 endmodule : mem_wb_reg
