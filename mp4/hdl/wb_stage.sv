@@ -12,7 +12,7 @@ module wb_stage
 import rv32i_types::*;
 (
     input clk, rst, 
-    input rv32i_types::regfilemux_sel_t regfilemux_sel; 
+    input cw_writeback ctrl_w_WB; 
     
     input rv32i_word alu_out,
     input logic br_en, 
@@ -23,7 +23,7 @@ import rv32i_types::*;
     output rv32i_word regfilemux_out
 );
 always_comb begin : regfilemux_sel
-    unique case (regfilemux_sel)
+    unique case (ctrl_w_WB.regfilemux_sel)
         regfilemux::alu_out: regfilemux_out = alu_out;
         regfilemux::br_en:   regfilemux_out = {{31'h0000}, br_en}; 
         regfilemux::u_imm:   regfilemux_out = ir_u_imm;         
@@ -31,19 +31,19 @@ always_comb begin : regfilemux_sel
         regfilemux::pc_plus4: regfilemux_out = pc_x + 4; 
         regfilemux::lb: begin 
             
-            regfilemux_out = 32'hdeadbeef; 
+            regfilemux_out = 32'hdeadbeef; //wat is dis?
         end
         regfilemux::lbu: begin 
             
-            regfilemux_out = 32'hdeadbeef; 
+            regfilemux_out = 32'hdeadbeef;  //wat is dis?
         end
         regfilemux::lh: begin 
             
-            regfilemux_out = 32'hdeadbeef; 
+            regfilemux_out = 32'hdeadbeef;  //wat is dis?
         end
         regfilemux::lhu: begin 
             
-            regfilemux_out = 32'hdeadbeef; 
+            regfilemux_out = 32'hdeadbeef;  //wat is dis?
         end
     endcase
 end
