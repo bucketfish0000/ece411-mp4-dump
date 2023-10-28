@@ -18,6 +18,12 @@ module mp4datapath
     input logic exe_mem_load,
     input logic mem_wb_load,
 
+    //to decode
+    input control_word cw_cpu, //kinda not using this 
+    input cw_execute cw_exe,
+    input cw_mem cw_memory,
+    input cw_writeback cw_wb,
+
     output logic if_rdy,
     output logic de_rdy,
     output logic exe_rdy,
