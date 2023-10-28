@@ -17,12 +17,13 @@ import cpuIO::*;
     input rst,
 
     /*---if signals---*/
+    //none...?
+
+    /*---de signals... none?---*/
     input rv32i_opcode opcode,
     output logic[2:0] func3,
     output logic[6:0] func7,
     //...anything else?
-
-    /*---de signals... none?---*/
 
     /*---exe signals---*/
     input logic br_en,
@@ -57,7 +58,9 @@ import cpuIO::*;
     output control_word cw_cpu, 
     output cw_execute cw_exe,
     output cw_mem cw_memory,
-    output cw_writeback cw_wb 
+    output cw_writeback cw_wb,
+
+    output pcmux_sel_t pcmux_sel 
 );
 
 logic [4:0] rdy;
