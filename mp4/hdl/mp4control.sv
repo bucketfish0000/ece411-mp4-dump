@@ -1,19 +1,12 @@
-/*GO and READY signals:
-    GO(Output): 
-        -If high, the data you need is ready, do work then update the pipeline register associated w/ stage.
-        -If low, the data you need isn't ready, hold your output constant*(including rdy signal), don't load the pipeline register associated
-         w/ stage.
-    READY(Input):
-        -If you give me high that means that you've updated your pipeline register and are ready for more work.
-        -If you give me low that means your pipeline register hasn't been updated AND/OR you are still work on something.
-
-    *NOTE: Each pipeline register/stage using the go signals should also account for the previous stage/pipeline register's ready signal
-           If the previous stage has the data ready, but the cpu is not telling you to proceed then this indicates you need to keep all 
-           outputs constant. This will usually only be the case when MEM stage is holding up pipeline, and requires constant input signals
-           to interface with D cache properly.
-
-    **NOTE: Use internal logic from the associated stage, previous stages ready signal, and cpu go signal to decide when to signal you are 
-            ready/when to update the pipeline register.
+/*ld and READY signals:
+    ld(Output): 
+        -Always load unless one of the stages in front of you is stalling(valid == 1 and rdy == 0)
+    valid(Input):
+        -If high then register has been initialized after cold start(or flush)
+        -Otherwise value is unitialized
+    ready(Input):
+        -If high then stage has finished computation
+        -If low still computing so don't load the register before stage yet(stalling if valid is high)
 */
 module mp4control;
 import rv32i_types::*;
@@ -41,20 +34,24 @@ import cpuIO::*;
     //...anything else?
 
     /*---ready signals---*/
-    input logic if_1_rdy,
-    // input logic if_2_rdy, //for cp2
+    input logic if_rdy,
     input logic de_rdy,
     input logic exe_rdy,
     input logic mem_rdy,
     input logic wb_rdy,
 
+    /*---valid signals---*/
+    input logic if_valid,
+    input logic de_valid,
+    input logic exe_valid,
+    input logic mem_valid,
+    input logic wb_valid,
+
     /*---continue/load signals---*/
-    output logic if_1_go,
-    // output logic if_2_go, //for cp2
-    output logic de_go,
-    output logic exe_go,
-    output logic mem_go,
-    output logic wb_go,
+    output logic if_de_ld,
+    output logic de_exe_ld,
+    output logic exe_mem_ld,
+    output logic mem_wb_ld
 
     /*---cpu_cw---*/
     output control_word cw_cpu, 
@@ -63,22 +60,20 @@ import cpuIO::*;
     output cw_writeback cw_wb 
 );
 
-// logic [5:0] rdy;
 logic [4:0] rdy;
+logic [4:0] vald;
 
-assign rdy = {if_1_rdy, /*if_2_rdy,*/ de_rdy, exe_rdy, mem_rdy, wb_rdy}
+assign rdy = {if_rdy, de_rdy, exe_rdy, mem_rdy, wb_rdy};
+assign vald = {if_valid, de_valid, exe_valid, mem_valid, wb_valid};
 
 //how know when load pc? Gonna need testing to see for sure
 
-//always comb or always ff???
-always_comb begin : go_ctrl
+always_comb begin : ld_ctrl
     if(rst) begin
-        if_1_go = 1'b0;
-        // if_2_go = 1'b0;
-        de_go = 1'b0;
-        exe_go = 1'b0;
-        mem_go = 1'b0;
-        wb_go = 1'b0;
+        if_de_ld = 1'b0;
+        de_exe_ld = 1'b0;
+        exe_mem_ld = 1'b0;
+        mem_wb_ld = 1'b0;
     end
     else begin
         /*
@@ -98,82 +93,161 @@ always_comb begin : go_ctrl
             val_x: .word 0x0000010 #0x010 = 16 
 
             ------------------------------------------------------------------------------------
-            cyc   |   ld_1   |   ld_2   |   de   |   exe   |   mem   |   wb   ||    rdy    |    go    |    event
-             0    |     x    |     x    |    x   |    x    |    x    |   x    ||  000000   |  100000  |  start
-             1    |    i1    |     x    |    x   |    x    |    x    |   x    ||  100000   |  110000  |  I_read_hit,
-             2    |    i2    |    i1    |    x   |    x    |    x    |   x    ||  110000   |  111000  |  I_read_hit, I_resp
-             3    |   nop    |    i2    |   i1   |    x    |    x    |   x    ||  111000   |  111100  |  I_read_hit, I_resp
-             4    |   nop    |   nop    |   i2   |   i1    |    x    |   x    ||  111100   |  111110  |  I_read_hit, I_resp
-             5    |    i3    |   nop    |  nop   |   i2    |   i1    |   x    ||  111110   |  111111  |  I_read_hit, I_resp
-             6    |   end    |    i3    |  nop   |  nop    |   i2    |  i1    ||  111101   |  000010  |  I_read_hit, I_resp, r1 = 17
-             7    |   end    |    i3    |  nop   |  nop    |   i2    |   x    ||  111110   |  111111  |  D_resp
-             8    |   nop    |   end    |   i3   |  nop    |  nop    |  i2    ||  111111   |  111111  |  chugga,     r2 = 16
-             9    |   nop    |   nop    |  end   |   i3    |  nop    | nop    ||  111111   |  111111  |  chugga     
-             10   |   nop    |   nop    |  nop   |  end    |   i3    | nop    ||  111111   |  111111  |  choo  
-             11   |   nop    |   nop    |  nop   |  nop    |  end    |  i3    ||  111111   |  111111  |  choo,       r3 = 33       
-             12   |   nop    |   nop    |  nop   |  nop    |  nop    | end    ||  111111   |  111111  |  end         
+            cyc   |   ld   |   de   |   exe   |   mem   |   wb   ||    rdy    |   valid   |    ld    |    event
+             0    |     x    |    x   |    x    |    x    |   x    ||  000000   |   000000  |  100000  |  start
+             1    |    i1    |    x   |    x    |    x    |   x    ||  100000   |   100000  |  110000  |  I_read_hit,
+             2    |    i2    |   i1   |    x    |    x    |   x    ||  110000   |   110000  |  111000  |  I_read_hit, I_resp
+             3    |   nop    |   i2   |   i1    |    x    |   x    ||  111000   |   111000  |  111100  |  I_read_hit, I_resp
+             4    |   nop    |  nop   |   i2    |   i1    |   x    ||  111100   |           |  111110  |  I_read_hit, I_resp
+             5    |    i3    |  nop   |  nop    |   i2    |  i1    ||  111110   |           |  111111  |  I_read_hit, I_resp
+             6    |   end    |  nop   |  nop    |   i2    |  i1    ||  111101   |           |  000010  |  I_read_hit, I_resp, r1 = 17
+             7    |   end    |  nop   |  nop    |   i2    |   x    ||  111110   |           |  111111  |  D_resp
+             8    |   nop    |   i3   |  nop    |  nop    |  i2    ||  111111   |           |  111111  |  chugga,     r2 = 16
+             9    |   nop    |  end   |   i3    |  nop    | nop    ||  111111   |           |  111111  |  chugga     
+             10   |   nop    |  nop   |  end    |   i3    | nop    ||  111111   |           |  111111  |  choo  
+             11   |   nop    |  nop   |  nop    |  end    |  i3    ||  111111   |           |  111111  |  choo,       r3 = 33       
+             12   |   nop    |  nop   |  nop    |  nop    | end    ||  111111   |           |  111111  |  end         
         */
 
-        //don't continue if_1 if rest of the pipeline needs to hold data constant until mem finishes, don't really care about status of rdy[0]
-        //if r/w D => continue only if if_2/de can continue
-        if((mem_read_D || mem_write_D) && /*(rdy[5:1] == 5'b11110)*/ (rdy[4:1] == 4'b1110)) 
-            if_1_go = 1'b0;
-        else
-            if_1_go = 1'b1;
+        if_de_ld = 1'b1;
+        de_exe_ld = 1'b1;
+        exe_mem_ld = 1'b1;
+        mem_wb_ld = 1'b1;
 
-        /*---cp2---*/
-        // if((rdy[5]) && !((mem_read_D || mem_write_D) && (rdy[4:1] == 4'b1110))) begin
-        //     if_2_go = 1'b1;
-        // end
-        // else begin
-        //     if_2_go = 1'b0;
-        // end
-
-        // start if cp1: if_1 ready --- cp2: if_2 ready
-        // if r/w D => continue only if exe can continue
-        if((rdy[4]) && !((mem_read_D || mem_write_D) && (rdy[3:1] == 3'b110))) begin
-            ld_pc = 1'b1;//might be in if_2 for cp2
-            de_go = 1'b1;
-        end
-        else begin
-            ld_pc = 1'b0;
-            de_go = 1'b0;
+        //              de                          exe                                         mem                                     wb
+        if(((rdy[3] = 0) && (vald[3] == 1)) || ((rdy[2] == 0) && (vald[2] == 1)) || ((rdy[1] == 0) && (vald[1] == 1)) || ((rdy[0] == 0) && (vald[0] == 1))) begin
+            if_de_ld = 1'b0;
         end
 
-        //start if de ready, if r/w D => continue only if mem ready continue
-        if((rdy[3]) && !((mem_read_D || mem_write_D) && (rdy[2:1] == 2'b10))) begin
-            exe_go = 1'b1;
-        end
-        else begin
-            exe_go = 1'b0;
+        //           exe                                         mem                                     wb
+        if(((rdy[2] == 0) && (vald[2] == 1)) || ((rdy[1] == 0) && (vald[1] == 1)) || ((rdy[0] == 0) && (vald[0] == 1))) begin
+            if_de_ld = 1'b0;
+            de_exe_ld = 1'b0;
         end
 
-        //start if exe ready, if r/w D => continue writing
-        if(((rdy[2]) || (mem_read_D || mem_write_D))) begin
-            mem_go = 1'b1;
+        //                 mem                                     wb
+        if(((rdy[1] == 0) && (vald[1] == 1)) || ((rdy[0] == 0) && (vald[0] == 1))) begin
+            if_de_ld = 1'b0;
+            de_exe_ld = 1'b0;
+            exe_mem_ld = 1'b0;
         end
-        else begin
-            mem_go = 1'b0;
+        
+        //                  wb
+        if(((rdy[0] == 0) && (vald[0] == 1))) begin
+            if_de_ld = 1'b0;
+            de_exe_ld = 1'b0;
+            exe_mem_ld = 1'b0;
+            mem_wb_ld = 1'b0;
         end
 
-        //start if mem ready
-        if((rdy[1])) begin //mem ready
-            wb_go = 1'b1;
-        end
-        else begin
-            wb_go = 1'b0;
-        end
-
-        // if(rdy[0]) begin //wb ready
-        //     //...nobody cares about you
-        // end
-        // else begin
-        //     //...and they never will
-        // end
-
-        //if()
     end
 end
+
+// /***************** USED BY RVFIMON --- ONLY MODIFY WHEN TOLD *****************/
+// logic trap;
+// logic [3:0] rmask, wmask;
+// /*****************************************************************************/
+
+branch_funct3_t branch_funct3;
+store_funct3_t store_funct3;
+load_funct3_t load_funct3;
+arith_funct3_t arith_funct3;
+
+assign arith_funct3 = arith_funct3_t'(funct3);
+assign branch_funct3 = branch_funct3_t'(funct3);
+assign load_funct3 = load_funct3_t'(funct3);
+assign store_funct3 = store_funct3_t'(funct3);;
+
+// always_comb
+// begin : trap_check
+//     trap = '0;
+//     rmask = '0;
+//     wmask = '0;
+//     mem_addr = mem_address;
+
+//     case (opcode)
+//         op_lui: begin
+            
+//         end
+        
+//         op_auipc: begin
+            
+//         end
+        
+//         op_imm: begin
+            
+//         end
+        
+//         op_reg: begin
+            
+//         end
+        
+//         op_jal: begin
+            
+//         end
+         
+//         op_jalr: begin
+            
+//         end
+
+//         op_br: begin
+//             case (branch_funct3)
+//                 beq: begin
+                    
+//                 end
+//                 bne: begin
+                    
+//                 end
+//                 blt: begin
+                    
+//                 end
+//                 bge: begin
+                    
+//                 end
+//                 bltu: begin
+                    
+//                 end
+//                 bgeu: begin
+                        
+//                 end
+//                 default: trap = '1;
+//             endcase
+//         end
+
+//         //!!! Send mar_in through this first before sending it to mar !!!
+//         op_load: begin
+//             case (load_funct3)
+//                 lw: rmask = 4'b1111;
+//                 lh, lhu: begin
+//                     rmask = (4'b0011) << (mem_address%4); /* Modify for MP1 Final */ //correct???
+//                     mem_addr = mem_address - (mem_address%4);
+//                 end
+//                 lb, lbu: begin
+//                     rmask = (4'b0001) << (mem_address%4); /* Modify for MP1 Final */ //correct???
+//                     mem_addr = mem_address - (mem_address%4);
+//                 end
+//                 default: trap = '1;
+//             endcase
+//         end
+
+//         op_store: begin
+//             case (store_funct3)
+//                 sw: wmask = 4'b1111;
+//                 sh: begin
+//                     wmask = (4'b0011) << (mem_address%4); /* Modify for MP1 Final */ //correct???
+//                     mem_addr = mem_address - (mem_address%4);
+//                 end
+//                 sb: begin
+//                     wmask = (4'b0001) << (mem_address%4); /* Modify for MP1 Final */ //correct???
+//                     mem_addr = mem_address - (mem_address%4);
+//                 end
+//                 default: trap = '1;
+//             endcase
+//         end
+
+//         default: trap = '1;
+//     endcase
+// end
 
 function void set_def();
     cw_cpu.opcode = 7'b0;
@@ -188,8 +262,8 @@ function void set_def();
     cw_exe.aluop = alu_ops::alu_add;
     cw_memory.mem_read_d = 1'b0;
     cw_memory.mem_write_d = 1'b0;
-    cw_memory.mem_byte_enable = 4'b0000;
     cw_memory.mar_sel = marmux_sel_t::pc_out;
+    cw_wb.ld_reg = 1'b0;
     cw_wb.regfilemux_sel = regfilemux_sel_t::alu_out;
 endfunction
 
@@ -209,6 +283,7 @@ always_comb begin : cpu_cw
                 //mem doesn't do anything here
 
                 //writeback
+                cw_wb.ld_reg = 1'b1;
                 cw_wb.regfilemux_sel = regfilemux::u_imm;
 
                 //fetch
@@ -225,6 +300,7 @@ always_comb begin : cpu_cw
                 //mem doesn't do anything here
 
                 //writeback
+                cw_wb.ld_reg = 1'b1;
                 cw_wb.regfilemux_sel = regfilemux::alu_out;
 
                 //fetch
@@ -240,6 +316,7 @@ always_comb begin : cpu_cw
                 //mem doesn't do anything here
 
                 //writeback
+                cw_wb.ld_reg = 1'b1;
                 cw_wb.regfilemux_sel = regfilemux::pc_plus4;
 
                 //fetch
@@ -255,6 +332,7 @@ always_comb begin : cpu_cw
                 //mem doesn't do anything here
 
                 //writeback
+                cw_wb.ld_reg = 1'b1;
                 cw_wb.regfilemux_sel = regfilemux::pc_plus4;
 
                 //fetch
@@ -305,9 +383,9 @@ always_comb begin : cpu_cw
 
                 //mem
                 cw_memory.mem_read_d = 1'b1;
-                cw_memory.mem_byte_enable = rmask;
 
-                //writeback    
+                //writeback
+                cw_wb.ld_reg = 1'b1;    
                 case (funct3)
                     3'b000: begin   //lb
                         cw_wb.regfilemux_sel = regfilemux::lb; //lb 
@@ -339,7 +417,6 @@ always_comb begin : cpu_cw
 
                 //mem
                 cw_memory.mem_write_d = 1'b1;
-                cw_memory.mem_byte_enable = wmask;
 
                 //writeback doesn't do anything here
 
@@ -348,6 +425,7 @@ always_comb begin : cpu_cw
             end
 
             op_imm: begin
+                cw_wb.ld_reg = 1'b1;
                 case(func3):
                     3'b000: begin
                         //exe
@@ -440,6 +518,7 @@ always_comb begin : cpu_cw
             end
 
             op_reg: begin
+                cw_wb.ld_reg = 1'b1;
                 case(func3):
                     3'b000: begin
                         //exe
