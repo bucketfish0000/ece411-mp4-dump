@@ -113,6 +113,9 @@ import cpuIO::*;
     output logic [31:0] mem_address_d, //to data cache
     output logic [31:0] mem_wdata_d, //to data cache
     output logic [3:0] mem_byte_enable //to data cache
+
+    output logic [3:0] rmask,
+    output logic [3:0] wmask
 );
     logic [31:0] fwd_r_EX, pc_x_r, u_imm_r;
     logic [3:0] mem_byte_enable_r
@@ -267,7 +270,10 @@ import cpuIO::*;
     //we have address(which is only available after exe computes it)
     logic [31:0] marmux_o, mem_addr;
     logic trap;
-    logic [3:0] rmask, wmask; 
+    logic [3:0] rmask_temp, wmask_temp; 
+
+    assign rmask = rmask_temp;
+    assign wmask = wmask_temp;
 
     always_comb begin : mem_mux
         unique case (ctrl_w_MEM_i.mar_sel)
@@ -285,22 +291,22 @@ import cpuIO::*;
     );
 
     always_comb begin : calc_addr
-        rmask = 4'b0000;
-        wmask = 4'b0000;
+        rmask_temp = 4'b0000;
+        wmask_temp = 4'b0000;
         mem_addr = marmux_o;
         trap = 1'b0;
 
         if(ctrl_w_MEM_i.mem_read_d) begin
             case (ctrl_w_MEM_i.load_funct3)
                 lw: begin
-                    rmask = 4'b1111;
+                    rmask_temp = 4'b1111;
                 end
                 lh, lhu: begin
-                    rmask = (4'b0011) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
+                    rmask_temp = (4'b0011) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
                     mem_addr = marmux_o - (marmux_o%4);
                 end
                 lb, lbu: begin
-                    rmask = (4'b0001) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
+                    rmask_temp = (4'b0001) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
                     mem_addr = marmux_o - (marmux_o%4);
                 end
                 default: trap = '1;
@@ -309,14 +315,14 @@ import cpuIO::*;
         else if(ctrl_w_MEM_i.mem_write_d) begin
             case (ctrl_w_MEM_i.store_funct3)
                 sw: begin
-                    wmask = 4'b1111;
+                    wmask_temp = 4'b1111;
                 end
                 sh: begin
-                    wmask = (4'b0011) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
+                    wmask_temp = (4'b0011) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
                     mem_addr = marmux_o - (marmux_o%4);
                 end
                 sb: begin
-                    wmask = (4'b0001) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
+                    wmask_temp = (4'b0001) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
                     mem_addr = marmux_o - (marmux_o%4);
                 end
                 default: trap = '1;
@@ -335,12 +341,12 @@ import cpuIO::*;
         end
         else if((exe_mem_ld == 1) && (de_exe_valid == 1) && ((ctrl_w_MEM_i.mem_read_d) || (ctrl_w_MEM_i.mem_write_d))) begin
             if(ctrl_w_MEM_i.mem_read_d) begin
-                mem_byte_enable <= rmask;
-                mem_byte_enable_r <= rmask;
+                mem_byte_enable <= rmask_temp;
+                mem_byte_enable_r <= rmask_temp;
             end
             else if(ctrl_w_MEM_i.mem_write_d) begin
-                mem_byte_enable <= wmask;
-                mem_byte_enable_r <= wmask;
+                mem_byte_enable <= wmask_temp;
+                mem_byte_enable_r <= wmask_temp;
             end
         end
         else begin
@@ -357,6 +363,7 @@ import cpuIO::*;
     );
 
 endmodule : exe_mem_reg
+
 
 
 module mem_wb_reg
