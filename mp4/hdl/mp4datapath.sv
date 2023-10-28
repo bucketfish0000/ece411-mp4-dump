@@ -21,8 +21,8 @@ module mp4datapath
     output logic if_rdy,
     output logic de_rdy,
     output logic exe_rdy,
-    input logic mem_rdy,
-    input logic wb_rdy,
+    output logic mem_rdy,
+    output logic wb_rdy,
 
     /*---valid signals---*/
     output logic if_valid,
@@ -30,12 +30,19 @@ module mp4datapath
     output logic exe_valid,
     output logic mem_valid,
     output logic wb_valid,
+
+    output logic mem_r_d,
+    output logic mem_w_d,
+    output rv32i_word mem_wdata_d,
+    output rv32i_word mem_address_d,
+    output logic [3:0] mem_byte_enable
 );
 
 rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb;
 logic fetch_ready,decode_ready, exec_ready, mem_ready, wb_ready, exe_mem_rdy, exe_mem_valid, mem_wb_rdy, mem_wb_valid, br_en_exe_o,
-br_en_exe_mem_o, br_en_mem_wb_o, mem_r_d, mem_w_d, mem_resp_d;
-logic [31:0] mem_fwd_data, exe_fwd_data, alu_out_exe, alu_out_mem_wb, rs2_out, rs1_data, rs2_data;
+br_en_exe_mem_o, br_en_mem_wb_o;
+logic [31:0] mem_fwd_data, exe_fwd_data, alu_out_exe, alu_out_mem_wb, rs2_out, rs1_data, rs2_data, mem_address_d, mem_wdata_d;
+logic [3:0] mem_byte_enable
 cw_execute cw_exe_from_de_exe;
 cw_mem cw_mem_from_de_exe, cw_mem_from_exe_mem;
 cw_writeback cw_wb_from_de_exe, cw_wb_from_exe_mem, cw_wb_from_mem_wb;
@@ -131,9 +138,9 @@ exe_mem_reg exe_mem_register(
     .exe_mem_rdy(exe_mem_rdy), //to MEM_WB pipeline reg
 
     //include these here bc they need to be loaded at same time as EXE_MEM
-    .mem_address_d(), //to data cache
-    .mem_wdata_d(), //to data cache
-    .mem_byte_enable() //to data cache
+    .mem_address_d(mem_address_d), //to data cache
+    .mem_wdata_d(mem_wdata_d), //to data cache
+    .mem_byte_enable(mem_byte_enable) //to data cache
 );
 
 //memory stage
