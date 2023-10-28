@@ -1,19 +1,12 @@
 /*ld and READY signals:
     ld(Output): 
-        -If high, the data you need is ready, do work then update the pipeline register associated w/ stage.
-        -If low, the data you need isn't ready, hold your output constant*(including rdy signal), don't load the pipeline register associated
-         w/ stage.
-    READY(Input):
-        -If you give me high that means that you've updated your pipeline register and are ready for more work.
-        -If you give me low that means your pipeline register hasn't been updated AND/OR you are still work on something.
-
-    *NOTE: Each pipeline register/stage using the ld signals should also account for the previous stage/pipeline register's ready signal
-           If the previous stage has the data ready, but the cpu is not telling you to proceed then this indicates you need to keep all 
-           outputs constant. This will usually only be the case when MEM stage is holding up pipeline, and requires constant input signals
-           to interface with D cache properly.
-
-    **NOTE: Use internal logic from the associated stage, previous stages ready signal, and cpu ld signal to decide when to signal you are 
-            ready/when to update the pipeline register.
+        -Always load unless one of the stages in front of you is stalling(valid == 1 and rdy == 0)
+    valid(Input):
+        -If high then register has been initialized after cold start(or flush)
+        -Otherwise value is unitialized
+    ready(Input):
+        -If high then stage has finished computation
+        -If low still computing so don't load the register before stage yet(stalling if valid is high)
 */
 module mp4control;
 import rv32i_types::*;
@@ -41,25 +34,24 @@ import cpuIO::*;
     //...anything else?
 
     /*---ready signals---*/
-    input logic if_1_rdy,
+    input logic if_rdy,
     input logic de_rdy,
     input logic exe_rdy,
     input logic mem_rdy,
     input logic wb_rdy,
 
     /*---valid signals---*/
-    input logic if_1_valid,
+    input logic if_valid,
     input logic de_valid,
     input logic exe_valid,
     input logic mem_valid,
     input logic wb_valid,
 
     /*---continue/load signals---*/
-    output logic if_1_ld,
-    output logic de_ld,
-    output logic exe_ld,
-    output logic mem_ld,
-    output logic wb_ld,
+    output logic if_de_ld,
+    output logic de_exe_ld,
+    output logic exe_mem_ld,
+    output logic mem_wb_ld
 
     /*---cpu_cw---*/
     output control_word cw_cpu, 
@@ -71,18 +63,17 @@ import cpuIO::*;
 logic [4:0] rdy;
 logic [4:0] vald;
 
-assign rdy = {if_1_rdy, de_rdy, exe_rdy, mem_rdy, wb_rdy};
-assign vald = {if_1_valid, de_valid, exe_valid, mem_valid, wb_valid};
+assign rdy = {if_rdy, de_rdy, exe_rdy, mem_rdy, wb_rdy};
+assign vald = {if_valid, de_valid, exe_valid, mem_valid, wb_valid};
 
 //how know when load pc? Gonna need testing to see for sure
 
 always_comb begin : ld_ctrl
     if(rst) begin
-        if_1_ld = 1'b0;
-        de_ld = 1'b0;
-        exe_ld = 1'b0;
-        mem_ld = 1'b0;
-        wb_ld = 1'b0;
+        if_de_ld = 1'b0;
+        de_exe_ld = 1'b0;
+        exe_mem_ld = 1'b0;
+        mem_wb_ld = 1'b0;
     end
     else begin
         /*
@@ -102,20 +93,20 @@ always_comb begin : ld_ctrl
             val_x: .word 0x0000010 #0x010 = 16 
 
             ------------------------------------------------------------------------------------
-            cyc   |   ld_1   |   ld_2   |   de   |   exe   |   mem   |   wb   ||    rdy    |    ld    |    event
-             0    |     x    |     x    |    x   |    x    |    x    |   x    ||  000000   |  100000  |  start
-             1    |    i1    |     x    |    x   |    x    |    x    |   x    ||  100000   |  110000  |  I_read_hit,
-             2    |    i2    |    i1    |    x   |    x    |    x    |   x    ||  110000   |  111000  |  I_read_hit, I_resp
-             3    |   nop    |    i2    |   i1   |    x    |    x    |   x    ||  111000   |  111100  |  I_read_hit, I_resp
-             4    |   nop    |   nop    |   i2   |   i1    |    x    |   x    ||  111100   |  111110  |  I_read_hit, I_resp
-             5    |    i3    |   nop    |  nop   |   i2    |   i1    |   x    ||  111110   |  111111  |  I_read_hit, I_resp
-             6    |   end    |    i3    |  nop   |  nop    |   i2    |  i1    ||  111101   |  000010  |  I_read_hit, I_resp, r1 = 17
-             7    |   end    |    i3    |  nop   |  nop    |   i2    |   x    ||  111110   |  111111  |  D_resp
-             8    |   nop    |   end    |   i3   |  nop    |  nop    |  i2    ||  111111   |  111111  |  chugga,     r2 = 16
-             9    |   nop    |   nop    |  end   |   i3    |  nop    | nop    ||  111111   |  111111  |  chugga     
-             10   |   nop    |   nop    |  nop   |  end    |   i3    | nop    ||  111111   |  111111  |  choo  
-             11   |   nop    |   nop    |  nop   |  nop    |  end    |  i3    ||  111111   |  111111  |  choo,       r3 = 33       
-             12   |   nop    |   nop    |  nop   |  nop    |  nop    | end    ||  111111   |  111111  |  end         
+            cyc   |   ld   |   de   |   exe   |   mem   |   wb   ||    rdy    |   valid   |    ld    |    event
+             0    |     x    |    x   |    x    |    x    |   x    ||  000000   |   000000  |  100000  |  start
+             1    |    i1    |    x   |    x    |    x    |   x    ||  100000   |   100000  |  110000  |  I_read_hit,
+             2    |    i2    |   i1   |    x    |    x    |   x    ||  110000   |   110000  |  111000  |  I_read_hit, I_resp
+             3    |   nop    |   i2   |   i1    |    x    |   x    ||  111000   |   111000  |  111100  |  I_read_hit, I_resp
+             4    |   nop    |  nop   |   i2    |   i1    |   x    ||  111100   |           |  111110  |  I_read_hit, I_resp
+             5    |    i3    |  nop   |  nop    |   i2    |  i1    ||  111110   |           |  111111  |  I_read_hit, I_resp
+             6    |   end    |  nop   |  nop    |   i2    |  i1    ||  111101   |           |  000010  |  I_read_hit, I_resp, r1 = 17
+             7    |   end    |  nop   |  nop    |   i2    |   x    ||  111110   |           |  111111  |  D_resp
+             8    |   nop    |   i3   |  nop    |  nop    |  i2    ||  111111   |           |  111111  |  chugga,     r2 = 16
+             9    |   nop    |  end   |   i3    |  nop    | nop    ||  111111   |           |  111111  |  chugga     
+             10   |   nop    |  nop   |  end    |   i3    | nop    ||  111111   |           |  111111  |  choo  
+             11   |   nop    |  nop   |  nop    |  end    |  i3    ||  111111   |           |  111111  |  choo,       r3 = 33       
+             12   |   nop    |  nop   |  nop    |  nop    | end    ||  111111   |           |  111111  |  end         
         */
 
         if_de_ld = 1'b1;
