@@ -37,12 +37,126 @@ import rv32i_types::*;
             logic   [31:0]  monitor_rd_wdata;
             logic   [31:0]  monitor_pc_rdata;
             logic   [31:0]  monitor_pc_wdata;
-            logic   [31:0]  monitor_mem_addr;
-            logic   [3:0]   monitor_mem_rmask;
-            logic   [3:0]   monitor_mem_wmask;
-            logic   [31:0]  monitor_mem_rdata;
-            logic   [31:0]  monitor_mem_wdata;
+            logic   [31:0]  monitor_mem_addr, mem_addr_d;
+            logic   [3:0]   monitor_mem_rmask, rmask;
+            logic   [3:0]   monitor_mem_wmask, wmask;
+            logic   [31:0]  monitor_mem_rdata, mem_rdata_d;
+            logic   [31:0]  monitor_mem_wdata, mem_wdata_d;
+            pcmux_sel_t pcmux_sel;
+            logic if_rdy, de_rdy, exe_rdy, mem_rdy, wb_rdy;
+            logic if_valid, de_valid, exe_valid, mem_valid, wb_valid;
+            logic if_de_ld, de_exe_ld, exe_mem_ld, mem_wb_ld;
+            logic mem_r_d, mem_w_d;
+            cw_cpu cpu_ctrl_word;
+            cw_execute exe_ctrl_word;
+            cw_mem mem_ctrl_word;
+            cw_writeback wb_ctrl_word;
 
+
+    mp4control control(
+        .clk(clk),
+        .rst(rst),
+
+        /*---if signals---*/
+        //...none?
+
+        /*---de signals---*/
+        .opcode(),
+        .func3(),
+        .func7(),
+        //anything else...?
+
+        /*---exe signals---*/
+        .br_en(),
+        //...anything else?
+
+        /*---mem_stage signals---*/
+        .mem_read_D(),
+        .mem_write_D(),
+        //...anything else?
+
+        /*---ready signals---*/
+        .if_rdy(if_rdy),
+        .de_rdy(de_rdy),
+        .exe_rdy(exe_rdy),
+        .mem_rdy(mem_rdy),
+        .wb_rdy(wb_rdy),
+
+        /*---valid signals---*/
+        .if_valid(if_valid),
+        .de_valid(de_valid),
+        .exe_valid(exe_valid),
+        .mem_valid(mem_valid),
+        .wb_valid(wb_valid),
+
+        /*---continue/load signals---*/
+        .if_de_ld(if_de_ld),
+        .de_exe_ld(de_exe_ld),
+        .exe_mem_ld(exe_mem_ld),
+        .mem_wb_ld(mem_wb_ld)
+
+        /*---cpu_cw---*/
+        .cw_cpu(cpu_ctrl_word), 
+        .cw_exe(exe_ctrl_word),
+        .cw_memory(mem_ctrl_word),
+        .cw_wb(wb_ctrl_word).
+
+        .pcmux_sel(pcmux_sel)
+    );
+
+    mp4datapath datapath(
+        .clk(clk),
+        .rst(rst),
+
+        .icache_resp(imem_resp),
+        .dcache_resp(dmem_resp),
+        .icache_out(imem_rdata),
+        .dcache_out(dmem_rdata),
+
+        .pcmux_sel(pcmux_sel),
+
+        .fet_dec_load(if_de_ld),
+        .dec_exe_load(de_exe_ld),
+        .exe_mem_load(exe_mem_ld),
+        .mem_wb_load(mem_wb_ld),
+
+        //to decode
+        .cw_cpu(cpu_ctrl_word), //kinda not using this 
+        .cw_exe(exe_ctrl_word),
+        .cw_memory(mem_ctrl_word),
+        .cw_wb(wb_ctrl_word),
+
+        .if_rdy(if_rdy),
+        .de_rdy(de_rdy),
+        .exe_rdy(exe_rdy),
+        .mem_rdy(mem_rdy),
+        .wb_rdy(wb_rdy),
+
+        /*---valid signals---*/
+        .if_valid(if_valid),
+        .de_valid(de_valid),
+        .exe_valid(exe_valid),
+        .mem_valid(mem_valid),
+        .wb_valid(wb_valid),
+
+        .mem_r_d(mem_r_d),
+        .mem_w_d(mem_w_d),
+        .mem_wdata_d(mem_wdata_d),
+        .mem_address_d(mem_addr_d),
+        .mem_byte_enable(),
+
+        .wmask(wmask),
+        .rmask(rmask)
+    );
+
+    
+    assign imem_address = ;
+    assign imem_read = ;
+    assign dmem_address = mem_addr_d;
+    assign dmem_read = mem_r_d;
+    assign dmem_write = mem_w_d;
+    assign dmem_wmask = wmask;
+    assign dmem_wdata = mem_wdata_d;
 
     // Fill this out
     // Only use hierarchical references here for verification
@@ -58,10 +172,10 @@ import rv32i_types::*;
     assign monitor_rd_wdata  = ;
     assign monitor_pc_rdata  = ;
     assign monitor_pc_wdata  = ;
-    assign monitor_mem_addr  = ;
-    assign monitor_mem_rmask = ;
-    assign monitor_mem_wmask = ;
-    assign monitor_mem_rdata = ;
-    assign monitor_mem_wdata = ;
+    assign monitor_mem_addr  = mem_addr_d;
+    assign monitor_mem_rmask = rmask;
+    assign monitor_mem_wmask = wmask;
+    assign monitor_mem_rdata = dmem_rdata;
+    assign monitor_mem_wdata = mem_wdata_d;
 
 endmodule : mp4
