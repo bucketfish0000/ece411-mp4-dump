@@ -24,6 +24,21 @@ module mp4datapath
     input cw_mem cw_memory,
     input cw_writeback cw_wb,
 
+    output rv32i_opcode opcode,
+    output logic [2:0] func3,
+    output logic [6:0] func7,
+
+    output rv32i_reg rs1_addr,
+    output rv32i_reg rs2_addr,
+    output rv32i_word rs1_rdata,
+    output rv32i_word rs2_rdata,
+    output rv32i_reg rd_addr,
+    output rv32i_word rd_wdata,
+    output rv32i_word pc_rdata,
+    output rv32i_word pc_wdata,
+
+    output logic br_en,
+
     output logic if_rdy,
     output logic de_rdy,
     output logic exe_rdy,
@@ -41,7 +56,10 @@ module mp4datapath
     output logic mem_w_d,
     output rv32i_word mem_wdata_d,
     output rv32i_word mem_address_d,
-    output logic [3:0] mem_byte_enable
+    output logic [3:0] mem_byte_enable,
+
+    output logic [3:0] rmask,
+    output logic [3:0] wmask
 );
 
 rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb;
@@ -90,10 +108,10 @@ decode_stage decode(
     .instruction(instr_decode),
     .rs1_data(rs1_data),
     .rs2_data(rs2_data),
-    .opcode(),
+    .opcode(opcode),
     .imm(),
-    .func3(),
-    .func7(),
+    .func3(func3),
+    .func7(func7),
     .ready(decode_ready)
 );
 
@@ -146,7 +164,10 @@ exe_mem_reg exe_mem_register(
     //include these here bc they need to be loaded at same time as EXE_MEM
     .mem_address_d(mem_address_d), //to data cache
     .mem_wdata_d(mem_wdata_d), //to data cache
-    .mem_byte_enable(mem_byte_enable) //to data cache
+    .mem_byte_enable(mem_byte_enable), //to data cache
+
+    .rmask(rmask),
+    .wmask(wmask)
 );
 
 //memory stage

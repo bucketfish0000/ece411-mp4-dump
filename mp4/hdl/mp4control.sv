@@ -21,8 +21,8 @@ import cpuIO::*;
 
     /*---de signals... none?---*/
     input rv32i_opcode opcode,
-    output logic[2:0] func3,
-    output logic[6:0] func7,
+    input logic[2:0] func3,
+    input logic[6:0] func7,
     //...anything else?
 
     /*---exe signals---*/
