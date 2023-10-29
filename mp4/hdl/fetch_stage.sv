@@ -14,17 +14,16 @@ module fetch_stage
     output rv32i_word instr_out,
     
     output logic ready;
+    output logic valid;
 );
-    logic load;
-    assign load = icache_resp;loadresp;
 
     rv32i_word pc_in,pc;
     assign pc_out = pc;
     assign instr_out = instr_in;
+    assign ready = icache_resp;
+    assign valid = icache_resp;
 
     register PC(.clk(clk),.rst(rst),.load(load_pc) .in(pc_in),.out(pc));
-
-    
 
     //pcmux
     always_comb begin
@@ -34,4 +33,5 @@ module fetch_stage
             pcmux_sel_t::alu_mod2: pc_in = {exec_fwd_date[31:1],1'b0};
         endcase
     end : pc_mux_logic
+
 endmodule : fetch_stage
