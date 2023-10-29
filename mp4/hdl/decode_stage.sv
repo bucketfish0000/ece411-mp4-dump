@@ -18,9 +18,12 @@ module decode_stage
     output logic[2:0] func3,
     output logic[6:0] func7,
     output rv32i_reg rd_out,
-    output logic ready
-)
-    
+
+    input logic ready_i,
+    input logic valid_i,
+    output logic ready_o,
+    output logic valid_o
+);
 /*
     output rv32i_reg rd,
     output rv32i_word i_imm,
@@ -33,6 +36,9 @@ module decode_stage
 */
     rv32i_reg rd,rs1,rs2;
     assign rd_out = rd;
+
+    assign ready_o = 1'b1;
+    assign valid_o = ready_i & valid_i;
 
     //decode logic 
     begin decode_logic
@@ -50,8 +56,6 @@ module decode_stage
         assign rs2 = instruction[24:20];
         assign rd = instruction[11:7];
     end decode_logic
-    ////
-    assign ready = 1'b1; //?????
 
     regfile regfile
     (.clk(clk),.rst(rst), .load(reg_load),
