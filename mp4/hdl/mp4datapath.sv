@@ -39,9 +39,18 @@ module mp4datapath
 );
 
 rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb;
-logic fetch_ready,decode_ready, exec_ready, mem_ready, wb_ready, exe_mem_rdy, exe_mem_valid, mem_wb_rdy, mem_wb_valid, br_en_exe_o,
-br_en_exe_mem_o, br_en_mem_wb_o;
-logic [31:0] mem_fwd_data, exe_fwd_data, alu_out_exe, alu_out_mem_wb, rs2_out, rs1_data, rs2_data, mem_address_d, mem_wdata_d;
+
+logic  br_en_exe_o, br_en_exe_mem_o, br_en_mem_wb_o;
+
+logic fetch_ready_i, decode_ready_i,exec_ready_i,mem_ready_i,wb_ready_i;
+logic fetch_valid_i, decode_valid_i,exec_valid_i,mem_valid_i,wb_valid_i;
+logic fetch_ready_o, decode_ready_o, exec_ready_o, mem_ready_o, wb_ready_o;
+logic fetch_valid_o, decode_valid_o, exec_valid_o, mem_valid_o, wb_valid_o;
+
+// logic f_d_ready,d_e_ready,e_m_ready,_m_w_ready;
+// logic f_d_valid,d_e_valid,e_m_valid,m_w_valid;
+
+logic [31:0] mem_fwd_data, exe_fwd_data, alu_out_exe, alu_out_mem_wb, rs2_out, rs1_data_decode, rs2_data_decode, mem_address_d, mem_wdata_d;
 logic [3:0] mem_byte_enable
 cw_execute cw_exe_from_de_exe;
 cw_mem cw_mem_from_de_exe, cw_mem_from_exe_mem;
@@ -56,44 +65,93 @@ rv32i_word instr_fetch;
 logic load_pc;
 
 fetch_stage fetch(
-    .clk(clk),.rst(rst),
+    .clk(clk),
+    .rst(rst),
     .icache_resp(icache_resp),
     .load_pc(load_pc)
     .pcmux_sel(pcmux_sel),
-    .exec_fwd_data(/*???*/),
+    .exec_fwd_data(/*???*/),                                                                       
     .instr_in(icache_out),
     .pc_out(pc_fetch),
     .instr_out(instr_fetch),
-    .ready(fetch_ready)
+    .ready(fetch_ready_o),
+    .valid(fetch_valid_o)
     );
 
 rv32i_word instr_decode;
-
 fet_dec_reg fet_dec_reg(
     .clk(clk),.rst(rst),
     .load(fet_dec_load),
+
+    .ready_i(fetch_ready_o),
+    .valid_i(fetch_valid_o),
+    .ready_o(decode_ready_i),
+    .valid_o(decode_valid_i),
+
     .instr_fetch(instr_fetch),
     .pc_fetch(pc_fetch),
     .instr_decode(instr_decode),
     .pc_decode(pc_decode)
 );
 
+imm imm_decode;
+rv32i_opcode opcode_decode;
+rv32i_word func3_deocde,func7_decode;
 decode_stage decode(
     .clk(clk),.rst(rst),
     .reg_load(),//???
     .rd_data(),//???
     .rd_sel(),//
     .instruction(instr_decode),
-    .rs1_data(rs1_data),
-    .rs2_data(rs2_data),
-    .opcode(),
-    .imm(),
-    .func3(),
-    .func7(),
-    .ready(decode_ready)
+    .rs1_data(rs1_data_decode),
+    .rs2_data(rs2_data_decode),
+    .opcode(opcode_decode),
+    .imm(imm_decode),
+    .func3(func3_decode),
+    .func7(func7_decode),
+    .ready_i(decode_ready_i),
+    .valid_i(decode_valid_i),
+    .ready_o(decode_ready_o),
+    .valid_o(decode_valid_o)
 );
 
 //de_exe_reg
+
+rv32i_word rs1_data_exec,rs2_data_exec;
+rv32i_opcode opcode_exec;
+imm imm_exec;
+rv32i_word func3_exec, func7_exec;
+
+dec_exe_reg dec_exe_reg(
+    .clk(clk),
+    .rst(rst),
+    .load(dec_exe_load),
+.
+    .opcode_in(opcode_decode),
+    .imm_in(imm_decode),
+    .func3_in(func3_decode),
+    .func7_in(func7_decode),
+    .rs1_data_in(rs1_data_decode),
+    .rs2_data_in(rs2_data_decode)
+    .ready_i(decode_ready_o),
+    .valid_i(decode_valid_o),
+    .rs1_data_in(rs1_data_decode),
+    .rs2_data_in(rs2_data_decode),
+
+    .opcode_out(opcode_exec),
+    .imm_out(imm_exec),
+    .func3_out(func3_exec),
+    .func7_out(func7_exec),
+    
+    .ready_decode,
+    .valid_decode,
+    .ready_exec,
+    .valid_exec,
+
+    .cw_in,
+    .cw_out
+);
+
 
 //exexute stage
 exe_stage execute(
