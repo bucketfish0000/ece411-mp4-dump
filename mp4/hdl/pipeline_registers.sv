@@ -5,6 +5,11 @@ module fet_dec_reg
     input logic rst,
     input logic load,
 
+    input logic ready_i,
+    input logic valid_i,
+    output logic ready_o,
+    output logic valid_o,
+
     input rv32i_word instr_fetch,
     input rv32i_word pc_fetch,
 
@@ -12,9 +17,34 @@ module fet_dec_reg
     output rv32i_word pc_decode
 );
 
-    register instr_fet_dec(.*,.in(instr_fetch),.out(instr_decode));
-    register pc_fet_dec(.*,in(pc_fetch),.out(pc_decode));
+    logic ready,valid;
+    logic[31:0] instr,pc;
 
+    always_ff @(posedge clk)
+    begin
+        if (rst)
+        begin
+            ready<='0;
+            valid<='0;
+            instr<=0;
+            pc<=0;
+        end
+        else if (load)
+        begin
+            ready<=ready_i;
+            valid<=valid_i;
+            instr<=instr_fetch;
+            pc<=pc_fetch;
+        end
+    end
+
+    always_comb
+    begin
+        ready_o=ready;
+        valid_o=valid;
+        instr_decode=instr;
+        pc_decode=pc;
+    end
 endmodule : fet_dec_reg
 
 module dec_exe_reg
@@ -29,11 +59,21 @@ module dec_exe_reg
     input imm imm_in,
     input logic [2:0] func3_in,
     input logic [6:0] func7_in,
-    
+    input rv32i_word rs1_data_in,
+    input rv32i_word rs2_data_in,
+
     output rv32i_opcode opcode_out,
     output imm imm_out,
     output logic [2:0] func3_out,
     output logic [6:0] func7_out,
+    output rv32i_word rs1_data_out,
+    output rv32i_word rs2_data_out,
+
+
+    input logic ready_i,
+    input logic valid_i,
+    output logic ready_o,
+    output logic valid_o,
 
     input control_word cw_in,
     output control_word cw_out
@@ -43,6 +83,9 @@ module dec_exe_reg
     imm imm_data;
     logic [2:0] func3_data;
     logic [6:0] func7_data;
+    rv32i_word rs1_data;
+    rv32i_word rs2_data;
+    logic ready,valid;
     control_word cw_data;
 
     always_ff (@posedge clk)
@@ -52,6 +95,10 @@ module dec_exe_reg
             imm_data<=0;
             func3_data<=0;
             func7_data<=0;
+            rs1_data<=0;
+            rs2_data<=0;
+            ready<=0;
+            valid<=0;
             cw_data<=0;
         end
         else if (load) begin
@@ -59,14 +106,11 @@ module dec_exe_reg
             imm_data<=imm_in;
             func3_data<=func3_in;
             func7_data<=func7_in;
+            rs1_data <= rs1_data_in;
+            rs2_data <= rs2_data_in;
+            ready<=ready_i;
+            valid<=valid_i;
             cw_data<=cw_in;
-        end
-        else begin
-            opcode_data<=opcode_data;
-            imm_data<=imm_data;
-            func3_data<=func3_data;
-            func7_data<=func7_data;
-            cw_data<=cw_data;
         end
     end 
 
@@ -76,6 +120,10 @@ module dec_exe_reg
         imm_out=imm_data;
         func3_out=func3_data;
         func7_out=func7_data;
+        rs1_data_out = rs1_data;
+        rs2_data_out = rs2_data;
+        ready_o = ready;
+        valid_o = valid;
         cw_out=cw_data;
     end
 
