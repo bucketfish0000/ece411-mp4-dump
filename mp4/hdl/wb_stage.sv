@@ -18,7 +18,7 @@ import rv32i_types::*;
     input logic br_en, 
     input rv32i_word ir_u_imm,  // make sure correct bit width? 
     input rv32i_word mem_data_out, 
-    input rv32i_word pc_x, 
+    input rv32i_word pc_wb, 
 
     output rv32i_word regfilemux_out
 );
@@ -27,8 +27,8 @@ always_comb begin : regfilemux_sel
         regfilemux::alu_out: regfilemux_out = alu_out;
         regfilemux::br_en:   regfilemux_out = {{31'h0000}, br_en}; 
         regfilemux::u_imm:   regfilemux_out = ir_u_imm;         
-        regfilemux::lw:      regfilemux_out = mdrreg_out;
-        regfilemux::pc_plus4: regfilemux_out = pc_x + 4; 
+        regfilemux::lw:      regfilemux_out = mem_data_out;
+        regfilemux::pc_plus4: regfilemux_out = pc_wb + 4; 
         regfilemux::lb: begin 
             
             regfilemux_out = 32'hdeadbeef; //wat is dis?
