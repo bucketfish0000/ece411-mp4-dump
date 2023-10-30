@@ -55,7 +55,7 @@ import cpuIO::*;
     output logic mem_wb_ld
 
     /*---cpu_cw---*/
-    output control_word cw_cpu, 
+    //output control_word cw_cpu, 
     output cw_execute cw_exe,
     output cw_mem cw_memory,
     output cw_writeback cw_wb,
@@ -253,9 +253,9 @@ assign store_funct3 = store_funct3_t'(funct3);;
 // end
 
 function void set_def();
-    cw_cpu.opcode = 7'b0;
-    cw_cpu.funct3 = 3'b0;
-    cw_cpu.funct7 = 7'b0;
+    // cw_cpu.opcode = 7'b0;
+    // cw_cpu.funct3 = 3'b0;
+    // cw_cpu.funct7 = 7'b0;
     cw_exe.cmp_sel = cmpmux::rs2_out;
     cw_exe.alumux1_sel = alumux::rs1_out;
     cw_exe.alumux2_sel = alumux::i_imm;
@@ -275,9 +275,9 @@ always_comb begin : cpu_cw
         set_def();
     end
     else if(rdy[4]) begin
-        cw_cpu.opcode = opcode;
-        cw_cpu.funct3 = func3;
-        cw_cpu.funct7 = func7;
+        // cw_cpu.opcode = opcode;
+        // cw_cpu.funct3 = func3;
+        // cw_cpu.funct7 = func7;
 
         unique case(opcode)
             op_lui: begin
