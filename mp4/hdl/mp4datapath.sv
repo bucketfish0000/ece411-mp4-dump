@@ -271,9 +271,9 @@ wb_stage writeback(
     .ctrl_w_WB(cw_wb_from_mem_wb),
     .alu_out(alu_out_mem_wb),
     .br_en(br_en_mem_wb_o), 
-    .ir_u_imm(),
-    .mem_data_out(),
-    .pc_x(pc_wb);
+    .ir_u_imm(u_imm_wb),
+    .mem_data_out(mem_fwd_data),
+    .pc_wb(pc_wb)
 );
 
 assign pc_rdata = pc_wb; 
