@@ -12,6 +12,7 @@ import cpuIO::*;
     input logic [31:0] mem_fwd_data,
     input logic [31:0] exe_fwd_data,
     input imm imm_in,
+    
     output logic [31:0] rs2_out,
     output logic [31:0] alu_out,
     output logic br_en,
@@ -74,7 +75,7 @@ import cpuIO::*;
         endcase
 
         unique case (ctrl_w_EXE.alumux1_sel)
-            alumux::rs1_out: alumux1_o = rs1_out;
+            alumux::rs1_out: alumux1_o = rs1_o;
             alumux::pc_out: alumux1_o = pc_x;
         endcase
 
