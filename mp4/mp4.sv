@@ -42,11 +42,13 @@ import rv32i_types::*;
             logic   [3:0]   monitor_mem_wmask, wmask;
             logic   [31:0]  monitor_mem_rdata, mem_rdata_d;
             logic   [31:0]  monitor_mem_wdata, mem_wdata_d;
+            logic [31:0] mem_addr_i;
             pcmux_sel_t pcmux_sel;
             logic if_rdy, de_rdy, exe_rdy, mem_rdy, wb_rdy;
             logic if_valid, de_valid, exe_valid, mem_valid, wb_valid;
             logic if_de_ld, de_exe_ld, exe_mem_ld, mem_wb_ld;
             logic mem_r_d, mem_w_d;
+            logic mem_r_i,
             cw_cpu cpu_ctrl_word;
             cw_execute exe_ctrl_word;
             cw_mem mem_ctrl_word;
@@ -55,6 +57,15 @@ import rv32i_types::*;
             logic[2:0] func3;
             logic[6:0] func7;
             logic br_en;
+            logic mem_byte_enable;
+
+    assign imem_address = mem_addr_i;
+    assign imem_read = mem_r_i;
+    assign dmem_address = mem_addr_d;
+    assign dmem_read = mem_r_d;
+    assign dmem_write = mem_w_d;
+    assign dmem_wmask = mem_byte_enable;
+    assign dmem_wdata = mem_wdata_d;
 
 
     mp4control control(
@@ -162,20 +173,14 @@ import rv32i_types::*;
         .mem_w_d(mem_w_d),
         .mem_wdata_d(mem_wdata_d),
         .mem_address_d(mem_addr_d),
-        .mem_byte_enable(),
+        .mem_byte_enable(mem_byte_enable),
+
+        .mem_r_i(mem_r_i),
+        .mem_addr_i(mem_addr_i),
 
         .rmask(rmask),
         .wmask(wmask)
     );
-
-    
-    assign imem_address = ;
-    assign imem_read = ;
-    assign dmem_address = mem_addr_d;
-    assign dmem_read = mem_r_d;
-    assign dmem_write = mem_w_d;
-    assign dmem_wmask = wmask;
-    assign dmem_wdata = mem_wdata_d;
 
     // Fill this out
     // Only use hierarchical references here for verification
