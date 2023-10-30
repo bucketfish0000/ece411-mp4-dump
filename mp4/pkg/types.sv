@@ -7,9 +7,9 @@ package cpuIO;
     import rsmux::*;
 
     typedef struct {
-        rv32i_types::rv32i_opcode opcode;
-        logic [2:0] funct3;
-        logic [6:0] funct7;
+        cw_execute exe;
+        cw_mem mem;
+        cw_writeback wb;
     } control_word;
     
     typedef struct {
@@ -35,10 +35,21 @@ package cpuIO;
         regfilemux::regfilemux_sel_t regfilemux_sel;
     } cw_writeback;
 
+
     typedef struct {
+        logic[4:0] opcode;
+        logic [31:0] func3;
+        logic [31:0] func7;
+    } control_read;
 
-    } cpu_read;
+endpackage : cpuIO
 
-
-
-endpackage cpuIO
+package immdiates;
+typedef struct {
+    rv32i_word i_imm;
+    rv32i_word u_imm;
+    rv32i_word b_imm;
+    rv32i_word s_imm;
+    rv32i_word j_imm;
+} imm;
+endpackage : immdiates
