@@ -65,9 +65,9 @@ import rv32i_types::*;
         //...none?
 
         /*---de signals---*/
-        .opcode(opcode),
-        .func3(func3),
-        .func7(func7),
+        .opcode(control_read.opcode),
+        .func3(control_read.func3),
+        .func7(control_read.func7),
         //anything else...?
 
         /*---exe signals---*/
@@ -100,14 +100,19 @@ import rv32i_types::*;
         .mem_wb_ld(mem_wb_ld)
 
         /*---cpu_cw---*/
-        .cw_cpu(cpu_ctrl_word), 
+        //.cw_cpu(cpu_ctrl_word), 
         .cw_exe(exe_ctrl_word),
         .cw_memory(mem_ctrl_word),
         .cw_wb(wb_ctrl_word).
 
         .pcmux_sel(pcmux_sel)
     );
+    control_word cw_control;
+    assign cw_control.exe = exe_ctrl_word;
+    assign cw_control.mem = mem_ctrl_word;
+    assign cw_control.wb = wb_ctrl_word;
 
+    control_read control_read;
     mp4datapath datapath(
         .clk(clk),
         .rst(rst),
@@ -125,14 +130,9 @@ import rv32i_types::*;
         .mem_wb_load(mem_wb_ld),
 
         //to decode
-        .cw_cpu(cpu_ctrl_word), //kinda not using this 
-        .cw_exe(exe_ctrl_word),
-        .cw_memory(mem_ctrl_word),
-        .cw_wb(wb_ctrl_word),
+        .cw_dec(cw_control),
 
-        .opcode(opcode),
-        .func3(func3),
-        .func7(func7),
+        .cr(control_read),
 
         .rs1_addr(rs1_address),
         .rs2_addr(rs2_address),
