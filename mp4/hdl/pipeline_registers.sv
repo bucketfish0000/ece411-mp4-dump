@@ -136,36 +136,43 @@ import rv32i_types::*;
 import rv32i_mux_types::*;
 import cpuIO::*;
 (
-    input clk, //from datapath
-    input rst, //from datapath
-    input logic br_en_i, //from exe_stage
-    input logic exe_mem_ld, //from cpu_ctrl
+    input lopgic clk, //from datapath
+    input logic rst, //from datapath
+    //input logic load,
+
+    input logic br_en_i, 
+    input logic exe_mem_ld, 
     input logic exe_rdy,
     input logic de_exe_valid,
-    input logic [31:0] alu_out_i, //from exe_stage
-    input logic [31:0] exe_pc_x, //from DE_EXE pipeline reg
-    input logic [31:0] rs2_out_i, //from exe_stage
-    input logic [31:0] u_imm_i, //from DE_EXE pipeline reg
-    input cw_mem ctrl_w_MEM_i, //from DE_EXE pipeline reg
-    input cw_writeback ctrl_w_WB_i, //from DE_EXE pipeline reg
-    output cw_mem ctrl_w_MEM_o, //to mem_stage / MEM_WB pipeline reg
-    output cw_writeback ctrl_w_WB_o, //to MEM_WB pipeline reg
-    output logic [31:0] exe_fwd_data, //to exe_stage / mem_stage / MEM_WB pipeline reg
-    output logic [31:0] mem_pc_x, //to MEM_WB pipeline reg
-    output logic [31:0] u_imm_o, //to MEM_WB pipeline reg
-    output logic br_en_o, //to ctrl??? / MEM_WB pipeline reg
-    output logic exe_mem_valid, //to ctrl / MEM_WB pipeline reg
-    output logic exe_mem_rdy, //to MEM_WB pipeline reg
+    input logic [31:0] alu_out_i, 
+    input logic [31:0] exe_pc_x, 
+    input logic [31:0] rs2_out_i, 
+    input logic [31:0] u_imm_i, 
+ 
+    output logic [31:0] exe_fwd_data, 
+    output logic [31:0] mem_pc_x, 
+    output logic [31:0] u_imm_o, 
+    output logic br_en_o, 
+    output logic exe_mem_valid, 
+    output logic exe_mem_rdy, 
 
-    //include these here bc they need to be loaded at same time as EXE_MEM
+
     output logic [31:0] mem_address_d, //to data cache
     output logic [31:0] mem_wdata_d, //to data cache
     output logic [3:0] mem_byte_enable //to data cache
+
+    input logic ready_i,
+    input logic valid_i,
+    output logic ready_o,
+    output logic valid_o,
+
+    input control_word cw_in,
+    output control_word cw_out
+
 );
     logic [31:0] fwd_r_EX, pc_x_r, u_imm_r;
     logic [3:0] mem_byte_enable_r
-    cw_mem ctrl_w_mem_r;
-    cw_writeback ctrl_w_wb_r;
+    control_word cw_data;
     logic br_en_r, valid_r, ready_r;
 
     //serves as alu_out reg/fwding exe data reg for cp2 onward
@@ -199,56 +206,15 @@ import cpuIO::*;
     end
 
     //control word for MEM 
-    always_ff @ (posedge clk, posedge rst) begin : ctrl_w_MEM_register
-        if(rst)begin
-            ctrl_w_mem_r.mem_read_d <= 1'b0;
-            ctrl_w_mem_r.mem_write_d <= 1'b0;
-            ctrl_w_mem_r.load_funct3 <= load_funct3_t::lw;
-            ctrl_w_mem_r.store_funct3 <= store_funct3_t::sw;
-            ctrl_w_mem_r.mar_sel <= marmux::pc_out;
-
-            ctrl_w_MEM_o.mem_read_d <= 1'b0;
-            ctrl_w_MEM_o.mem_write_d <= 1'b0;
-            ctrl_w_MEM_o.load_funct3 <= load_funct3_t::lw;
-            ctrl_w_MEM_o.store_funct3 <= store_funct3_t::sw;
-            ctrl_w_MEM_o.mar_sel <= marmux::pc_out;
+    always_ff @(posedge clk, posedge rst) begin: control_word_reg
+        if (rst) begin
+            cw_data <= 0;
         end
-        else if(exe_mem_ld == 1) begin
-            ctrl_w_mem_r.mem_read_d <= ctrl_w_MEM_i.mem_read_d;
-            ctrl_w_mem_r.mem_write_d <= ctrl_w_MEM_i.mem_write_d;
-            ctrl_w_mem_r.load_funct3 <= ctrl_w_MEM_i.load_funct3;
-            ctrl_w_mem_r.store_funct3 <= ctrl_w_MEM_i.store_funct3;
-            ctrl_w_mem_r.mar_sel <= ctrl_w_MEM_i.mar_sel;
-            
-            ctrl_w_MEM_o.mem_read_d <= ctrl_w_MEM_i.mem_read_d;
-            ctrl_w_MEM_o.mem_write_d <= ctrl_w_MEM_i.mem_write_d;
-            ctrl_w_MEM_o.load_funct3 <= ctrl_w_MEM_i.load_funct3;
-            ctrl_w_MEM_o.store_funct3 <= ctrl_w_MEM_i.store_funct3;
-            ctrl_w_MEM_o.mar_sel <= ctrl_w_MEM_i.mar_sel;
+        else if ((exe_mem_ld == 1) && (de_exe_valid == 1)) begin
+            cw_data <= cw_in;
         end
-        else begin
-            ctrl_w_MEM_o.mem_read_d <= ctrl_w_mem_r.mem_read_d;
-            ctrl_w_MEM_o.mem_write_d <= ctrl_w_mem_r.mem_write_d;
-            ctrl_w_MEM_o.load_funct3 <= ctrl_w_mem_r.load_funct3;
-            ctrl_w_MEM_o.store_funct3 <= ctrl_w_mem_r.store_funct3;
-            ctrl_w_MEM_o.mar_sel <= ctrl_w_mem_r.mar_sel;
-        end
-    end
-
-    //control word for WB 
-    always_ff @ (posedge clk, posedge rst) begin : ctrl_w_MEM_register
-        if(rst)begin
-            ctrl_w_wb_r.regfilemux_sel <= regfilemux::alu_out;
-            ctrl_w_WB_o.regfilemux_sel <= regfilemux::alu_out;
-        end
-        else if((exe_mem_ld == 1) && (de_exe_valid == 1)) begin
-            ctrl_w_wb_r.regfilemux_sel <= ctrl_w_WB_i.regfilemux_sel;
-            ctrl_w_WB_o.regfilemux_sel <= ctrl_w_WB_i.regfilemux_sel;
-        end
-        else begin
-            ctrl_w_WB_o.regfilemux_sel <= ctrl_w_wb_r.regfilemux_sel;
-        end
-    end
+    end 
+    assign cw_out = cw_data;
 
     //br_en register
     always_ff @ (posedge clk, posedge rst) begin : br_en_register

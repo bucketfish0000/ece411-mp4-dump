@@ -71,5 +71,4 @@ typedef enum bit [2:0] {
     alu_and = 3'b111
 } alu_ops;
 
-
 endpackage : rv32i_types
