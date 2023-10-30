@@ -17,7 +17,7 @@ import rv32i_types::*;
     input rv32i_word alu_out,
     input logic br_en, 
     input rv32i_word ir_u_imm,  // make sure correct bit width? 
-    input rv32i_word mdrreg_out, 
+    input rv32i_word mem_data_out, 
     input rv32i_word pc_x, 
 
     output rv32i_word regfilemux_out
