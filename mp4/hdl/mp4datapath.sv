@@ -21,6 +21,17 @@ module mp4datapath
     input control_word cw_dec,
 
     output control_read cr,
+
+    output rv32i_reg rs1_addr,
+    output rv32i_reg rs2_addr,
+    output rv32i_word rs1_rdata,
+    output rv32i_word rs2_rdata,
+    output rv32i_reg rd_addr,
+    output rv32i_word rd_wdata,
+    output rv32i_word pc_rdata,
+    output rv32i_word pc_wdata,
+
+    output logic br_en,
     output logic if_rdy,
     output logic de_rdy,
     output logic exe_rdy,
@@ -44,7 +55,7 @@ module mp4datapath
 rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb;
 
 logic  br_en_exe_o, br_en_exe_mem_o, br_en_mem_wb_o;
-
+assign br_en = br_en_exe_o;
 logic fetch_ready_i, decode_ready_i,exec_ready_i,mem_ready_i,wb_ready_i;
 logic fetch_valid_i, decode_valid_i,exec_valid_i,mem_valid_i,wb_valid_i;
 logic fetch_ready_o, decode_ready_o, exec_ready_o, mem_ready_o, wb_ready_o;
@@ -67,6 +78,10 @@ assign cr.func7 = func7_decode;
 
 rv32i_word instr_fetch;
 logic load_pc;
+
+
+assign if_rdy = fetch_ready_o;
+assign if_valid = fetch_valid_o;
 
 fetch_stage fetch(
     .clk(clk),
@@ -107,6 +122,9 @@ decode_stage decode(
     .rd_data(),//???
     .rd_sel(),//
     .instruction(instr_decode),
+    .rs1_o(rs1_addr),
+    .rs2_o(rs2_addr),
+    .rs_o(rd_addr),
     .rs1_data(rs1_data_decode),
     .rs2_data(rs2_data_decode),
     .opcode(opcode_decode),
@@ -118,6 +136,15 @@ decode_stage decode(
     .ready_o(decode_ready_o),
     .valid_o(decode_valid_o)
 );
+assign de_rdy = decode_ready_o;
+assign de_valid = decode_valid_0;
+
+
+assign rs1_rdata = rs1_data_decode;
+assign rs2_rdata = rs2_data_decode;
+
+assign rd_wdata = ;
+
 
 rv32i_word rs1_data_exec,rs2_data_exec;
 rv32i_opcode opcode_exec;
@@ -213,7 +240,7 @@ mem_stage memory(
     .mem_rdy(mem_ready) //to ctrl / MEM_WB reg
 );
 
-rv32i_word u_imm_wb;
+rv32i_word pc_wb,u_imm_wb;
 //mem_wb_reg
 mem_wb_reg mem_wb_register(
     .clk(clk),
@@ -228,7 +255,7 @@ mem_wb_reg mem_wb_register(
     .exe_mem_valid(exe_mem_valid),
     .ctrl_w_WB_i(cw_wb_from_exe_mem),
     .ctrl_w_WB_o(cw_wb_from_mem_wb),
-    .wb_pc_x(pc_exec),
+    .wb_pc_x(pc_wb),
     .u_imm_o(u_imm_wb),
     .mem_rdata_D_o(mem_fwd_data), //aka mem_fwd_data
     .mem_wb_rdy(mem_wb_rdy),
@@ -245,5 +272,9 @@ wb_stage writeback(
     .alu_out(alu_out_mem_wb),
     .br_en(br_en_mem_wb_o), 
 );
+
+assign pc_rdata = pc_wb; 
+assign pc_wdata = pc_exec;
+
 
 endmodule : mp4datapath
