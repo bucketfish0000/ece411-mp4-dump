@@ -23,7 +23,8 @@ module fetch_stage
     assign ready = icache_resp;
     assign valid = icache_resp;
 
-    register PC(.clk(clk),.rst(rst),.load(load_pc) .in(pc_in),.out(pc));
+    register #(width=32,resetData = 32'h40000000)
+    PC(.clk(clk),.rst(rst),.load(load_pc) .in(pc_in), .out(pc));
 
     //pcmux
     always_comb begin
