@@ -11,15 +11,15 @@ import cpuIO::*;
     input logic [31:0] pc_x,
     input logic [31:0] mem_fwd_data,
     input logic [31:0] exe_fwd_data,
-    input [31:0] i_imm,
-    input [31:0] s_imm,
-    input [31:0] b_imm,
-    input [31:0] u_imm,
-    input [31:0] j_imm,
+    input imm imm_in,
     output logic [31:0] rs2_out,
     output logic [31:0] alu_out,
     output logic br_en,
-    output logic exe_rdy //to ctrl / EXE_MEM reg
+  
+    input logic ready_i,
+    input logic valid_i,
+    output logic ready_o,
+    output logic valid_o
 );
     logic [31:0] rs1_o, rs2_o, alumux1_o, alumux2_o, cmpmux_o;
     cmpmux_sel_t cmp_sel;
@@ -27,8 +27,21 @@ import cpuIO::*;
     alumux2_sel_t alumux2_sel;
     rs1_sel_t rs1_sel;
     rs2_sel_t rs2_sel;
-    
+    rv32i_word i_imm;
+    rv32i_word s_imm;
+    rv32i_word b_imm;
+    rv32i_word u_imm;
+    rv32i_word j_imm;
+
+    assign i_imm = imm_in.i_imm;
+    assign s_imm = imm_in.s_imm;
+    assign b_imm = imm_in.b_imm;
+    assign u_imm = imm_in.u_imm;
+    assign j_imm = imm_in.j_imm;
     assign rs2_out = rs2_o;
+
+    assign ready_o = 1'b1;
+    assign valid_o = ready_i & valid_i;
 
     //always_ff or always_comb??
     always_ff @(posedge clk, posedge rst) begin : exe_rdy_ctrl

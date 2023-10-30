@@ -18,6 +18,8 @@ module mp4datapath
     input logic exe_mem_load,
     input logic mem_wb_load,
 
+    input control_word cw_dec,
+
     output logic if_rdy,
     output logic de_rdy,
     output logic exe_rdy,
@@ -52,9 +54,6 @@ logic fetch_valid_o, decode_valid_o, exec_valid_o, mem_valid_o, wb_valid_o;
 
 logic [31:0] mem_fwd_data, exe_fwd_data, alu_out_exe, alu_out_mem_wb, rs2_out, rs1_data_decode, rs2_data_decode, mem_address_d, mem_wdata_d;
 logic [3:0] mem_byte_enable
-cw_execute cw_exe_from_de_exe;
-cw_mem cw_mem_from_de_exe, cw_mem_from_exe_mem;
-cw_writeback cw_wb_from_de_exe, cw_wb_from_exe_mem, cw_wb_from_mem_wb;
 
 assign exe_rdy = exec_ready;
 assign exe_valid = exe_mem_valid;
@@ -115,18 +114,16 @@ decode_stage decode(
     .valid_o(decode_valid_o)
 );
 
-//de_exe_reg
-
 rv32i_word rs1_data_exec,rs2_data_exec;
 rv32i_opcode opcode_exec;
 imm imm_exec;
 rv32i_word func3_exec, func7_exec;
-
+control_word cw_exec;
 dec_exe_reg dec_exe_reg(
     .clk(clk),
     .rst(rst),
     .load(dec_exe_load),
-.
+
     .opcode_in(opcode_decode),
     .imm_in(imm_decode),
     .func3_in(func3_decode),
@@ -135,43 +132,40 @@ dec_exe_reg dec_exe_reg(
     .rs2_data_in(rs2_data_decode)
     .ready_i(decode_ready_o),
     .valid_i(decode_valid_o),
-    .rs1_data_in(rs1_data_decode),
-    .rs2_data_in(rs2_data_decode),
 
     .opcode_out(opcode_exec),
     .imm_out(imm_exec),
     .func3_out(func3_exec),
     .func7_out(func7_exec),
-    
-    .ready_decode,
-    .valid_decode,
-    .ready_exec,
-    .valid_exec,
+    .rs1_data_out(rs1_data_exec),
+    .rs2_data_out(rs2_data_exec),
+    .ready_o(exec_ready_i),
+    .valid_o(exec_valid_i),
 
-    .cw_in,
-    .cw_out
+    .cw_in(cw_dec),
+    .cw_out(cw_exec)
 );
 
-
+logic execute_ready_i, execute_valid_i, execute_ready_o, execute_valid_o;
 //exexute stage
 exe_stage execute(
     .clk(clk), //ins
     .rst(rst),
-    .ctrl_w_EXE(cw_exe_from_de_exe),
+    .ctrl_w_EXE(cw_exec.),
     .rs1_data(rs1_data),
     .rs2_data(rs2_data),
     .pc_x(),
     .mem_fwd_data(mem_fwd_data),
     .exe_fwd_data(exe_fwd_data),
-    .i_imm(),
-    .s_imm(),
-    .b_imm(),
-    .u_imm(),
-    .j_imm(),
+    .imm_in(imm_exec),
     .rs2_out(rs2_out), //outs
     .alu_out(alu_out_exe),
     .br_en(br_en_exe_o),
-    .exe_rdy(exec_ready) //to ctrl / EXE_MEM reg
+
+    .ready_i(execute_ready_i),
+    .valid_i(execute_valid_i),
+    .ready_o(execute_ready_o),
+    .valid_o(execute_valid_o)
 );
 
 //exe_mem_reg
@@ -179,13 +173,14 @@ exe_mem_reg exe_mem_register(
     .clk(clk), //from datapath
     .rst(rst), //from datapath
     .br_en_i(br_en_exe_o), //from exe_stage
+   // .load(),
     .exe_mem_ld(exe_mem_load), //from cpu_ctrl
     .exe_rdy(exec_ready),
     .de_exe_valid(),
     .alu_out_i(alu_out_exe), //from exe_stage
     .exe_pc_x(), //from DE_EXE pipeline reg
     .rs2_out_i(rs2_out), //from exe_stage
-    .u_imm_i(), //from DE_EXE pipeline reg
+    .u_imm_i(imm_exec.u_imm), //from DE_EXE pipeline reg
     .ctrl_w_MEM_i(cw_mem_from_de_exe), //from DE_EXE pipeline reg
     .ctrl_w_WB_i(cw_wb_from_de_exe), //from DE_EXE pipeline reg
     .ctrl_w_MEM_o(cw_mem_from_exe_mem), //to mem_stage / MEM_WB pipeline reg
