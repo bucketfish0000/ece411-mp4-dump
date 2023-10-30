@@ -20,6 +20,7 @@ module mp4datapath
 
     input control_word cw_dec,
 
+    output control_read cr,
     output logic if_rdy,
     output logic de_rdy,
     output logic exe_rdy,
@@ -60,6 +61,10 @@ assign exe_valid = exe_mem_valid;
 assign mem_rdy = mem_ready;
 assign mem_valid = mem_wb_valid;
 
+assign cr.opcode = opcode_decode;
+assign cr.func3 = func3_decode;
+assign cr.func7 = func7_decode;
+
 rv32i_word instr_fetch;
 logic load_pc;
 
@@ -69,7 +74,7 @@ fetch_stage fetch(
     .icache_resp(icache_resp),
     .load_pc(load_pc)
     .pcmux_sel(pcmux_sel),
-    .exec_fwd_data(/*???*/),                                                                       
+    .exec_fwd_data(exe_fwd_data),                                                                       
     .instr_in(icache_out),
     .pc_out(pc_fetch),
     .instr_out(instr_fetch),
@@ -123,22 +128,19 @@ dec_exe_reg dec_exe_reg(
     .clk(clk),
     .rst(rst),
     .load(dec_exe_load),
-
-    .opcode_in(opcode_decode),
+    .pc_in(pc_decode),
     .imm_in(imm_decode),
-    .func3_in(func3_decode),
-    .func7_in(func7_decode),
     .rs1_data_in(rs1_data_decode),
-    .rs2_data_in(rs2_data_decode)
+    .rs2_data_in(rs2_data_decode),
+
     .ready_i(decode_ready_o),
     .valid_i(decode_valid_o),
 
-    .opcode_out(opcode_exec),
     .imm_out(imm_exec),
-    .func3_out(func3_exec),
-    .func7_out(func7_exec),
     .rs1_data_out(rs1_data_exec),
     .rs2_data_out(rs2_data_exec),
+    .pc_out(pc_exec),
+
     .ready_o(exec_ready_i),
     .valid_o(exec_valid_i),
 
@@ -151,10 +153,10 @@ logic execute_ready_i, execute_valid_i, execute_ready_o, execute_valid_o;
 exe_stage execute(
     .clk(clk), //ins
     .rst(rst),
-    .ctrl_w_EXE(cw_exec.),
+    .ctrl_w_EXE(cw_exec.cw_execute),
     .rs1_data(rs1_data),
     .rs2_data(rs2_data),
-    .pc_x(),
+    .pc_x(pc_exec),
     .mem_fwd_data(mem_fwd_data),
     .exe_fwd_data(exe_fwd_data),
     .imm_in(imm_exec),
@@ -168,6 +170,7 @@ exe_stage execute(
     .valid_o(execute_valid_o)
 );
 
+rv32i_word u_imm_exec;
 //exe_mem_reg
 exe_mem_reg exe_mem_register(
     .clk(clk), //from datapath
@@ -176,17 +179,17 @@ exe_mem_reg exe_mem_register(
    // .load(),
     .exe_mem_ld(exe_mem_load), //from cpu_ctrl
     .exe_rdy(exec_ready),
-    .de_exe_valid(),
+    .de_exe_valid(exec_valid_i),
     .alu_out_i(alu_out_exe), //from exe_stage
-    .exe_pc_x(), //from DE_EXE pipeline reg
+    .exe_pc_x(pc_exec), //from DE_EXE pipeline reg
     .rs2_out_i(rs2_out), //from exe_stage
     .u_imm_i(imm_exec.u_imm), //from DE_EXE pipeline reg
-    .ctrl_w_MEM_i(cw_mem_from_de_exe), //from DE_EXE pipeline reg
-    .ctrl_w_WB_i(cw_wb_from_de_exe), //from DE_EXE pipeline reg
+    .ctrl_w_MEM_i(cw_exec.mem), //from DE_EXE pipeline reg
+    .ctrl_w_WB_i(cw_exe.wb), //from DE_EXE pipeline reg
     .ctrl_w_MEM_o(cw_mem_from_exe_mem), //to mem_stage / MEM_WB pipeline reg
     .ctrl_w_WB_o(cw_wb_from_exe_mem), //to MEM_WB pipeline reg
     .exe_fwd_data(exe_fwd_data), //to exe_stage / mem_stage / MEM_WB pipeline reg
-    .mem_pc_x(), //to MEM_WB pipeline reg
+    .mem_pc_x(pc_exec), //to MEM_WB pipeline reg
     .u_imm_o(), //to MEM_WB pipeline reg
     .br_en_o(br_en_exe_mem_o), //to ctrl??? / MEM_WB pipeline reg
     .exe_mem_valid(exe_mem_valid), //to ctrl / MEM_WB pipeline reg
@@ -210,6 +213,7 @@ mem_stage memory(
     .mem_rdy(mem_ready) //to ctrl / MEM_WB reg
 );
 
+rv32i_word u_imm_wb;
 //mem_wb_reg
 mem_wb_reg mem_wb_register(
     .clk(clk),
@@ -218,14 +222,14 @@ mem_wb_reg mem_wb_register(
     .mem_rdy(mem_ready),
     .alu_out_i(exe_fwd_data), //aka exe_fwd_data
     .br_en_i(br_en_exe_mem_o),
-    .mem_pc_x(),
-    .u_imm_i(),
-    .mem_rdata_D_i(),
+    .mem_pc_x(pc_exec),
+    .u_imm_i(u_imm_exec),
+    .mem_rdata_D_i(dcach_out),
     .exe_mem_valid(exe_mem_valid),
     .ctrl_w_WB_i(cw_wb_from_exe_mem),
     .ctrl_w_WB_o(cw_wb_from_mem_wb),
-    .wb_pc_x(),
-    .u_imm_o(),
+    .wb_pc_x(pc_exec),
+    .u_imm_o(u_imm_wb),
     .mem_rdata_D_o(mem_fwd_data), //aka mem_fwd_data
     .mem_wb_rdy(mem_wb_rdy),
     .mem_wb_valid(mem_wb_valid),
