@@ -55,7 +55,7 @@ import rv32i_types::*;
             logic[2:0] func3;
             logic[6:0] func7;
             logic br_en;
-
+            logic [3:0] mem_byte_enable; 
 
     mp4control control(
         .clk(clk),
@@ -162,7 +162,7 @@ import rv32i_types::*;
         .mem_w_d(mem_w_d),
         .mem_wdata_d(mem_wdata_d),
         .mem_address_d(mem_addr_d),
-        .mem_byte_enable(),
+        .mem_byte_enable(mem_byte_enable),
 
         .rmask(rmask),
         .wmask(wmask)
