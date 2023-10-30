@@ -18,6 +18,8 @@ module mp4datapath
     input logic exe_mem_load,
     input logic mem_wb_load,
 
+    input control_word cw_dec,
+
     output logic if_rdy,
     output logic de_rdy,
     output logic exe_rdy,
@@ -35,10 +37,7 @@ module mp4datapath
     output logic mem_w_d,
     output rv32i_word mem_wdata_d,
     output rv32i_word mem_address_d,
-    output logic [3:0] mem_byte_enable,
-
-    output logic [3:0] rmask,
-    output logic [3:0] wmask
+    output logic [3:0] mem_byte_enable
 );
 
 rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb;
@@ -103,17 +102,51 @@ decode_stage decode(
     .rd_data(),//???
     .rd_sel(),//
     .instruction(instr_decode),
-    .rs1_data(rs1_data),
-    .rs2_data(rs2_data),
-    .opcode(),
-    .imm(),
-    .func3(),
-    .func7(),
-    .ready(decode_ready)
+    .rs1_data(rs1_data_decode),
+    .rs2_data(rs2_data_decode),
+    .opcode(opcode_decode),
+    .imm(imm_decode),
+    .func3(func3_decode),
+    .func7(func7_decode),
+    .ready_i(decode_ready_i),
+    .valid_i(decode_valid_i),
+    .ready_o(decode_ready_o),
+    .valid_o(decode_valid_o)
 );
 
-//de_exe_reg
+rv32i_word rs1_data_exec,rs2_data_exec;
+rv32i_opcode opcode_exec;
+imm imm_exec;
+rv32i_word func3_exec, func7_exec;
+control_word cw_exec;
+dec_exe_reg dec_exe_reg(
+    .clk(clk),
+    .rst(rst),
+    .load(dec_exe_load),
 
+    .opcode_in(opcode_decode),
+    .imm_in(imm_decode),
+    .func3_in(func3_decode),
+    .func7_in(func7_decode),
+    .rs1_data_in(rs1_data_decode),
+    .rs2_data_in(rs2_data_decode)
+    .ready_i(decode_ready_o),
+    .valid_i(decode_valid_o),
+
+    .opcode_out(opcode_exec),
+    .imm_out(imm_exec),
+    .func3_out(func3_exec),
+    .func7_out(func7_exec),
+    .rs1_data_out(rs1_data_exec),
+    .rs2_data_out(rs2_data_exec),
+    .ready_o(exec_ready_i),
+    .valid_o(exec_valid_i),
+
+    .cw_in(cw_dec),
+    .cw_out(cw_exec)
+);
+
+logic execute_ready_i, execute_valid_i, execute_ready_o, execute_valid_o;
 //exexute stage
 exe_stage execute(
     .clk(clk), //ins
@@ -162,10 +195,7 @@ exe_mem_reg exe_mem_register(
     //include these here bc they need to be loaded at same time as EXE_MEM
     .mem_address_d(mem_address_d), //to data cache
     .mem_wdata_d(mem_wdata_d), //to data cache
-    .mem_byte_enable(mem_byte_enable), //to data cache
-
-    .rmask(rmask),
-    .wmask(wmask)
+    .mem_byte_enable(mem_byte_enable) //to data cache
 );
 
 //memory stage
@@ -213,4 +243,3 @@ wb_stage writeback(
 );
 
 endmodule : mp4datapath
-
