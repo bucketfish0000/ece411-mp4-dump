@@ -44,7 +44,7 @@ package cpuIO;
 
 endpackage : cpuIO
 
-package immdiates;
+package immediates;
 typedef struct {
     rv32i_word i_imm;
     rv32i_word u_imm;
@@ -52,4 +52,4 @@ typedef struct {
     rv32i_word s_imm;
     rv32i_word j_imm;
 } imm;
-endpackage : immdiates
+endpackage : immediates
