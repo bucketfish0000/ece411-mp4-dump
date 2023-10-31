@@ -71,7 +71,10 @@ module dec_exe_reg
     output logic valid_o,
 
     input control_word cw_in,
-    output control_word cw_out
+    output control_word cw_out,
+
+    input opcode_in, 
+    output opcode_data
 );
 
     immediates::imm imm_data;
@@ -120,8 +123,18 @@ endmodule : dec_exe_reg
 //substantially more complicated than other registers on account of needing to prime mar/mdo/mem_data_out for mem_stage to then be able to 
 //start r/w right away
 module exe_mem_reg
-import rv32i_types::*;
-import rv32i_mux_types::*;
+// Mux types are in their own packages to prevent identiier collisions
+// e.g. pcmux::pc_plus4 and regfilemux::pc_plus4 are seperate identifiers
+// for seperate enumerated types, you cannot //import rv32i_mux_types::*;
+import pcmux::*;
+import marmux::*;
+import cmpmux::*;
+import alumux::*;
+import regfilemux::*;
+import rs1mux::*;
+import rs2mux::*;
+
+import rv32i_types::*
 import cpuIO::*;
 (
     input logic clk, //from datapath
