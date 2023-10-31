@@ -52,7 +52,7 @@ import cpuIO::*;
     output logic if_de_ld,
     output logic de_exe_ld,
     output logic exe_mem_ld,
-    output logic mem_wb_ld
+    output logic mem_wb_ld,
 
     /*---cpu_cw---*/
     //output control_word cw_cpu, 
@@ -60,7 +60,7 @@ import cpuIO::*;
     output cw_mem cw_memory,
     output cw_writeback cw_wb,
 
-    output pcmux_sel_t pcmux_sel 
+    output pcmux::pcmux_sel_t pcmux_sel 
 );
 
 logic [4:0] rdy;
@@ -156,10 +156,10 @@ store_funct3_t store_funct3;
 load_funct3_t load_funct3;
 arith_funct3_t arith_funct3;
 
-assign arith_funct3 = arith_funct3_t'(funct3);
-assign branch_funct3 = branch_funct3_t'(funct3);
-assign load_funct3 = load_funct3_t'(funct3);
-assign store_funct3 = store_funct3_t'(funct3);;
+assign arith_funct3 = arith_funct3_t'(func3);
+assign branch_funct3 = branch_funct3_t'(func3);
+assign load_funct3 = load_funct3_t'(func3);
+assign store_funct3 = store_funct3_t'(func3);
 
 // always_comb
 // begin : trap_check
@@ -261,13 +261,13 @@ function void set_def();
     cw_exe.alumux2_sel = alumux::i_imm;
     cw_exe.rs1_sel = rs1mux::rs1_data;
     cw_exe.rs2_sel = rs2mux::rs2_data;
-    cw_exe.cmpop = branch_funct3_t::beq;
-    cw_exe.aluop = alu_ops::alu_add;
+    cw_exe.cmpop = beq;
+    cw_exe.aluop = alu_add;
     cw_memory.mem_read_d = 1'b0;
     cw_memory.mem_write_d = 1'b0;
-    cw_memory.mar_sel = marmux_sel_t::pc_out;
+    cw_memory.mar_sel = marmux::pc_out;
     cw_wb.ld_reg = 1'b0;
-    cw_wb.regfilemux_sel = regfilemux_sel_t::alu_out;
+    cw_wb.regfilemux_sel = regfilemux::alu_out;
 endfunction
 
 always_comb begin : cpu_cw
@@ -296,7 +296,7 @@ always_comb begin : cpu_cw
 
             op_auipc: begin
                 //exe
-                cw_exe.aluop = alu_ops::alu_add;
+                cw_exe.aluop = alu_add;
                 cw_exe.alumux1_sel = alumux::pc_out;
                 cw_exe.alumux2_sel = alumux::u_imm;
 
@@ -313,7 +313,7 @@ always_comb begin : cpu_cw
 
             op_jal: begin
                 //exe
-                cw_exe.aluop = alu_ops::alu_add;
+                cw_exe.aluop = alu_add;
                 cw_exe.alumux1_sel = alumux::pc_out;
                 cw_exe.alumux2_sel = alumux::j_imm;
 
@@ -329,7 +329,7 @@ always_comb begin : cpu_cw
 
             op_jalr: begin
                 //exe
-                cw_exe.aluop = alu_ops::alu_add;
+                cw_exe.aluop =  alu_add;
                 cw_exe.alumux1_sel = alumux::rs1_out;
                 cw_exe.alumux2_sel = alumux::i_imm;
 
@@ -347,23 +347,18 @@ always_comb begin : cpu_cw
                 //exe
                 cw_exe.cmp_sel = cmpmux::rs2_out;
                 unique case(func3)
-                    3'b000: cw_exe.cmpop = branch_funct3_t::beq;
-
-                    3'b001: cw_exe.cmpop = branch_funct3_t::bne;
-
-                    3'b100: cw_exe.cmpop = branch_funct3_t::blt;
-
-                    3'b101: cw_exe.cmpop = branch_funct3_t::bge;
-
-                    3'b110: cw_exe.cmpop = branch_funct3_t::bltu;
-
-                    3'b111: cw_exe.cmpop = branch_funct3_t::bgeu;
+                    3'b000: cw_exe.cmpop = beq;
+                    3'b001: cw_exe.cmpop = bne;
+                    3'b100: cw_exe.cmpop = blt;
+                    3'b101: cw_exe.cmpop = bge;
+                    3'b110: cw_exe.cmpop = bltu;
+                    3'b111: cw_exe.cmpop = bgeu;
 
                     default: ;
                 endcase
 
                 if(br_en) begin
-                    cw_exe.aluop = alu_ops::alu_add;
+                    cw_exe.aluop =  alu_add;
                     cw_exe.alumux1_sel = alumux::pc_out;
                     cw_exe.alumux2_sel = alumux::b_imm;
 
@@ -381,7 +376,7 @@ always_comb begin : cpu_cw
 
             op_load: begin
                 //exe
-                cw_exe.aluop = alu_ops::add;
+                cw_exe.aluop =  add;
                 cw_exe.alumux1_sel = alumux::rs1_out;
                 cw_exe.alumux2_sel = alumux::i_imm;
 
@@ -390,7 +385,7 @@ always_comb begin : cpu_cw
 
                 //writeback
                 cw_wb.ld_reg = 1'b1;    
-                case (funct3)
+                case (func3)
                     3'b000: begin   //lb
                         cw_wb.regfilemux_sel = regfilemux::lb; //lb 
                     end
@@ -415,7 +410,7 @@ always_comb begin : cpu_cw
 
             op_store: begin
                 //exe
-                cw_exe.aluop = alu_ops::add;
+                cw_exe.aluop =  add;
                 cw_exe.alumux1_sel = alumux::rs1_out;
                 cw_exe.alumux2_sel = alumux::s_imm;
 
@@ -430,10 +425,10 @@ always_comb begin : cpu_cw
 
             op_imm: begin
                 cw_wb.ld_reg = 1'b1;
-                case(func3):
+                case(func3)
                     3'b000: begin
                         //exe
-                        cw_exe.aluop = alu_ops::alu_add;
+                        cw_exe.aluop =  alu_add;
                         cw_exe.alumux1_sel = alumux::rs1_out;
                         cw_exe.alumux2_sel = alumux::i_imm;
                    
@@ -443,7 +438,7 @@ always_comb begin : cpu_cw
                      
                     3'b001: begin
                         //exe
-                        cw_exe.aluop = alu_ops::alu_sll;
+                        cw_exe.aluop =  alu_sll;
                         cw_exe.alumux1_sel = alumux::rs1_out;
                         cw_exe.alumux2_sel = alumux::i_imm;
 
@@ -453,7 +448,7 @@ always_comb begin : cpu_cw
 
                     3'b010: begin
                         //exe
-                        cw_exe.cmpop = branch_funct3_t::blt;
+                        cw_exe.cmpop = blt;
                         cw_exe.cmp_sel = cmpmux::i_imm;
 
                         //writeback
@@ -462,7 +457,7 @@ always_comb begin : cpu_cw
 
                     3'b011: begin
                         //exe
-                        cw_exe.cmpop = branch_funct3_t::bltu;
+                        cw_exe.cmpop = bltu;
                         cw_exe.cmp_sel = cmpmux::i_imm;
 
                         //writeback
@@ -471,7 +466,7 @@ always_comb begin : cpu_cw
 
                     3'b100: begin
                         //exe
-                        cw_exe.aluop = alu_ops::alu_xor;
+                        cw_exe.aluop =  alu_xor;
                         cw_exe.alumux1_sel = alumux::rs1_out;
                         cw_exe.alumux2_sel = alumux::i_imm;
 
@@ -482,10 +477,10 @@ always_comb begin : cpu_cw
                     3'b101: begin
                         //exe
                         if(func7[5]) begin
-                            cw_exe.aluop = alu_ops::alu_sra;
+                            cw_exe.aluop =  alu_sra;
                         end
                         else begin
-                            cw_exe.aluop = alu_ops::alu_srl;
+                            cw_exe.aluop =  alu_srl;
                         end
                         cw_exe.alumux1_sel = alumux::rs1_out;
                         cw_exe.alumux2_sel = alumux::i_imm;
@@ -496,7 +491,7 @@ always_comb begin : cpu_cw
 
                     3'b110: begin
                         //exe
-                        cw_exe.aluop = alu_ops::alu_or;
+                        cw_exe.aluop =  alu_or;
                         cw_exe.alumux1_sel = alumux::rs1_out;
                         cw_exe.alumux2_sel = alumux::i_imm;
 
@@ -506,7 +501,7 @@ always_comb begin : cpu_cw
                     
                     3'b111: begin
                         //exe
-                        cw_exe.aluop = alu_ops::alu_and;
+                        cw_exe.aluop =  alu_and;
                         cw_exe.alumux1_sel = alumux::rs1_out;
                         cw_exe.alumux2_sel = alumux::i_imm;
 
@@ -523,14 +518,14 @@ always_comb begin : cpu_cw
 
             op_reg: begin
                 cw_wb.ld_reg = 1'b1;
-                case(func3):
+                case(func3)
                     3'b000: begin
                         //exe
                         if(func7[5]) begin
-                            cw_exe.aluop = alu_ops::alu_sub;
+                            cw_exe.aluop =  alu_sub;
                         end
                         else begin
-                            cw_exe.aluop = alu_ops::alu_add;
+                            cw_exe.aluop =  alu_add;
                         end
                         cw_exe.alumux1_sel = alumux::rs1_out;
                         cw_exe.alumux2_sel = alumux::rs2_out;
@@ -539,9 +534,9 @@ always_comb begin : cpu_cw
                         cw_wb.regfilemux_sel = regfilemux::alu_out;
                     end
                     
-                    3'b001 begin
+                    3'b001: begin
                         //exe
-                        cw_exe.aluop = alu_ops::alu_sll;
+                        cw_exe.aluop =  alu_sll;
                         cw_exe.alumux1_sel = alumux::rs1_out;
                         cw_exe.alumux2_sel = alumux::rs2_out;
 
@@ -551,7 +546,7 @@ always_comb begin : cpu_cw
 
                     3'b010: begin
                         //exe
-                        cw_exe.cmpop = branch_funct3_t::blt;
+                        cw_exe.cmpop = blt;
                         cw_exe.cmp_sel = cmpmux::rs2_out;
 
                         //writeback
@@ -560,7 +555,7 @@ always_comb begin : cpu_cw
 
                     3'b011: begin
                         //exe
-                        cw_exe.cmpop = branch_funct3_t::bltu;
+                        cw_exe.cmpop = bltu;
                         cw_exe.cmp_sel = cmpmux::rs2_out;
 
                         //writeback
@@ -569,7 +564,7 @@ always_comb begin : cpu_cw
 
                     3'b100: begin
                         //exe
-                        cw_exe.aluop = alu_ops::alu_xor;
+                        cw_exe.aluop =  alu_xor;
                         cw_exe.alumux1_sel = alumux::rs1_out;
                         cw_exe.alumux2_sel = alumux::rs2_out;
 
@@ -580,10 +575,10 @@ always_comb begin : cpu_cw
                     3'b101: begin
                         //exe
                         if(func7[5]) begin
-                            cw_exe.aluop = alu_ops::alu_sra;
+                            cw_exe.aluop =  alu_sra;
                         end
                         else begin
-                            cw_exe.aluop = alu_ops::alu_srl;
+                            cw_exe.aluop =  alu_srl;
                         end
                         cw_exe.alumux1_sel = alumux::rs1_out;
                         cw_exe.alumux2_sel = alumux::rs2_out;
@@ -594,7 +589,7 @@ always_comb begin : cpu_cw
 
                     3'b110: begin
                         //exe
-                        cw_exe.aluop = alu_ops::alu_or;
+                        cw_exe.aluop =  alu_or;
                         cw_exe.alumux1_sel = alumux::rs1_out;
                         cw_exe.alumux2_sel = alumux::rs2_out;
 
@@ -604,7 +599,7 @@ always_comb begin : cpu_cw
 
                     3'b111: begin
                         //exe
-                        cw_exe.aluop = alu_ops::alu_and;
+                        cw_exe.aluop =  alu_and;
                         cw_exe.alumux1_sel = alumux::rs1_out;
                         cw_exe.alumux2_sel = alumux::rs2_out;
 

@@ -1,5 +1,5 @@
 module decode_stage
-    import rv32i_type::*;
+    import rv32i_types::*;
     import immediates::*;   
 (
     input logic clk,
@@ -16,8 +16,8 @@ module decode_stage
     output rv32i_word rs1_data,
     output rv32i_word rs2_data,
 
-    output rv32i_opcode opcode
-    output imm imm,
+    output rv32i_opcode opcode,
+    output immediates::imm imm_data,
     output logic[2:0] func3,
     output logic[6:0] func7,
 
@@ -44,21 +44,21 @@ module decode_stage
     assign valid_o = ready_i & valid_i;
 
     //decode logic 
-    begin decode_logic
+    //begin decode_logic
         assign funct3 = instruction[14:12];
         assign funct7 = instruction[31:25];
         assign opcode = rv32i_opcode'(instruction[6:0]);
         
-        assign imm.i_imm = {{21{instruction[31]}}, instruction[30:20]};
-        assign imm.s_imm = {{21{instruction[31]}}, instruction[30:25], instruction[11:7]};
-        assign imm.b_imm = {{20{instruction[31]}}, instruction[7], instruction[30:25], instruction[11:8], 1'b0};
-        assign imm.u_imm = {instruction[31:12], 12'h000};
-        assign imm.j_imm = {{12{instruction[31]}}, instruction[19:12], instruction[20], instruction[30:21], 1'b0};
+        assign imm_data.i_imm = {{21{instruction[31]}}, instruction[30:20]};
+        assign imm_data.s_imm = {{21{instruction[31]}}, instruction[30:25], instruction[11:7]};
+        assign imm_data.b_imm = {{20{instruction[31]}}, instruction[7], instruction[30:25], instruction[11:8], 1'b0};
+        assign imm_data.u_imm = {instruction[31:12], 12'h000};
+        assign imm_data.j_imm = {{12{instruction[31]}}, instruction[19:12], instruction[20], instruction[30:21], 1'b0};
     
         assign rs1 = instruction[19:15];
         assign rs2 = instruction[24:20];
         assign rd = instruction[11:7];
-    end decode_logic
+    //end decode_logic
 
     regfile regfile
     (.clk(clk),.rst(rst), .load(reg_load),

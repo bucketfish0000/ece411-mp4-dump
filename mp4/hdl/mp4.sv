@@ -1,5 +1,6 @@
 module mp4
 import rv32i_types::*;
+import cpuIO::*;
 (
     input   logic           clk,
     input   logic           rst,
@@ -42,12 +43,12 @@ import rv32i_types::*;
             logic   [3:0]   monitor_mem_wmask, wmask;
             logic   [31:0]  monitor_mem_rdata, mem_rdata_d;
             logic   [31:0]  monitor_mem_wdata, mem_wdata_d;
-            pcmux_sel_t pcmux_sel;
+            pcmux::pcmux_sel_t pcmux_sel;
             logic if_rdy, de_rdy, exe_rdy, mem_rdy, wb_rdy;
             logic if_valid, de_valid, exe_valid, mem_valid, wb_valid;
             logic if_de_ld, de_exe_ld, exe_mem_ld, mem_wb_ld;
             logic mem_r_d, mem_w_d;
-            cw_cpu cpu_ctrl_word;
+            //cw_cpu cpu_ctrl_word;
             cw_execute exe_ctrl_word;
             cw_mem mem_ctrl_word;
             cw_writeback wb_ctrl_word;
@@ -56,7 +57,7 @@ import rv32i_types::*;
             logic[6:0] func7;
             logic br_en;
             logic [3:0] mem_byte_enable; 
-
+    control_read ctrl_rd;
     mp4control control(
         .clk(clk),
         .rst(rst),
@@ -65,9 +66,9 @@ import rv32i_types::*;
         //...none?
 
         /*---de signals---*/
-        .opcode(control_read.opcode),
-        .func3(control_read.func3),
-        .func7(control_read.func7),
+        .opcode(ctrl_rd.opcode),
+        .func3(ctrl_rd.func3),
+        .func7(ctrl_rd.func7),
         //anything else...?
 
         /*---exe signals---*/
@@ -99,13 +100,13 @@ import rv32i_types::*;
         .if_de_ld(if_de_ld),
         .de_exe_ld(de_exe_ld),
         .exe_mem_ld(exe_mem_ld),
-        .mem_wb_ld(mem_wb_ld)
+        .mem_wb_ld(mem_wb_ld),
 
         /*---cpu_cw---*/
         //.cw_cpu(cpu_ctrl_word), 
         .cw_exe(exe_ctrl_word),
         .cw_memory(mem_ctrl_word),
-        .cw_wb(wb_ctrl_word).
+        .cw_wb(wb_ctrl_word),
 
         .pcmux_sel(pcmux_sel)
     );
@@ -114,7 +115,6 @@ import rv32i_types::*;
     assign cw_control.mem = mem_ctrl_word;
     assign cw_control.wb = wb_ctrl_word;
 
-    control_read control_read;
     mp4datapath datapath(
         .clk(clk),
         .rst(rst),
@@ -123,7 +123,7 @@ import rv32i_types::*;
         .dcache_resp(dmem_resp),
         .icache_out(imem_rdata),
         .dcache_out(dmem_rdata),
-
+        .imem_read(imem_read),
         .pcmux_sel(pcmux_sel),
 
         .fet_dec_load(if_de_ld),
@@ -133,8 +133,7 @@ import rv32i_types::*;
 
         //to decode
         .cw_dec(cw_control),
-
-        .cr(control_read),
+        .cr(ctrl_rd),
 
         .rs1_addr(rs1_address),
         .rs2_addr(rs2_address),
@@ -171,8 +170,8 @@ import rv32i_types::*;
     );
 
     
-    assign imem_address = ;
-    assign imem_read = ;
+    assign imem_address = pc_rdata;
+    //assign imem_read = imem_read;
     assign dmem_address = mem_addr_d;
     assign dmem_read = mem_r_d;
     assign dmem_write = mem_w_d;
@@ -182,8 +181,8 @@ import rv32i_types::*;
     // Fill this out
     // Only use hierarchical references here for verification
     // **DO NOT** use hierarchical references in the actual design!
-    assign monitor_valid     = ; //???
-    assign monitor_order     = ; //???
+    assign monitor_valid     = 1'b1; //???
+    assign monitor_order     = 0; //???
     assign monitor_inst      = imem_rdata; //???
     assign monitor_rs1_addr  = rs1_address;
     assign monitor_rs2_addr  = rs2_address;
