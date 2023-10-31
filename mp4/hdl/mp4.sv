@@ -78,6 +78,8 @@ import rv32i_types::*;
         .mem_read_D(mem_r_d),
         .mem_write_D(mem_w_d),
         //...anything else?
+        .rd_addr(rd_addr),
+
 
         /*---ready signals---*/
         .if_rdy(if_rdy),
