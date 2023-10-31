@@ -1,5 +1,6 @@
 module fet_dec_reg
     import rv32i_types::*;
+    import immediates::*; 
 (
     input logic clk,
     input logic rst,
@@ -54,13 +55,12 @@ module dec_exe_reg
     input logic clk,
     input logic rst,
     input logic load,
-.
-    input imm imm_in,
+    input immediates::imm imm_in,
     input rv32i_word rs1_data_in,
     input rv32i_word rs2_data_in,  
     input rv32i_word pc_in,
 
-    output imm imm_out,
+    output immediates::imm imm_out,
     output rv32i_word rs1_data_out,
     output rv32i_word rs2_data_out,
     output rv32i_word pc_out,
@@ -74,14 +74,14 @@ module dec_exe_reg
     output control_word cw_out
 );
 
-    imm imm_data;
+    immediates::imm imm_data;
     rv32i_word rs1_data;
     rv32i_word rs2_data;
     logic ready,valid;
     control_word cw_data;
     rv32i_word pc;
 
-    always_ff (@posedge clk)
+    always_ff @(posedge clk)
     begin
         if (rst) begin
             imm_data<=0;
@@ -119,12 +119,12 @@ endmodule : dec_exe_reg
 
 //substantially more complicated than other registers on account of needing to prime mar/mdo/mem_data_out for mem_stage to then be able to 
 //start r/w right away
-module exe_mem_reg;
+module exe_mem_reg
 import rv32i_types::*;
 import rv32i_mux_types::*;
 import cpuIO::*;
 (
-    input lopgic clk, //from datapath
+    input logic clk, //from datapath
     input logic rst, //from datapath
 
     input logic br_en_i, 
@@ -148,10 +148,10 @@ import cpuIO::*;
     output logic [31:0] mem_wdata_d, //to data cache
     output logic [3:0] mem_byte_enable //to data cache
 
-    input cw_mem ctrl_w_MEM_i(cw_exec.mem), //from DE_EXE pipeline reg
-    input cw_wb ctrl_w_WB_i(cw_exe.wb), //from DE_EXE pipeline reg
-    output cw_mem ctrl_w_MEM_o(cw_mem_from_exe_mem), //to mem_stage / MEM_WB pipeline reg
-    output cw_wb ctrl_w_WB_o(cw_wb_from_exe_mem),
+    input cpuIO::cw_mem ctrl_w_MEM_i(cw_exec.mem), //from DE_EXE pipeline reg
+    input cpuIO::cw_wb ctrl_w_WB_i(cw_exe.wb), //from DE_EXE pipeline reg
+    output cpuIO::cw_mem ctrl_w_MEM_o(cw_mem_from_exe_mem), //to mem_stage / MEM_WB pipeline reg
+    output cpuIO::cw_wb ctrl_w_WB_o(cw_wb_from_exe_mem),
 
     output logic [3:0] rmask,
     output logic [3:0] wmask

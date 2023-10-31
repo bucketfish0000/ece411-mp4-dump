@@ -12,7 +12,7 @@ module wb_stage
 import rv32i_types::*;
 (
     input clk, rst, 
-    input cw_writeback ctrl_w_WB; 
+    input cpuIO::cw_writeback ctrl_w_WB,
     
     input rv32i_word alu_out,
     input logic br_en, 

@@ -2,7 +2,16 @@
 //they get set at same time as exe_mem reg so that this can immediately begin
 module mem_stage;
 import rv32i_types::*;
-import rv32i_mux_types::*;
+// Mux types are in their own packages to prevent identiier collisions
+// e.g. pcmux::pc_plus4 and regfilemux::pc_plus4 are seperate identifiers
+// for seperate enumerated types, you cannot //import rv32i_mux_types::*;
+import pcmux::*;
+import marmux::*;
+import cmpmux::*;
+import alumux::*;
+import regfilemux::*;
+import rs1mux::*;
+import rs2mux::*;
 import cpuIO::*;
 (
     input clk, //from datapath
