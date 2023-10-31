@@ -376,7 +376,7 @@ always_comb begin : cpu_cw
 
             op_load: begin
                 //exe
-                cw_exe.aluop =  add;
+                cw_exe.aluop = alu_add;
                 cw_exe.alumux1_sel = alumux::rs1_out;
                 cw_exe.alumux2_sel = alumux::i_imm;
 
@@ -410,7 +410,7 @@ always_comb begin : cpu_cw
 
             op_store: begin
                 //exe
-                cw_exe.aluop =  add;
+                cw_exe.aluop =  alu_add;
                 cw_exe.alumux1_sel = alumux::rs1_out;
                 cw_exe.alumux2_sel = alumux::s_imm;
 

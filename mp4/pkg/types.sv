@@ -34,8 +34,8 @@ package cpuIO;
 
     typedef struct {
         logic[4:0] opcode;
-        logic [31:0] func3;
-        logic [31:0] func7;
+        logic [2:0] func3;
+        logic [6:0] func7;
     } control_read;
     
     typedef struct {
