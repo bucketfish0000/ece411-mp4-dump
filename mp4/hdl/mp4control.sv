@@ -8,9 +8,8 @@
         -If high then stage has finished computation
         -If low still computing so don't load the register before stage yet(stalling if valid is high)
 */
-module mp4control;
+module mp4control
 import rv32i_types::*;
-import rv32i_mux_types::*;
 import cpuIO::*;
 (
     input clk,
