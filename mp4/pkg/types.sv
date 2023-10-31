@@ -8,8 +8,8 @@ package cpuIO;
     // import rsmux::*;
   
     typedef struct {
-        rsmux::rs1_sel_t rs1_sel;
-        rsmux::rs2_sel_t rs2_sel;
+        rs1mux::rs1_sel_t rs1_sel;
+        rs2mux::rs2_sel_t rs2_sel;
         alumux::alumux1_sel_t alumux1_sel;
         alumux::alumux2_sel_t alumux2_sel;
         cmpmux::cmpmux_sel_t cmp_sel;
