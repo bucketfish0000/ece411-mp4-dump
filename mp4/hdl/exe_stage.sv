@@ -1,17 +1,25 @@
-module exe_stage;
+module exe_stage
 import rv32i_types::*;
-import rv32i_mux_types::*;
-import cpuIO::*;
+// Mux types are in their own packages to prevent identiier collisions
+// e.g. pcmux::pc_plus4 and regfilemux::pc_plus4 are seperate identifiers
+// for seperate enumerated types, you cannot //import rv32i_mux_types::*;
+import pcmux::*;
+import marmux::*;
+import cmpmux::*;
+import alumux::*;
+import regfilemux::*;
+import rs1mux::*;
+import rs2mux::*;
+import immediates::*;
 (
-    input clk,
-    input rst,
-    input cw_execute ctrl_w_EXE,
+    input clk, rst,
+    input cpuIO::cw_execute ctrl_w_EXE,
     input logic [31:0] rs1_data,
     input logic [31:0] rs2_data,
     input logic [31:0] pc_x,
     input logic [31:0] mem_fwd_data,
     input logic [31:0] exe_fwd_data,
-    input imm imm_in,
+    input immediates::imm imm_in,
     
     output logic [31:0] rs2_out,
     output logic [31:0] alu_out,
@@ -19,8 +27,10 @@ import cpuIO::*;
   
     input logic ready_i,
     input logic valid_i,
+    input logic de_exe_valid, de_exe_rdy,
     output logic ready_o,
-    output logic valid_o
+    output logic valid_o,
+    output logic exe_rdy
 );
     logic [31:0] rs1_o, rs2_o, alumux1_o, alumux2_o, cmpmux_o;
     cmpmux_sel_t cmp_sel;
