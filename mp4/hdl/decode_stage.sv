@@ -1,6 +1,6 @@
 module decode_stage
     import rv32i_type::*;
-    import immdiates::*;
+    import immediates::*;   
 (
     input logic clk,
     input logic rst,
