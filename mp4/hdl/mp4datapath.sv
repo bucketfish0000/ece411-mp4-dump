@@ -53,6 +53,8 @@ module mp4datapath
 );
 
 rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb;
+rv32i_word regfilemux_out;
+rv32i_reg rd_sel;
 
 logic  br_en_exe_o, br_en_exe_mem_o, br_en_mem_wb_o;
 assign br_en = br_en_exe_o;
@@ -60,17 +62,20 @@ logic fetch_ready_i, decode_ready_i,exec_ready_i,mem_ready_i,wb_ready_i;
 logic fetch_valid_i, decode_valid_i,exec_valid_i,mem_valid_i,wb_valid_i;
 logic fetch_ready_o, decode_ready_o, exec_ready_o, mem_ready_o, wb_ready_o;
 logic fetch_valid_o, decode_valid_o, exec_valid_o, mem_valid_o, wb_valid_o;
+logic load_reg_wb;
 
 // logic f_d_ready,d_e_ready,e_m_ready,_m_w_ready;
 // logic f_d_valid,d_e_valid,e_m_valid,m_w_valid;
 
 logic [31:0] mem_fwd_data, exe_fwd_data, alu_out_exe, alu_out_mem_wb, rs2_out, rs1_data_decode, rs2_data_decode;
 
-assign exe_rdy = exec_ready_i;
-assign exe_valid = exe_mem_valid;
-assign mem_rdy = mem_ready;
-assign mem_valid = mem_wb_valid;
+assign exe_rdy = exec_ready_o;
+assign exe_valid = exec_valid_o;
+assign mem_rdy = mem_ready_o;
+assign mem_valid = mem_valid_o;
 
+rv32i_opcode opcode_decode;
+rv32i_word func3_decode,func7_decode;
 assign cr.opcode = opcode_decode;
 assign cr.func3 = func3_decode;
 assign cr.func7 = func7_decode;
@@ -86,7 +91,7 @@ fetch_stage fetch(
     .clk(clk),
     .rst(rst),
     .icache_resp(icache_resp),
-    .load_pc(load_pc)
+    .load_pc(load_pc),
     .pcmux_sel(pcmux_sel),
     .exec_fwd_data(exe_fwd_data),                                                                       
     .instr_in(icache_out),
@@ -113,17 +118,16 @@ fet_dec_reg fet_dec_reg(
 );
 
 imm imm_decode;
-rv32i_opcode opcode_decode;
-rv32i_word func3_deocde,func7_decode;
+
 decode_stage decode(
     .clk(clk),.rst(rst),
-    .reg_load(),//???
-    .rd_data(),//???
-    .rd_sel(),//
+    .reg_load(load_reg_wb),//???
+    .rd_data(regfilemux_out),//???
+    .rd_sel(rd_sel),//
     .instruction(instr_decode),
     .rs1_o(rs1_addr),
     .rs2_o(rs2_addr),
-    .rs_o(rd_addr),
+    .rd_o(rd_addr),
     .rs1_data(rs1_data_decode),
     .rs2_data(rs2_data_decode),
     .opcode(opcode_decode),
@@ -136,14 +140,13 @@ decode_stage decode(
     .valid_o(decode_valid_o)
 );
 assign de_rdy = decode_ready_o;
-assign de_valid = decode_valid_0;
+assign de_valid = decode_valid_o;
 
 
 assign rs1_rdata = rs1_data_decode;
 assign rs2_rdata = rs2_data_decode;
 
-assign rd_wdata = ;
-
+assign rd_wdata = regfilemux_out;
 
 rv32i_word rs1_data_exec,rs2_data_exec;
 rv32i_opcode opcode_exec;
@@ -272,7 +275,10 @@ wb_stage writeback(
     .br_en(br_en_mem_wb_o), 
     .ir_u_imm(u_imm_wb),
     .mem_data_out(mem_fwd_data),
-    .pc_wb(pc_wb)
+    .pc_wb(pc_wb),
+    .regfilemux_out(regfilemux_out),
+    .load_reg(load_reg_wb),
+    .rd_sel(rd_sel)
 );
 
 assign pc_rdata = pc_wb; 

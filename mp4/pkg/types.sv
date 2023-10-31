@@ -28,6 +28,7 @@ package cpuIO;
     typedef struct {
         logic ld_reg;
         regfilemux::regfilemux_sel_t regfilemux_sel;
+        logic rd_sel;
     } cw_writeback;
 
 

@@ -40,6 +40,7 @@ import cpuIO::*;
     input logic exe_rdy,
     input logic mem_rdy,
     input logic wb_rdy,
+    input rv32i_reg rd_addr,
 
     /*---valid signals---*/
     input logic if_valid,
@@ -304,6 +305,7 @@ always_comb begin : cpu_cw
 
                 //writeback
                 cw_wb.ld_reg = 1'b1;
+                cw_wb.rd_sel = rd_addr;
                 cw_wb.regfilemux_sel = regfilemux::alu_out;
 
                 //fetch
