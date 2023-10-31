@@ -25,8 +25,8 @@ import rv32i_types::*;
     output logic rd_sel
 );
 
-assign load_reg = cw_wb_from_mem_wb.ld_reg;
-assign rd_sel =  cw_wb_from_mem_wb.rd_sel;
+assign load_reg = ctrl_w_WB.ld_reg;
+assign rd_sel =  ctrl_w_WB.rd_sel;
 always_comb begin : regfilemux_sel
     unique case (ctrl_w_WB.regfilemux_sel)
         regfilemux::alu_out: regfilemux_out = alu_out;

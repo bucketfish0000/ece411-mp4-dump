@@ -75,7 +75,7 @@ module dec_exe_reg
     output control_word cw_out,
 
     input opcode_in, 
-    output opcode_data
+    output rv32i_opcode opcode_data
 );
 
     immediates::imm imm_data;
@@ -89,12 +89,16 @@ module dec_exe_reg
     always_ff @(posedge clk)
     begin
         if (rst) begin
-            imm_data<=0;
+            imm_data.i_imm <= 0;
+            imm_data.u_imm <= 0;
+            imm_data.b_imm <= 0;
+            imm_data.s_imm <= 0;
+            imm_data.j_imm <= 0;
             rs1_data<=0;
             rs2_data<=0;
             ready<=0;
             valid<=0;
-            cw_data<=0;
+            //cw_data<=;
             pc<=0;
         end
         else if (load) begin
@@ -166,6 +170,8 @@ import cpuIO::*;
     logic [31:0] fwd_r_EX, pc_x_r, u_imm_r;
     logic [3:0] mem_byte_enable_r;
     control_word cw_data;
+    cw_mem ctrl_w_mem_r;
+    cw_writeback ctrl_w_wb_r;
     logic br_en_r, valid_r, ready_r;
 
     //serves as alu_out reg/fwding exe data reg for cp2 onward
