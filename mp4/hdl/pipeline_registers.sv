@@ -126,15 +126,7 @@ module exe_mem_reg
 // Mux types are in their own packages to prevent identiier collisions
 // e.g. pcmux::pc_plus4 and regfilemux::pc_plus4 are seperate identifiers
 // for seperate enumerated types, you cannot //import rv32i_mux_types::*;
-import pcmux::*;
-import marmux::*;
-import cmpmux::*;
-import alumux::*;
-import regfilemux::*;
-import rs1mux::*;
-import rs2mux::*;
-
-import rv32i_types::*
+import rv32i_types::*;
 import cpuIO::*;
 (
     input logic clk, //from datapath
@@ -156,22 +148,21 @@ import cpuIO::*;
     output logic exe_mem_valid, 
     output logic exe_mem_rdy, 
 
-
     output logic [31:0] mem_address_d, //to data cache
     output logic [31:0] mem_wdata_d, //to data cache
-    output logic [3:0] mem_byte_enable //to data cache
+    output logic [3:0] mem_byte_enable, //to data cache
 
-    input cpuIO::cw_mem ctrl_w_MEM_i(cw_exec.mem), //from DE_EXE pipeline reg
-    input cpuIO::cw_wb ctrl_w_WB_i(cw_exe.wb), //from DE_EXE pipeline reg
-    output cpuIO::cw_mem ctrl_w_MEM_o(cw_mem_from_exe_mem), //to mem_stage / MEM_WB pipeline reg
-    output cpuIO::cw_wb ctrl_w_WB_o(cw_wb_from_exe_mem),
+    input cpuIO::cw_mem ctrl_w_MEM_i, //from DE_EXE pipeline reg
+    input cpuIO::cw_writeback ctrl_w_WB_i, //from DE_EXE pipeline reg
+    output cpuIO::cw_mem ctrl_w_MEM_o, //to mem_stage / MEM_WB pipeline reg
+    output cpuIO::cw_writeback ctrl_w_WB_o,
 
     output logic [3:0] rmask,
     output logic [3:0] wmask
 );
 
     logic [31:0] fwd_r_EX, pc_x_r, u_imm_r;
-    logic [3:0] mem_byte_enable_r
+    logic [3:0] mem_byte_enable_r;
     control_word cw_data;
     logic br_en_r, valid_r, ready_r;
 
@@ -210,14 +201,14 @@ import cpuIO::*;
         if(rst)begin
             ctrl_w_mem_r.mem_read_d <= 1'b0;
             ctrl_w_mem_r.mem_write_d <= 1'b0;
-            ctrl_w_mem_r.load_funct3 <= load_funct3_t::lw;
-            ctrl_w_mem_r.store_funct3 <= store_funct3_t::sw;
+            ctrl_w_mem_r.load_funct3 <= lw;
+            ctrl_w_mem_r.store_funct3 <= sw;
             ctrl_w_mem_r.mar_sel <= marmux::pc_out;
 
             ctrl_w_MEM_o.mem_read_d <= 1'b0;
             ctrl_w_MEM_o.mem_write_d <= 1'b0;
-            ctrl_w_MEM_o.load_funct3 <= load_funct3_t::lw;
-            ctrl_w_MEM_o.store_funct3 <= store_funct3_t::sw;
+            ctrl_w_MEM_o.load_funct3 <= lw;
+            ctrl_w_MEM_o.store_funct3 <= sw;
             ctrl_w_MEM_o.mar_sel <= marmux::pc_out;
         end
         else if(exe_mem_ld == 1) begin
@@ -243,7 +234,7 @@ import cpuIO::*;
     end
 
     //control word for WB 
-    always_ff @ (posedge clk, posedge rst) begin : ctrl_w_MEM_register
+    always_ff @ (posedge clk, posedge rst) begin : ctrl_w_WB_register
         if(rst)begin
             ctrl_w_wb_r.regfilemux_sel <= regfilemux::alu_out;
             ctrl_w_WB_o.regfilemux_sel <= regfilemux::alu_out;
@@ -330,7 +321,7 @@ import cpuIO::*;
     always_comb begin : mem_mux
         unique case (ctrl_w_MEM_i.mar_sel)
             marmux::pc_out: marmux_o = exe_pc_x;
-            marmux::alu_out: marmux_o = alu_out;
+            marmux::alu_out: marmux_o = alu_out_i;
         endcase
     end
 
