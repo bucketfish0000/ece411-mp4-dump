@@ -20,8 +20,13 @@ import rv32i_types::*;
     input rv32i_word mem_data_out, 
     input rv32i_word pc_wb, 
 
-    output rv32i_word regfilemux_out
+    output rv32i_word regfilemux_out,
+    output logic load_reg,
+    output logic rd_sel
 );
+
+assign load_reg = cw_wb_from_mem_wb.ld_reg;
+assign rd_sel =  cw_wb_from_mem_wb.rd_sel;
 always_comb begin : regfilemux_sel
     unique case (ctrl_w_WB.regfilemux_sel)
         regfilemux::alu_out: regfilemux_out = alu_out;

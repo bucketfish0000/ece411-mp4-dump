@@ -20,7 +20,6 @@ module decode_stage
     output imm imm,
     output logic[2:0] func3,
     output logic[6:0] func7,
-    output rv32i_reg rd_o,
 
     input logic ready_i,
     input logic valid_i,
