@@ -1,0 +1,5 @@
+        input: dcache_request, icache_request, dcache_resp, icache_resp
+state      0000   0001       10       11    
+WAIT       WAIT  D_CACHE   I_CACHE  I_CACHE
+D_CACHE  
+I_CACHE
