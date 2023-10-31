@@ -1,17 +1,12 @@
 package cpuIO;
-    import pcmux::*;
-    import marmux::*;
-    import cmpmux::*;
-    import alumux::*;
-    import regfilemux::*;
-    import rsmux::*;
-
-    typedef struct {
-        cw_execute exe;
-        cw_mem mem;
-        cw_writeback wb;
-    } control_word;
-    
+    import rv32i_types::*; 
+    // import pcmux::*;
+    // import marmux::*;
+    // import cmpmux::*;
+    // import alumux::*;
+    // import regfilemux::*;
+    // import rsmux::*;
+  
     typedef struct {
         rsmux::rs1_sel_t rs1_sel;
         rsmux::rs2_sel_t rs2_sel;
@@ -41,10 +36,16 @@ package cpuIO;
         logic [31:0] func3;
         logic [31:0] func7;
     } control_read;
-
+    
+    typedef struct {
+        cw_execute exe;
+        cw_mem mem;
+        cw_writeback wb;
+    } control_word;
 endpackage : cpuIO
 
 package immediates;
+import rv32i_types::*; 
 typedef struct {
     rv32i_word i_imm;
     rv32i_word u_imm;
