@@ -1,6 +1,6 @@
+module cmp
 import rv32i_types::*;
-
-module cmp(
+(
     input branch_funct3_t cmpop,
     input rv32i_word comp1,
     input rv32i_word comp2,
