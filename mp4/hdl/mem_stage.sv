@@ -1,6 +1,6 @@
 //handles interfacing with memory(using cache control signals r/w/resp), d cache input data(addr, wdata, byte_en) handled by exe_mem reg
 //they get set at same time as exe_mem reg so that this can immediately begin
-module mem_stage;
+module mem_stage
 import rv32i_types::*;
 // Mux types are in their own packages to prevent identiier collisions
 // e.g. pcmux::pc_plus4 and regfilemux::pc_plus4 are seperate identifiers

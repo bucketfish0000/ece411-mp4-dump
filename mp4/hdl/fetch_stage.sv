@@ -6,15 +6,16 @@ module fetch_stage
     input logic icache_resp,
     input logic load_pc,
 
-    input pcmux_sel_t pcmux_sel,
+    input pcmux::pcmux_sel_t pcmux_sel,
     input rv32i_word exec_fwd_data,
     input rv32i_word instr_in,
     
     output rv32i_word pc_out,
     output rv32i_word instr_out,
+    output logic imem_read,
     
-    output logic ready;
-    output logic valid;
+    output logic ready,
+    output logic valid
 );
 
     rv32i_word pc_in,pc;
@@ -22,16 +23,17 @@ module fetch_stage
     assign instr_out = instr_in;
     assign ready = icache_resp;
     assign valid = icache_resp;
+    assign imem_read = 1'b1;
 
-    register #(width=32,resetData = 32'h40000000)
-    PC(.clk(clk),.rst(rst),.load(load_pc) .in(pc_in), .out(pc));
+    register #(.width(32), .resetData(32'h40000000)) 
+        PC(.clk(clk),.rst(rst),.load(load_pc),.in(pc_in), .out(pc));
 
     //pcmux
-    always_comb begin
+    always_comb begin : pc_mux_logic
         unique case(pcmux_sel)
-            pcmux_sel_t::pc_plus4: pc_in = pc+4;
-            pcmux_sel_t::alu_out: pc_in = exec_fwd_data;
-            pcmux_sel_t::alu_mod2: pc_in = {exec_fwd_date[31:1],1'b0};
+            pcmux::pc_plus4: pc_in = pc+4;
+            pcmux::alu_out: pc_in = exec_fwd_data;
+            pcmux::alu_mod2: pc_in = {exec_fwd_data[31:1],1'b0};
         endcase
     end : pc_mux_logic
 
