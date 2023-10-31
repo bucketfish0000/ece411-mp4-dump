@@ -10,6 +10,7 @@ module mp4datapath
     input logic dcache_resp,
     input rv32i_word icache_out,
     input rv32i_word dcache_out,
+    output logic imem_read,
 
     input pcmux::pcmux_sel_t pcmux_sel,
 
@@ -49,7 +50,8 @@ module mp4datapath
     output logic mem_w_d,
     output rv32i_word mem_wdata_d,
     output rv32i_word mem_address_d,
-    output logic [3:0] mem_byte_enable
+    output logic [3:0] mem_byte_enable,
+    output logic [3:0] rmask, wmask
 );
 
 rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb;
@@ -98,7 +100,8 @@ fetch_stage fetch(
     .pc_out(pc_fetch),
     .instr_out(instr_fetch),
     .ready(fetch_ready_o),
-    .valid(fetch_valid_o)
+    .valid(fetch_valid_o),
+    .imem_read(imem_read)
     );
 
 rv32i_word instr_decode;
@@ -131,7 +134,7 @@ decode_stage decode(
     .rs1_data(rs1_data_decode),
     .rs2_data(rs2_data_decode),
     .opcode(opcode_decode),
-    .imm(imm_decode),
+    .imm_data(imm_decode),
     .func3(func3_decode),
     .func7(func7_decode),
     .ready_i(decode_ready_i),
@@ -219,7 +222,7 @@ exe_mem_reg exe_mem_register(
     .ctrl_w_WB_o(cw_wb_from_exe_mem), //to MEM_WB pipeline reg
     .exe_fwd_data(exe_fwd_data), //to exe_stage / mem_stage / MEM_WB pipeline reg
     .mem_pc_x(pc_exec), //to MEM_WB pipeline reg
-    .u_imm_o(), //to MEM_WB pipeline reg
+    .u_imm_o(u_imm_exec), //to MEM_WB pipeline reg
     .br_en_o(br_en_exe_mem_o), //to ctrl??? / MEM_WB pipeline reg
     .exe_mem_valid(exe_mem_valid), //to ctrl / MEM_WB pipeline reg
     .exe_mem_rdy(exe_mem_rdy), //to MEM_WB pipeline reg
@@ -227,7 +230,9 @@ exe_mem_reg exe_mem_register(
     //include these here bc they need to be loaded at same time as EXE_MEM
     .mem_address_d(mem_address_d), //to data cache
     .mem_wdata_d(mem_wdata_d), //to data cache
-    .mem_byte_enable(mem_byte_enable) //to data cache
+    .mem_byte_enable(mem_byte_enable), //to data cache
+    .rmask(rmask),
+    .wmask(wmask)
 );
 
 //memory stage
@@ -242,7 +247,7 @@ mem_stage memory(
     .mem_rdy(mem_ready) //to ctrl / MEM_WB reg
 );
 
-rv32i_word pc_wb,u_imm_wb;
+rv32i_word pc_wb, u_imm_wb;
 //mem_wb_reg
 mem_wb_reg mem_wb_register(
     .clk(clk),
