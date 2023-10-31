@@ -66,6 +66,10 @@ logic fetch_ready_o, decode_ready_o, exec_ready_o, mem_ready_o, wb_ready_o;
 logic fetch_valid_o, decode_valid_o, exec_valid_o, mem_valid_o, wb_valid_o;
 logic load_reg_wb;
 
+cw_execute cw_exe_from_de_exe;
+cw_mem cw_mem_from_de_exe, cw_mem_from_exe_mem;
+cw_writeback cw_wb_from_de_exe, cw_wb_from_exe_mem, cw_wb_from_mem_wb;
+
 // logic f_d_ready,d_e_ready,e_m_ready,_m_w_ready;
 // logic f_d_valid,d_e_valid,e_m_valid,m_w_valid;
 
@@ -185,7 +189,7 @@ logic execute_ready_i, execute_valid_i, execute_ready_o, execute_valid_o;
 exe_stage execute(
     .clk(clk), //ins
     .rst(rst),
-    .ctrl_w_EXE(cw_exec.cw_execute),
+    .ctrl_w_EXE(cw_exec.exe),
     .rs1_data(rs1_data),
     .rs2_data(rs2_data),
     .pc_x(pc_exec),
@@ -203,6 +207,7 @@ exe_stage execute(
 );
 
 rv32i_word u_imm_exec;
+rv32i_word pc_exe_mem_reg;
 //exe_mem_reg
 exe_mem_reg exe_mem_register(
     .clk(clk), //from datapath
@@ -217,11 +222,11 @@ exe_mem_reg exe_mem_register(
     .rs2_out_i(rs2_out), //from exe_stage
     .u_imm_i(imm_exec.u_imm), //from DE_EXE pipeline reg
     .ctrl_w_MEM_i(cw_exec.mem), //from DE_EXE pipeline reg
-    .ctrl_w_WB_i(cw_exe.wb), //from DE_EXE pipeline reg
+    .ctrl_w_WB_i(cw_exec.wb), //from DE_EXE pipeline reg
     .ctrl_w_MEM_o(cw_mem_from_exe_mem), //to mem_stage / MEM_WB pipeline reg
     .ctrl_w_WB_o(cw_wb_from_exe_mem), //to MEM_WB pipeline reg
     .exe_fwd_data(exe_fwd_data), //to exe_stage / mem_stage / MEM_WB pipeline reg
-    .mem_pc_x(pc_exec), //to MEM_WB pipeline reg
+    .mem_pc_x(pc_exe_mem_reg), //to MEM_WB pipeline reg
     .u_imm_o(u_imm_exec), //to MEM_WB pipeline reg
     .br_en_o(br_en_exe_mem_o), //to ctrl??? / MEM_WB pipeline reg
     .exe_mem_valid(exe_mem_valid), //to ctrl / MEM_WB pipeline reg
@@ -256,7 +261,7 @@ mem_wb_reg mem_wb_register(
     .mem_rdy(mem_ready),
     .alu_out_i(exe_fwd_data), //aka exe_fwd_data
     .br_en_i(br_en_exe_mem_o),
-    .mem_pc_x(pc_exec),
+    .mem_pc_x(pc_exe_mem_reg),
     .u_imm_i(u_imm_exec),
     .mem_rdata_D_i(dcach_out),
     .exe_mem_valid(exe_mem_valid),

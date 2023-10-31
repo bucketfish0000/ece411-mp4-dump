@@ -58,6 +58,7 @@ import cpuIO::*;
             logic br_en;
             logic [3:0] mem_byte_enable; 
     control_read ctrl_rd;
+    
     mp4control control(
         .clk(clk),
         .rst(rst),
@@ -66,7 +67,7 @@ import cpuIO::*;
         //...none?
 
         /*---de signals---*/
-        .opcode(ctrl_rd.opcode),
+        .opcode(rv32i_opcode'(ctrl_rd.opcode)),
         .func3(ctrl_rd.func3),
         .func7(ctrl_rd.func7),
         //anything else...?
