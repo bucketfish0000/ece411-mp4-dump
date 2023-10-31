@@ -1,5 +1,5 @@
 module mp4datapath
-    import rv32i_type::*;
+    import rv32i_types::*;
     import cpuIO::*;
     import immediates::*;
 (
@@ -11,7 +11,7 @@ module mp4datapath
     input rv32i_word icache_out,
     input rv32i_word dcache_out,
 
-    input pcmux_sel_t pcmux_sel,
+    input pcmux::pcmux_sel_t pcmux_sel,
 
     input logic fet_dec_load,
     input logic dec_exe_load,
@@ -64,10 +64,9 @@ logic fetch_valid_o, decode_valid_o, exec_valid_o, mem_valid_o, wb_valid_o;
 // logic f_d_ready,d_e_ready,e_m_ready,_m_w_ready;
 // logic f_d_valid,d_e_valid,e_m_valid,m_w_valid;
 
-logic [31:0] mem_fwd_data, exe_fwd_data, alu_out_exe, alu_out_mem_wb, rs2_out, rs1_data_decode, rs2_data_decode, mem_address_d, mem_wdata_d;
-logic [3:0] mem_byte_enable
+logic [31:0] mem_fwd_data, exe_fwd_data, alu_out_exe, alu_out_mem_wb, rs2_out, rs1_data_decode, rs2_data_decode;
 
-assign exe_rdy = exec_ready;
+assign exe_rdy = exec_ready_i;
 assign exe_valid = exe_mem_valid;
 assign mem_rdy = mem_ready;
 assign mem_valid = mem_wb_valid;
@@ -205,7 +204,7 @@ exe_mem_reg exe_mem_register(
     .br_en_i(br_en_exe_o), //from exe_stage
    // .load(),
     .exe_mem_ld(exe_mem_load), //from cpu_ctrl
-    .exe_rdy(exec_ready),
+    .exe_rdy(exec_ready_o),
     .de_exe_valid(exec_valid_i),
     .alu_out_i(alu_out_exe), //from exe_stage
     .exe_pc_x(pc_exec), //from DE_EXE pipeline reg
