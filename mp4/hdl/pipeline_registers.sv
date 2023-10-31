@@ -65,6 +65,7 @@ module dec_exe_reg
     output rv32i_word rs2_data_out,
     output rv32i_word pc_out,
 
+
     input logic ready_i,
     input logic valid_i,
     output logic ready_o,
@@ -80,6 +81,7 @@ module dec_exe_reg
     immediates::imm imm_data;
     rv32i_word rs1_data;
     rv32i_word rs2_data;
+    rv32i_reg rd_addr;
     logic ready,valid;
     control_word cw_data;
     rv32i_word pc;
@@ -140,7 +142,7 @@ import cpuIO::*;
     input logic [31:0] exe_pc_x, 
     input logic [31:0] rs2_out_i, 
     input logic [31:0] u_imm_i, 
- 
+
     output logic [31:0] exe_fwd_data, 
     output logic [31:0] mem_pc_x, 
     output logic [31:0] u_imm_o, 
