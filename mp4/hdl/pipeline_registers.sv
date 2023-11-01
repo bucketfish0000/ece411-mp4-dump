@@ -74,7 +74,7 @@ module dec_exe_reg
     input control_word cw_in,
     output control_word cw_out,
 
-    input opcode_in, 
+    input rv32i_opcode opcode_in, 
     output rv32i_opcode opcode_data
 );
 
@@ -89,17 +89,17 @@ module dec_exe_reg
     always_ff @(posedge clk)
     begin
         if (rst) begin
-            imm_data.i_imm <= 0;
-            imm_data.u_imm <= 0;
-            imm_data.b_imm <= 0;
-            imm_data.s_imm <= 0;
-            imm_data.j_imm <= 0;
-            rs1_data<=0;
-            rs2_data<=0;
-            ready<=0;
-            valid<=0;
+            imm_data.i_imm <= 32'b0;
+            imm_data.u_imm <= 32'b0;
+            imm_data.b_imm <= 32'b0;
+            imm_data.s_imm <= 32'b0;
+            imm_data.j_imm <= 32'b0;
+            rs1_data<=  32'b0;
+            rs2_data<= 32'b0;
+            ready<= 1'b0;
+            valid<= 1'b0;
             //cw_data<=;
-            pc<=0;
+            pc<=32'b0;
         end
         else if (load) begin
             opcode_data<=opcode_in;
@@ -425,7 +425,7 @@ module mem_wb_reg
     input rst,
     input logic mem_wb_ld,
     input logic mem_rdy,
-    input logic alu_out_i, //aka exe_fwd_data
+    input logic [31:0] alu_out_i, //aka exe_fwd_data
     input logic br_en_i,
     input logic [31:0] mem_pc_x,
     input logic [31:0] u_imm_i,
@@ -438,7 +438,7 @@ module mem_wb_reg
     output logic [31:0] mem_rdata_D_o,
     output logic mem_wb_rdy,
     output logic mem_wb_valid,
-    output logic alu_out_o, //aka exe_fwd_data
+    output logic [31:0] alu_out_o, //aka exe_fwd_data
     output logic br_en_o
 );
     logic [31:0] alu_out_r, pc_x_r, u_imm_r, mem_rdata_r;
