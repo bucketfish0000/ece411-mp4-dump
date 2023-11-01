@@ -45,8 +45,8 @@ module decode_stage
 
     //decode logic 
     //begin decode_logic
-        assign funct3 = instruction[14:12];
-        assign funct7 = instruction[31:25];
+        assign func3 = instruction[14:12];
+        assign func7 = instruction[31:25];
         assign opcode = rv32i_opcode'(instruction[6:0]);
         
         assign imm_data.i_imm = {{21{instruction[31]}}, instruction[30:20]};
@@ -62,7 +62,7 @@ module decode_stage
 
     regfile regfile
     (.clk(clk),.rst(rst), .load(reg_load),
-    .in(reg_in),
+    .in(rd_data),
     .src_a(rs1), 
     .src_b(rs2), 
     .dest(rd_sel),
