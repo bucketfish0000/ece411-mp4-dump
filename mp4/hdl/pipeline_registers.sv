@@ -74,7 +74,7 @@ module dec_exe_reg
     input control_word cw_in,
     output control_word cw_out,
 
-    input opcode_in, 
+    input rv32i_reg opcode_in, 
     output rv32i_opcode opcode_data
 );
 
