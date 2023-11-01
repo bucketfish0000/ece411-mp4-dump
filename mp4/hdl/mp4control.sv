@@ -17,7 +17,9 @@ import cpuIO::*;
 
     /*---if signals---*/
     //none...?
-
+    output logic load_pc,
+    output logic  imem_read,
+    input logic icache_resp,
     /*---de signals... none?---*/
     input rv32i_opcode opcode,
     input logic[2:0] func3,
@@ -70,10 +72,22 @@ assign rdy = {if_rdy, de_rdy, exe_rdy, mem_rdy, wb_rdy};
 assign vald = {if_valid, de_valid, exe_valid, mem_valid, wb_valid};
 
 //how know when load pc? Gonna need testing to see for sure
-
+//logic load_pc_next;
+// always_comb begin : icache_fetch_interactions
+//     if (rst) begin
+//         imem_read = 1'b0;
+//         load_pc = 1'b0;
+//     end
+//     else begin
+//         imem_read = 1'b1;
+//         load_pc = 1'b1;
+//     end
+// end: icache_fetch_interactions
 always_comb begin : ld_ctrl
     if(rst) begin
         if_de_ld = 1'b0;
+        imem_read = 1'b0;
+        load_pc = 1'b0;
         de_exe_ld = 1'b0;
         exe_mem_ld = 1'b0;
         mem_wb_ld = 1'b0;
@@ -113,6 +127,8 @@ always_comb begin : ld_ctrl
         */
 
         if_de_ld = 1'b1;
+        imem_read = 1'b1;
+        load_pc = 1'b1;
         de_exe_ld = 1'b1;
         exe_mem_ld = 1'b1;
         mem_wb_ld = 1'b1;
@@ -120,17 +136,23 @@ always_comb begin : ld_ctrl
         //              de                          exe                                         mem                                     wb
         if(((rdy[3] == 0) && (vald[3] == 1)) || ((rdy[2] == 0) && (vald[2] == 1)) || ((rdy[1] == 0) && (vald[1] == 1)) || ((rdy[0] == 0) && (vald[0] == 1))) begin
             if_de_ld = 1'b0;
+            imem_read = 1'b0;
+            load_pc = 1'b0;
         end
 
         //           exe                                         mem                                     wb
         if(((rdy[2] == 0) && (vald[2] == 1)) || ((rdy[1] == 0) && (vald[1] == 1)) || ((rdy[0] == 0) && (vald[0] == 1))) begin
             if_de_ld = 1'b0;
+            imem_read = 1'b0;
+            load_pc = 1'b0;
             de_exe_ld = 1'b0;
         end
 
         //                 mem                                     wb
         if(((rdy[1] == 0) && (vald[1] == 1)) || ((rdy[0] == 0) && (vald[0] == 1))) begin
             if_de_ld = 1'b0;
+            imem_read = 1'b0;
+            load_pc = 1'b0;
             de_exe_ld = 1'b0;
             exe_mem_ld = 1'b0;
         end
@@ -138,6 +160,8 @@ always_comb begin : ld_ctrl
         //                  wb
         if(((rdy[0] == 0) && (vald[0] == 1))) begin
             if_de_ld = 1'b0;
+            imem_read = 1'b0;
+            load_pc = 1'b0;
             de_exe_ld = 1'b0;
             exe_mem_ld = 1'b0;
             mem_wb_ld = 1'b0;
@@ -160,97 +184,6 @@ assign arith_funct3 = arith_funct3_t'(func3);
 assign branch_funct3 = branch_funct3_t'(func3);
 assign load_funct3 = load_funct3_t'(func3);
 assign store_funct3 = store_funct3_t'(func3);
-
-// always_comb
-// begin : trap_check
-//     trap = '0;
-//     rmask = '0;
-//     wmask = '0;
-//     mem_addr = mem_address;
-
-//     case (opcode)
-//         op_lui: begin
-            
-//         end
-        
-//         op_auipc: begin
-            
-//         end
-        
-//         op_imm: begin
-            
-//         end
-        
-//         op_reg: begin
-            
-//         end
-        
-//         op_jal: begin
-            
-//         end
-         
-//         op_jalr: begin
-            
-//         end
-
-//         op_br: begin
-//             case (branch_funct3)
-//                 beq: begin
-                    
-//                 end
-//                 bne: begin
-                    
-//                 end
-//                 blt: begin
-                    
-//                 end
-//                 bge: begin
-                    
-//                 end
-//                 bltu: begin
-                    
-//                 end
-//                 bgeu: begin
-                        
-//                 end
-//                 default: trap = '1;
-//             endcase
-//         end
-
-//         //!!! Send mar_in through this first before sending it to mar !!!
-//         op_load: begin
-//             case (load_funct3)
-//                 lw: rmask = 4'b1111;
-//                 lh, lhu: begin
-//                     rmask = (4'b0011) << (mem_address%4); /* Modify for MP1 Final */ //correct???
-//                     mem_addr = mem_address - (mem_address%4);
-//                 end
-//                 lb, lbu: begin
-//                     rmask = (4'b0001) << (mem_address%4); /* Modify for MP1 Final */ //correct???
-//                     mem_addr = mem_address - (mem_address%4);
-//                 end
-//                 default: trap = '1;
-//             endcase
-//         end
-
-//         op_store: begin
-//             case (store_funct3)
-//                 sw: wmask = 4'b1111;
-//                 sh: begin
-//                     wmask = (4'b0011) << (mem_address%4); /* Modify for MP1 Final */ //correct???
-//                     mem_addr = mem_address - (mem_address%4);
-//                 end
-//                 sb: begin
-//                     wmask = (4'b0001) << (mem_address%4); /* Modify for MP1 Final */ //correct???
-//                     mem_addr = mem_address - (mem_address%4);
-//                 end
-//                 default: trap = '1;
-//             endcase
-//         end
-
-//         default: trap = '1;
-//     endcase
-// end
 
 function void set_def();
     // cw_cpu.opcode = 7'b0;
