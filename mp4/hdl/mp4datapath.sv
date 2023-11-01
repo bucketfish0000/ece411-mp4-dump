@@ -105,6 +105,7 @@ fetch_stage fetch(
     .exec_fwd_data(exe_fwd_data),                                                                       
     .instr_in(icache_out),
     .pc_out(pc_fetch),
+    .pc_next(pc_wdata),
     .instr_out(instr_fetch),
     .ready(fetch_ready_o),
     .valid(fetch_valid_o)
@@ -294,7 +295,6 @@ wb_stage writeback(
 );
 
 assign pc_rdata = pc_wb; 
-assign pc_wdata = pc_exec;
 assign wb_valid = 1'b1;
 assign wb_rdy = 1'b1;
 
