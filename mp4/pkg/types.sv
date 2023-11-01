@@ -28,12 +28,12 @@ package cpuIO;
     typedef struct {
         logic ld_reg;
         regfilemux::regfilemux_sel_t regfilemux_sel;
-        logic rd_sel;
+        logic [4:0] rd_sel;
     } cw_writeback;
 
 
     typedef struct {
-        logic[4:0] opcode;
+        logic[6:0] opcode;
         logic [2:0] func3;
         logic [6:0] func7;
     } control_read;
