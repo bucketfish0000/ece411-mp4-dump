@@ -245,14 +245,18 @@ import cpuIO::*;
     always_ff @ (posedge clk, posedge rst) begin : ctrl_w_WB_register
         if(rst)begin
             ctrl_w_wb_r.regfilemux_sel <= regfilemux::alu_out;
+            ctrl_w_wb_r.ld_reg <= 1'b0;
+            ctrl_w_wb_r.rd_sel <= 5'b0000;
             ctrl_w_WB_o.regfilemux_sel <= regfilemux::alu_out;
+            ctrl_w_WB_o.ld_reg <= 1'b0;
+            ctrl_w_WB_o.rd_sel <= 5'b0000;
         end
         else if((exe_mem_ld == 1) && (de_exe_valid == 1)) begin
-            ctrl_w_wb_r.regfilemux_sel <= ctrl_w_WB_i.regfilemux_sel;
-            ctrl_w_WB_o.regfilemux_sel <= ctrl_w_WB_i.regfilemux_sel;
+            ctrl_w_wb_r <= ctrl_w_WB_i;
+            ctrl_w_WB_o <= ctrl_w_WB_i;
         end
         else begin
-            ctrl_w_WB_o.regfilemux_sel <= ctrl_w_wb_r.regfilemux_sel;
+            ctrl_w_WB_o <= ctrl_w_wb_r;
         end
     end
 
@@ -494,14 +498,18 @@ module mem_wb_reg
     always_ff @ (posedge clk, posedge rst) begin : ctrl_w_wb_register
         if(rst)begin
             ctrl_w_wb_r.regfilemux_sel <= regfilemux::alu_out;
+            ctrl_w_wb_r.ld_reg <= 1'b0;
+            ctrl_w_wb_r.rd_sel <= 5'b0000;
             ctrl_w_WB_o.regfilemux_sel <= regfilemux::alu_out;
+            ctrl_w_WB_o.ld_reg <= 1'b0;
+            ctrl_w_WB_o.rd_sel <= 5'b0000;
         end
         else if((mem_wb_ld == 1) && (exe_mem_valid == 1)) begin
-            ctrl_w_wb_r.regfilemux_sel <= ctrl_w_WB_i.regfilemux_sel;
-            ctrl_w_WB_o.regfilemux_sel <= ctrl_w_WB_i.regfilemux_sel;
+            ctrl_w_wb_r<= ctrl_w_WB_i;
+            ctrl_w_WB_o <= ctrl_w_WB_i;
         end
         else begin
-            ctrl_w_WB_o.regfilemux_sel <= ctrl_w_wb_r.regfilemux_sel;
+            ctrl_w_WB_o <= ctrl_w_wb_r;
         end
     end
 
