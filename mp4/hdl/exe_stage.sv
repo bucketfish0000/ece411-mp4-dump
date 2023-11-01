@@ -25,11 +25,8 @@ import immediates::*;
     output logic [31:0] alu_out,
     output logic br_en,
   
-    input logic ready_i,
-    input logic valid_i,
-    input logic de_exe_valid, de_exe_rdy,
-    output logic ready_o,
-    output logic valid_o,
+    input logic de_exe_valid,
+    input logic de_exe_rdy,
     output logic exe_rdy
 );
     logic [31:0] rs1_o, rs2_o, alumux1_o, alumux2_o, cmpmux_o;
@@ -50,9 +47,6 @@ import immediates::*;
     assign u_imm = imm_in.u_imm;
     assign j_imm = imm_in.j_imm;
     assign rs2_out = rs2_o;
-
-    assign ready_o = 1'b1;
-    assign valid_o = ready_i & valid_i;
 
     //always_ff or always_comb??
     always_ff @(posedge clk, posedge rst) begin : exe_rdy_ctrl

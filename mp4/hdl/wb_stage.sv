@@ -22,11 +22,22 @@ import rv32i_types::*;
 
     output rv32i_word regfilemux_out,
     output logic load_reg,
-    output logic rd_sel
+    output rv32i_reg rd_sel
 );
 
-assign load_reg = ctrl_w_WB.ld_reg;
-assign rd_sel =  ctrl_w_WB.rd_sel;
+
+always_comb begin : regfile_ctrl_signals
+
+    if(rst) begin
+        load_reg = 1'b0;
+        rd_sel =  5'b00000;
+    end
+    else begin
+        load_reg = ctrl_w_WB.ld_reg;
+        rd_sel =  ctrl_w_WB.rd_sel;
+    end
+end
+
 always_comb begin : regfilemux_sel
     unique case (ctrl_w_WB.regfilemux_sel)
         regfilemux::alu_out: regfilemux_out = alu_out;
