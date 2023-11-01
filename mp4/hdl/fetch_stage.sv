@@ -11,6 +11,7 @@ module fetch_stage
     input rv32i_word instr_in,
     
     output rv32i_word pc_out,
+    output rv32i_word pc_next,
     output rv32i_word instr_out,
     output logic imem_read,
     
@@ -20,6 +21,7 @@ module fetch_stage
 
     rv32i_word pc_in,pc;
     assign pc_out = pc;
+    assign pc_next = pc_in;
     assign instr_out = instr_in;
     assign ready = icache_resp;
     assign valid = icache_resp;
