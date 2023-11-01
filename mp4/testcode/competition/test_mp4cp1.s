@@ -21,7 +21,8 @@ _start:
     auipc x7, 8   #x7 <= pc + (8<<12) = pc + 32768
     lui x3, 2   #x3 <= 2<<12 = 8192
     lw x4, mem_data     #x4 <= 0x0d00d
-    sw x3, mem_data     #M[mem_data] <= 8192
+    la x1, mem_data
+    sw x3, 0(x1)    #M[mem_data] <= 8192
     lw x5, mem_data     #x5 <= 8192
 
     addi x7, x0, 8   #x7 <= 0 + 8(x0==0) = 8
@@ -41,6 +42,8 @@ halt:                 # Infinite loop to keep the processor
     beq x0, x0, halt  # from trying to execute the data below.
                       # Your own programs should also make use
                       # of an infinite loop at the end.
+
+.section .rodata
 
 mem_data:    .word 0x0000d00d
 
