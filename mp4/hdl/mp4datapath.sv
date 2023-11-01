@@ -75,20 +75,22 @@ cw_writeback cw_wb_from_de_exe, cw_wb_from_exe_mem, cw_wb_from_mem_wb;
 
 logic [31:0] mem_fwd_data, exe_fwd_data, alu_out_exe, alu_out_mem_wb, rs2_out, rs1_data_decode, rs2_data_decode;
 
+//yes this looks messed up because the naming conventions don't actually work for my(the correct :) ) implementation
+//it's on purpose don't touch without asking
 assign exe_rdy = exec_ready_o;
-assign exe_valid = exec_valid_o;
+assign exe_valid = mem_valid_i;
 assign mem_rdy = mem_ready_o;
-assign mem_valid = mem_valid_o;
+assign mem_valid = wb_valid_i;
 
 rv32i_opcode opcode_decode;
-rv32i_word func3_decode,func7_decode;
+logic [2:0] func3_decode;
+logic [6:0] func7_decode;
 assign cr.opcode = opcode_decode;
 assign cr.func3 = func3_decode;
 assign cr.func7 = func7_decode;
 
 rv32i_word instr_fetch;
 logic load_pc;
-
 
 assign if_rdy = fetch_ready_o;
 assign if_valid = fetch_valid_o;
@@ -97,7 +99,7 @@ fetch_stage fetch(
     .clk(clk),
     .rst(rst),
     .icache_resp(icache_resp),
-    .load_pc(load_pc),
+    .load_pc(load_pc), 
     .pcmux_sel(pcmux_sel),
     .exec_fwd_data(exe_fwd_data),                                                                       
     .instr_in(icache_out),
@@ -184,14 +186,13 @@ dec_exe_reg dec_exe_reg(
     .cw_out(cw_exec)
 );
 
-logic execute_ready_i, execute_valid_i, execute_ready_o, execute_valid_o;
 //exexute stage
 exe_stage execute(
     .clk(clk), //ins
     .rst(rst),
     .ctrl_w_EXE(cw_exec.exe),
-    .rs1_data(rs1_data),
-    .rs2_data(rs2_data),
+    .rs1_data(rs1_data_exec),
+    .rs2_data(rs2_data_exec),
     .pc_x(pc_exec),
     .mem_fwd_data(mem_fwd_data),
     .exe_fwd_data(exe_fwd_data),
@@ -200,10 +201,10 @@ exe_stage execute(
     .alu_out(alu_out_exe),
     .br_en(br_en_exe_o),
 
-    .ready_i(execute_ready_i),
-    .valid_i(execute_valid_i),
-    .ready_o(execute_ready_o),
-    .valid_o(execute_valid_o)
+
+    .de_exe_valid(exec_valid_i),
+    .de_exe_rdy(exec_ready_i),
+    .exe_rdy(exec_ready_o)
 );
 
 rv32i_word u_imm_exec;
@@ -229,8 +230,8 @@ exe_mem_reg exe_mem_register(
     .mem_pc_x(pc_exe_mem_reg), //to MEM_WB pipeline reg
     .u_imm_o(u_imm_exec), //to MEM_WB pipeline reg
     .br_en_o(br_en_exe_mem_o), //to ctrl??? / MEM_WB pipeline reg
-    .exe_mem_valid(exe_mem_valid), //to ctrl / MEM_WB pipeline reg
-    .exe_mem_rdy(exe_mem_rdy), //to MEM_WB pipeline reg
+    .exe_mem_valid(mem_valid_i), //to ctrl / MEM_WB pipeline reg
+    .exe_mem_rdy(mem_ready_i), //to MEM_WB pipeline reg
 
     //include these here bc they need to be loaded at same time as EXE_MEM
     .mem_address_d(mem_address_d), //to data cache
@@ -244,34 +245,34 @@ exe_mem_reg exe_mem_register(
 mem_stage memory(
     .clk(clk), //from datapath
     .rst(rst), //from datapath
-    .exe_mem_valid(exe_mem_valid), //from EXE_MEM pipeline reg, don't want to accidentally do junk memory operations
+    .exe_mem_valid(mem_valid_i), //from EXE_MEM pipeline reg, don't want to accidentally do junk memory operations
     .ctrl_w_MEM(cw_mem_from_exe_mem),//from EXE_MEM pipeline reg
-    .mem_resp_d(mem_rsp_d), //from data_cache
+    .mem_resp_d(dcache_resp), //from data_cache
     .mem_r_d(mem_r_d), //to data cache
     .mem_w_d(mem_w_d), //to data cache
-    .mem_rdy(mem_ready) //to ctrl / MEM_WB reg
+    .mem_rdy(mem_ready_o) //to ctrl / MEM_WB reg
 );
 
-rv32i_word pc_wb, u_imm_wb;
+rv32i_word u_imm_wb;
 //mem_wb_reg
 mem_wb_reg mem_wb_register(
     .clk(clk),
     .rst(rst),
     .mem_wb_ld(mem_wb_load),
-    .mem_rdy(mem_ready),
+    .mem_rdy(mem_ready_o),
     .alu_out_i(exe_fwd_data), //aka exe_fwd_data
     .br_en_i(br_en_exe_mem_o),
     .mem_pc_x(pc_exe_mem_reg),
     .u_imm_i(u_imm_exec),
-    .mem_rdata_D_i(dcach_out),
-    .exe_mem_valid(exe_mem_valid),
+    .mem_rdata_D_i(dcache_out),
+    .exe_mem_valid(mem_valid_i),
     .ctrl_w_WB_i(cw_wb_from_exe_mem),
     .ctrl_w_WB_o(cw_wb_from_mem_wb),
     .wb_pc_x(pc_wb),
     .u_imm_o(u_imm_wb),
     .mem_rdata_D_o(mem_fwd_data), //aka mem_fwd_data
-    .mem_wb_rdy(mem_wb_rdy),
-    .mem_wb_valid(mem_wb_valid),
+    .mem_wb_rdy(wb_ready_i),
+    .mem_wb_valid(wb_valid_i),
     .alu_out_o(alu_out_mem_wb),
     .br_en_o(br_en_mem_wb_o)
 );
@@ -293,6 +294,7 @@ wb_stage writeback(
 
 assign pc_rdata = pc_wb; 
 assign pc_wdata = pc_exec;
-
+assign wb_valid = 1'b1;
+assign wb_rdy = 1'b1;
 
 endmodule : mp4datapath

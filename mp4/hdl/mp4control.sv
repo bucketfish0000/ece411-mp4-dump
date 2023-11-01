@@ -118,7 +118,7 @@ always_comb begin : ld_ctrl
         mem_wb_ld = 1'b1;
 
         //              de                          exe                                         mem                                     wb
-        if(((rdy[3] = 0) && (vald[3] == 1)) || ((rdy[2] == 0) && (vald[2] == 1)) || ((rdy[1] == 0) && (vald[1] == 1)) || ((rdy[0] == 0) && (vald[0] == 1))) begin
+        if(((rdy[3] == 0) && (vald[3] == 1)) || ((rdy[2] == 0) && (vald[2] == 1)) || ((rdy[1] == 0) && (vald[1] == 1)) || ((rdy[0] == 0) && (vald[0] == 1))) begin
             if_de_ld = 1'b0;
         end
 
