@@ -169,6 +169,8 @@ import cpuIO::*;
 
         .rmask(rmask),
         .wmask(wmask)
+
+        // .rd_addr_sel(rd_addr_sel)
     );
 
     
