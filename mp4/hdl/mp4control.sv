@@ -201,6 +201,7 @@ function void set_def();
     cw_memory.mar_sel = marmux::pc_out;
     cw_wb.ld_reg = 1'b0;
     cw_wb.regfilemux_sel = regfilemux::alu_out;
+    cw_wb.rd_sel = 5'b00000;
 endfunction
 
 always_comb begin : cpu_cw
@@ -221,6 +222,7 @@ always_comb begin : cpu_cw
                 //writeback
                 cw_wb.ld_reg = 1'b1;
                 cw_wb.regfilemux_sel = regfilemux::u_imm;
+                cw_wb.rd_sel = rd_addr;
 
                 //fetch
                 pcmux_sel = pcmux::pc_plus4;
@@ -255,6 +257,7 @@ always_comb begin : cpu_cw
                 //writeback
                 cw_wb.ld_reg = 1'b1;
                 cw_wb.regfilemux_sel = regfilemux::pc_plus4;
+                cw_wb.rd_sel = rd_addr;
 
                 //fetch
                 pcmux_sel = pcmux::alu_out;
@@ -271,6 +274,7 @@ always_comb begin : cpu_cw
                 //writeback
                 cw_wb.ld_reg = 1'b1;
                 cw_wb.regfilemux_sel = regfilemux::pc_plus4;
+                cw_wb.rd_sel = rd_addr;
 
                 //fetch
                 pcmux_sel = pcmux::alu_mod2;
@@ -317,7 +321,8 @@ always_comb begin : cpu_cw
                 cw_memory.mem_read_d = 1'b1;
 
                 //writeback
-                cw_wb.ld_reg = 1'b1;    
+                cw_wb.ld_reg = 1'b1;
+                cw_wb.rd_sel = rd_addr;    
                 case (func3)
                     3'b000: begin   //lb
                         cw_wb.regfilemux_sel = regfilemux::lb; //lb 
@@ -367,6 +372,8 @@ always_comb begin : cpu_cw
                    
                         //writeback
                         cw_wb.regfilemux_sel = regfilemux::alu_out;
+                        cw_wb.rd_sel = rd_addr;
+                        cw_wb.ld_reg = 1'b1;
                     end
                      
                     3'b001: begin
@@ -377,6 +384,8 @@ always_comb begin : cpu_cw
 
                         //writeback
                         cw_wb.regfilemux_sel = regfilemux::alu_out;
+                        cw_wb.rd_sel = rd_addr;
+                        cw_wb.ld_reg = 1'b1;
                     end
 
                     3'b010: begin
@@ -386,6 +395,8 @@ always_comb begin : cpu_cw
 
                         //writeback
                         cw_wb.regfilemux_sel = regfilemux::br_en;
+                        cw_wb.rd_sel = rd_addr;
+                        cw_wb.ld_reg = 1'b1;
                     end
 
                     3'b011: begin
@@ -395,6 +406,8 @@ always_comb begin : cpu_cw
 
                         //writeback
                         cw_wb.regfilemux_sel = regfilemux::br_en;
+                        cw_wb.rd_sel = rd_addr;
+                        cw_wb.ld_reg = 1'b1;
                     end
 
                     3'b100: begin
@@ -405,6 +418,8 @@ always_comb begin : cpu_cw
 
                         //writeback
                         cw_wb.regfilemux_sel = regfilemux::alu_out;
+                        cw_wb.rd_sel = rd_addr;
+                        cw_wb.ld_reg = 1'b1;
                     end
 
                     3'b101: begin
@@ -420,6 +435,8 @@ always_comb begin : cpu_cw
 
                         //writeback
                         cw_wb.regfilemux_sel = regfilemux::alu_out;
+                        cw_wb.rd_sel = rd_addr;
+                        cw_wb.ld_reg = 1'b1;
                     end
 
                     3'b110: begin
@@ -430,6 +447,8 @@ always_comb begin : cpu_cw
 
                         //writeback
                         cw_wb.regfilemux_sel = regfilemux::alu_out;
+                        cw_wb.rd_sel = rd_addr;
+                        cw_wb.ld_reg = 1'b1;
                     end
                     
                     3'b111: begin
@@ -440,6 +459,8 @@ always_comb begin : cpu_cw
 
                         //writeback
                         cw_wb.regfilemux_sel = regfilemux::alu_out;
+                        cw_wb.rd_sel = rd_addr;
+                        cw_wb.ld_reg = 1'b1;
                     end
                 endcase
 
@@ -465,6 +486,8 @@ always_comb begin : cpu_cw
 
                         //writeback
                         cw_wb.regfilemux_sel = regfilemux::alu_out;
+                        cw_wb.rd_sel = rd_addr;
+                        cw_wb.ld_reg = 1'b1;
                     end
                     
                     3'b001: begin
@@ -475,6 +498,8 @@ always_comb begin : cpu_cw
 
                         //writeback
                         cw_wb.regfilemux_sel = regfilemux::alu_out;
+                        cw_wb.rd_sel = rd_addr;
+                        cw_wb.ld_reg = 1'b1;
                     end
 
                     3'b010: begin
@@ -484,6 +509,8 @@ always_comb begin : cpu_cw
 
                         //writeback
                         cw_wb.regfilemux_sel = regfilemux::br_en;
+                        cw_wb.rd_sel = rd_addr;
+                        cw_wb.ld_reg = 1'b1;
                     end
 
                     3'b011: begin
@@ -493,6 +520,8 @@ always_comb begin : cpu_cw
 
                         //writeback
                         cw_wb.regfilemux_sel = regfilemux::br_en;
+                        cw_wb.rd_sel = rd_addr;
+                        cw_wb.ld_reg = 1'b1;
                     end
 
                     3'b100: begin
@@ -503,6 +532,8 @@ always_comb begin : cpu_cw
 
                         //writeback
                         cw_wb.regfilemux_sel = regfilemux::alu_out;
+                        cw_wb.rd_sel = rd_addr;
+                        cw_wb.ld_reg = 1'b1;
                     end
 
                     3'b101: begin
@@ -518,6 +549,8 @@ always_comb begin : cpu_cw
 
                         //writeback
                         cw_wb.regfilemux_sel = regfilemux::alu_out;
+                        cw_wb.rd_sel = rd_addr;
+                        cw_wb.ld_reg = 1'b1;
                     end
 
                     3'b110: begin
@@ -528,6 +561,8 @@ always_comb begin : cpu_cw
 
                         //writeback
                         cw_wb.regfilemux_sel = regfilemux::alu_out;
+                        cw_wb.rd_sel = rd_addr;
+                        cw_wb.ld_reg = 1'b1;
                     end
 
                     3'b111: begin
@@ -538,6 +573,8 @@ always_comb begin : cpu_cw
 
                         //writeback
                         cw_wb.regfilemux_sel = regfilemux::alu_out;
+                        cw_wb.rd_sel = rd_addr;
+                        cw_wb.ld_reg = 1'b1;
                     end
                 endcase
 
