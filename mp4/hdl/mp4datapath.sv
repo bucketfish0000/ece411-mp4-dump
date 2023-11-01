@@ -10,7 +10,8 @@ module mp4datapath
     input logic dcache_resp,
     input rv32i_word icache_out,
     input rv32i_word dcache_out,
-    output logic imem_read,
+    //output logic imem_read,
+    input load_pc,
 
     input pcmux::pcmux_sel_t pcmux_sel,
 
@@ -90,7 +91,7 @@ assign cr.func3 = func3_decode;
 assign cr.func7 = func7_decode;
 
 rv32i_word instr_fetch;
-logic load_pc;
+//logic load_pc;
 
 assign if_rdy = fetch_ready_o;
 assign if_valid = fetch_valid_o;
@@ -106,8 +107,8 @@ fetch_stage fetch(
     .pc_out(pc_fetch),
     .instr_out(instr_fetch),
     .ready(fetch_ready_o),
-    .valid(fetch_valid_o),
-    .imem_read(imem_read)
+    .valid(fetch_valid_o)
+    //.imem_read(imem_read)
     );
 
 rv32i_word instr_decode;

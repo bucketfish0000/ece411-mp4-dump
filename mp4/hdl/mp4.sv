@@ -65,7 +65,8 @@ import cpuIO::*;
 
         /*---if signals---*/
         //...none?
-
+        .imem_read(imem_read),
+        .icache_resp(imem_resp),
         /*---de signals---*/
         .opcode(rv32i_opcode'(ctrl_rd.opcode)),
         .func3(ctrl_rd.func3),
@@ -124,7 +125,7 @@ import cpuIO::*;
         .dcache_resp(dmem_resp),
         .icache_out(imem_rdata),
         .dcache_out(dmem_rdata),
-        .imem_read(imem_read),
+        //.imem_read(imem_read),
         .pcmux_sel(pcmux_sel),
 
         .fet_dec_load(if_de_ld),
