@@ -53,11 +53,15 @@ module mp4datapath
     output rv32i_word mem_address_d,
     output logic [3:0] mem_byte_enable,
     output logic [3:0] rmask, wmask
+
+    // output logic [4:0] rd_addr_sel
 );
 
 rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb;
 rv32i_word regfilemux_out;
 rv32i_reg rd_sel;
+
+// assign rd_addr_sel = rd_sel;
 
 logic  br_en_exe_o, br_en_exe_mem_o, br_en_mem_wb_o;
 assign br_en = br_en_exe_o;
