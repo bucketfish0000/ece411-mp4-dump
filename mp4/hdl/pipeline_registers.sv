@@ -15,11 +15,14 @@ module fet_dec_reg
     input rv32i_word pc_fetch,
 
     output rv32i_word instr_decode,
-    output rv32i_word pc_decode
+    output rv32i_word pc_decode,
+
+    output logic [63:0] commit_order
 );
 
     logic ready,valid;
     logic[31:0] instr,pc;
+    logic [63:0] order_counter;
 
     always_ff @(posedge clk)
     begin
@@ -29,6 +32,7 @@ module fet_dec_reg
             valid<='0;
             instr<=0;
             pc<=0;
+            order_counter <= 64'b0;
         end
         else if (load)
         begin
@@ -36,6 +40,7 @@ module fet_dec_reg
             valid<=valid_i;
             instr<=instr_fetch;
             pc<=pc_fetch;
+            order_counter <= order_counter + 64'b01;
         end
     end
 
@@ -45,6 +50,7 @@ module fet_dec_reg
         valid_o=valid;
         instr_decode=instr;
         pc_decode=pc;
+        commit_order = order_counter; 
     end
 endmodule : fet_dec_reg
 
@@ -56,15 +62,8 @@ module dec_exe_reg
     input logic rst,
     input logic load,
     input immediates::imm imm_in,
-    input rv32i_word rs1_data_in,
-    input rv32i_word rs2_data_in,  
-    input rv32i_word pc_in,
 
     output immediates::imm imm_out,
-    output rv32i_word rs1_data_out,
-    output rv32i_word rs2_data_out,
-    output rv32i_word pc_out,
-
 
     input logic ready_i,
     input logic valid_i,
@@ -72,19 +71,12 @@ module dec_exe_reg
     output logic valid_o,
 
     input control_word cw_in,
-    output control_word cw_out,
-
-    input rv32i_opcode opcode_in, 
-    output rv32i_opcode opcode_data
+    output control_word cw_out
 );
 
     immediates::imm imm_data;
-    rv32i_word rs1_data;
-    rv32i_word rs2_data;
-    rv32i_reg rd_addr;
     logic ready,valid;
     control_word cw_data;
-    rv32i_word pc;
 
     always_ff @(posedge clk)
     begin
@@ -94,34 +86,54 @@ module dec_exe_reg
             imm_data.b_imm <= 32'b0;
             imm_data.s_imm <= 32'b0;
             imm_data.j_imm <= 32'b0;
-            rs1_data<=  32'b0;
-            rs2_data<= 32'b0;
+
             ready<= 1'b0;
             valid<= 1'b0;
-            //cw_data<=;
-            pc<=32'b0;
+
+            cw_data.exe.cmp_sel <= cmpmux::rs2_out;
+            cw_data.exe.alumux1_sel <= alumux::rs1_out;
+            cw_data.exe.alumux2_sel <= alumux::i_imm;
+            cw_data.exe.rs1_sel <= rs1mux::rs1_data;
+            cw_data.exe.rs2_sel <= rs2mux::rs2_data;
+            cw_data.exe.cmpop <= beq;
+            cw_data.exe.aluop <= alu_add;
+            cw_data.mem.mem_read_d <= 1'b0;
+            cw_data.mem.mem_write_d <= 1'b0;
+            cw_data.mem.mar_sel <= marmux::pc_out;
+            cw_data.wb.ld_reg <= 1'b0;
+            cw_data.wb.regfilemux_sel <= regfilemux::alu_out;
+            cw_data.wb.rd_sel <= 5'b00000;
+            cw_data.rvfi.valid_commit <= 1'b0;//done
+            cw_data.rvfi.order_commit <= 64'b0;//done
+            cw_data.rvfi.instruction <= 32'b0;//done
+            cw_data.rvfi.rs1_addr <= 5'b0; //done
+            cw_data.rvfi.rs2_addr <= 5'b0; //dome
+            cw_data.rvfi.rs1_data <= 32'b0; //done
+            cw_data.rvfi.rs2_data <= 32'b0; //done
+            cw_data.rvfi.rd_wdata <= 32'b0;//done
+            cw_data.rvfi.pc_rdata <= 32'h40000000;//done
+            cw_data.rvfi.pc_wdata <= 32'b0;//done
+            cw_data.rvfi.mem_addr <= 32'b0;//done
+            cw_data.rvfi.rmask <= 4'b0;//done
+            cw_data.rvfi.wmask <= 4'b0;//done
+            cw_data.rvfi.mem_rdata <= 32'b0;//done
+            cw_data.rvfi.mem_wdata <= 32'b0;//done
         end
         else if (load) begin
-            opcode_data<=opcode_in;
             imm_data<=imm_in;
-            rs1_data <= rs1_data_in;
-            rs2_data <= rs2_data_in;
             ready<=ready_i;
             valid<=valid_i;
+
             cw_data<=cw_in;
-            pc<=pc_in;
         end
     end 
 
     always_comb
     begin
         imm_out=imm_data;
-        rs1_data_out = rs1_data;
-        rs2_data_out = rs2_data;
         ready_o = ready;
         valid_o = valid;
         cw_out=cw_data;
-        pc_out=pc;
     end
 
 endmodule : dec_exe_reg
@@ -143,12 +155,10 @@ import cpuIO::*;
     input logic exe_rdy,
     input logic de_exe_valid,
     input logic [31:0] alu_out_i, 
-    input logic [31:0] exe_pc_x, 
-    input logic [31:0] rs2_out_i, 
+    input logic [31:0] rs2_out_i,
     input logic [31:0] u_imm_i, 
 
     output logic [31:0] exe_fwd_data, 
-    output logic [31:0] mem_pc_x, 
     output logic [31:0] u_imm_o, 
     output logic br_en_o, 
     output logic exe_mem_valid, 
@@ -158,21 +168,20 @@ import cpuIO::*;
     output logic [31:0] mem_wdata_d, //to data cache
     output logic [3:0] mem_byte_enable, //to data cache
 
-    input cpuIO::cw_mem ctrl_w_MEM_i, //from DE_EXE pipeline reg
-    input cpuIO::cw_writeback ctrl_w_WB_i, //from DE_EXE pipeline reg
-    output cpuIO::cw_mem ctrl_w_MEM_o, //to mem_stage / MEM_WB pipeline reg
-    output cpuIO::cw_writeback ctrl_w_WB_o,
+    input control_word cw_in,
+    output control_word cw_out,
 
-    output logic [3:0] rmask,
     output logic [3:0] wmask
 );
 
-    logic [31:0] fwd_r_EX, pc_x_r, u_imm_r;
+    logic [31:0] fwd_r_EX, u_imm_r;
     logic [3:0] mem_byte_enable_r;
     control_word cw_data;
-    cw_mem ctrl_w_mem_r;
-    cw_writeback ctrl_w_wb_r;
     logic br_en_r, valid_r, ready_r;
+
+     logic [31:0] marmux_o, mem_addr;
+    logic trap;
+    logic [3:0] rmask, wmask_temp;
 
     //serves as alu_out reg/fwding exe data reg for cp2 onward
     always_ff @ (posedge clk, posedge rst) begin : fwd_EX_reg
@@ -189,74 +198,108 @@ import cpuIO::*;
         end
     end
 
-    //serves as pc_x reg, mem_pc_x is the output, exe_pc_x is input
-    always_ff @ (posedge clk, posedge rst) begin : pc_x_register
+    //control word reg 
+     always_ff @ (posedge clk, posedge rst) begin : cw_register
         if(rst)begin
-            mem_pc_x <= 32'h40000000;
-            pc_x_r <= 32'h40000000;
+            cw_data.exe.cmp_sel <= cmpmux::rs2_out;
+            cw_data.exe.alumux1_sel <= alumux::rs1_out;
+            cw_data.exe.alumux2_sel <= alumux::i_imm;
+            cw_data.exe.rs1_sel <= rs1mux::rs1_data;
+            cw_data.exe.rs2_sel <= rs2mux::rs2_data;
+            cw_data.exe.cmpop <= beq;
+            cw_data.exe.aluop <= alu_add;
+            cw_data.mem.mem_read_d <= 1'b0;
+            cw_data.mem.mem_write_d <= 1'b0;
+            cw_data.mem.mar_sel <= marmux::pc_out;
+            cw_data.wb.ld_reg <= 1'b0;
+            cw_data.wb.regfilemux_sel <= regfilemux::alu_out;
+            cw_data.wb.rd_sel <= 5'b00000;
+            cw_data.rvfi.valid_commit <= 1'b0;//done
+            cw_data.rvfi.order_commit <= 64'b0;//done
+            cw_data.rvfi.instruction <= 32'b0;//done
+            cw_data.rvfi.rs1_addr <= 5'b0; //done
+            cw_data.rvfi.rs2_addr <= 5'b0; //dome
+            cw_data.rvfi.rs1_data <= 32'b0; //done
+            cw_data.rvfi.rs2_data <= 32'b0; //done
+            cw_data.rvfi.rd_wdata <= 32'b0;//done
+            cw_data.rvfi.pc_rdata <= 32'h40000000;//done
+            cw_data.rvfi.pc_wdata <= 32'b0;//done
+            cw_data.rvfi.mem_addr <= 32'b0;//done
+            cw_data.rvfi.rmask <= 4'b0;//done
+            cw_data.rvfi.wmask <= 4'b0;//done
+            cw_data.rvfi.mem_rdata <= 32'b0;//done
+            cw_data.rvfi.mem_wdata <= 32'b0;//done
+
+            cw_out.exe.cmp_sel <= cmpmux::rs2_out;
+            cw_out.exe.alumux1_sel <= alumux::rs1_out;
+            cw_out.exe.alumux2_sel <= alumux::i_imm;
+            cw_out.exe.rs1_sel <= rs1mux::rs1_data;
+            cw_out.exe.rs2_sel <= rs2mux::rs2_data;
+            cw_out.exe.cmpop <= beq;
+            cw_out.exe.aluop <= alu_add;
+            cw_out.mem.mem_read_d <= 1'b0;
+            cw_out.mem.mem_write_d <= 1'b0;
+            cw_out.mem.mar_sel <= marmux::pc_out;
+            cw_out.wb.ld_reg <= 1'b0;
+            cw_out.wb.regfilemux_sel <= regfilemux::alu_out;
+            cw_out.wb.rd_sel <= 5'b00000;
+            cw_out.rvfi.valid_commit <= 1'b0;//done
+            cw_out.rvfi.order_commit <= 64'b0;//done
+            cw_out.rvfi.instruction <= 32'b0;//done
+            cw_out.rvfi.rs1_addr <= 5'b0; //done
+            cw_out.rvfi.rs2_addr <= 5'b0; //dome
+            cw_out.rvfi.rs1_data <= 32'b0; //done
+            cw_out.rvfi.rs2_data <= 32'b0; //done
+            cw_out.rvfi.rd_wdata <= 32'b0;//done
+            cw_out.rvfi.pc_rdata <= 32'h40000000;//done
+            cw_out.rvfi.pc_wdata <= 32'b0;//done
+            cw_out.rvfi.mem_addr <= 32'b0;//done
+            cw_out.rvfi.rmask <= 4'b0;//done
+            cw_out.rvfi.wmask <= 4'b0;//done
+            cw_out.rvfi.mem_rdata <= 32'b0;//done
+            cw_out.rvfi.mem_wdata <= 32'b0;//done
         end
         else if((exe_mem_ld == 1) && (de_exe_valid == 1)) begin
-            mem_pc_x <= exe_pc_x;
-            pc_x_r <= exe_pc_x;
+            cw_data.exe <= cw_in.exe;
+            cw_data.mem <= cw_in.mem;
+            cw_data.wb <= cw_in.wb;
+            cw_data.rvfi.valid_commit <= cw_in.rvfi.valid_commit;//done
+            cw_data.rvfi.order_commit <= cw_in.rvfi.order_commit;//done
+            cw_data.rvfi.instruction <= cw_in.rvfi.instruction;//done
+            cw_data.rvfi.rs1_addr <= cw_in.rvfi.rs1_addr; //done
+            cw_data.rvfi.rs2_addr <= cw_in.rvfi.rs2_addr; //dome
+            cw_data.rvfi.rs1_data <= cw_in.rvfi.rs1_data; //done
+            cw_data.rvfi.rs2_data <= cw_in.rvfi.rs2_data; //done
+            cw_data.rvfi.rd_wdata <= cw_in.rvfi.rd_wdata;//done
+            cw_data.rvfi.pc_rdata <= cw_in.rvfi.pc_rdata;//done
+            cw_data.rvfi.pc_wdata <= cw_in.rvfi.pc_wdata;//done
+            cw_data.rvfi.mem_addr <= mem_addr;//done
+            cw_data.rvfi.rmask <= rmask;//done
+            cw_data.rvfi.wmask <= wmask_temp;//done
+            cw_data.rvfi.mem_rdata <= cw_in.rvfi.mem_rdata;//done
+            cw_data.rvfi.mem_wdata <= rs2_out_i;//done
+
+            cw_out.exe <= cw_in.exe;
+            cw_out.mem <= cw_in.mem;
+            cw_out.wb <= cw_in.wb;
+            cw_out.rvfi.valid_commit <= cw_in.rvfi.valid_commit;//done
+            cw_out.rvfi.order_commit <= cw_in.rvfi.order_commit;//done
+            cw_out.rvfi.instruction <= cw_in.rvfi.instruction;//done
+            cw_out.rvfi.rs1_addr <= cw_in.rvfi.rs1_addr; //done
+            cw_out.rvfi.rs2_addr <= cw_in.rvfi.rs2_addr; //dome
+            cw_out.rvfi.rs1_data <= cw_in.rvfi.rs1_data; //done
+            cw_out.rvfi.rs2_data <= cw_in.rvfi.rs2_data; //done
+            cw_out.rvfi.rd_wdata <= cw_in.rvfi.rd_wdata;//done
+            cw_out.rvfi.pc_rdata <= cw_in.rvfi.pc_rdata;//done
+            cw_out.rvfi.pc_wdata <= cw_in.rvfi.pc_wdata;//done
+            cw_out.rvfi.mem_addr <= mem_addr;//done
+            cw_out.rvfi.rmask <= rmask;//done
+            cw_out.rvfi.wmask <= wmask_temp;//done
+            cw_out.rvfi.mem_rdata <= cw_in.rvfi.mem_rdata;//done
+            cw_out.rvfi.mem_wdata <= rs2_out_i;//done
         end
         else begin
-            mem_pc_x <= pc_x_r;
-        end
-    end
-
-    //control word for MEM 
-     always_ff @ (posedge clk, posedge rst) begin : ctrl_w_MEM_register
-        if(rst)begin
-            ctrl_w_mem_r.mem_read_d <= 1'b0;
-            ctrl_w_mem_r.mem_write_d <= 1'b0;
-            ctrl_w_mem_r.load_funct3 <= lw;
-            ctrl_w_mem_r.store_funct3 <= sw;
-            ctrl_w_mem_r.mar_sel <= marmux::pc_out;
-
-            ctrl_w_MEM_o.mem_read_d <= 1'b0;
-            ctrl_w_MEM_o.mem_write_d <= 1'b0;
-            ctrl_w_MEM_o.load_funct3 <= lw;
-            ctrl_w_MEM_o.store_funct3 <= sw;
-            ctrl_w_MEM_o.mar_sel <= marmux::pc_out;
-        end
-        else if(exe_mem_ld == 1) begin
-            ctrl_w_mem_r.mem_read_d <= ctrl_w_MEM_i.mem_read_d;
-            ctrl_w_mem_r.mem_write_d <= ctrl_w_MEM_i.mem_write_d;
-            ctrl_w_mem_r.load_funct3 <= ctrl_w_MEM_i.load_funct3;
-            ctrl_w_mem_r.store_funct3 <= ctrl_w_MEM_i.store_funct3;
-            ctrl_w_mem_r.mar_sel <= ctrl_w_MEM_i.mar_sel;
-            
-            ctrl_w_MEM_o.mem_read_d <= ctrl_w_MEM_i.mem_read_d;
-            ctrl_w_MEM_o.mem_write_d <= ctrl_w_MEM_i.mem_write_d;
-            ctrl_w_MEM_o.load_funct3 <= ctrl_w_MEM_i.load_funct3;
-            ctrl_w_MEM_o.store_funct3 <= ctrl_w_MEM_i.store_funct3;
-            ctrl_w_MEM_o.mar_sel <= ctrl_w_MEM_i.mar_sel;
-        end
-        else begin
-            ctrl_w_MEM_o.mem_read_d <= ctrl_w_mem_r.mem_read_d;
-            ctrl_w_MEM_o.mem_write_d <= ctrl_w_mem_r.mem_write_d;
-            ctrl_w_MEM_o.load_funct3 <= ctrl_w_mem_r.load_funct3;
-            ctrl_w_MEM_o.store_funct3 <= ctrl_w_mem_r.store_funct3;
-            ctrl_w_MEM_o.mar_sel <= ctrl_w_mem_r.mar_sel;
-        end
-    end
-
-    //control word for WB 
-    always_ff @ (posedge clk, posedge rst) begin : ctrl_w_WB_register
-        if(rst)begin
-            ctrl_w_wb_r.regfilemux_sel <= regfilemux::alu_out;
-            ctrl_w_wb_r.ld_reg <= 1'b0;
-            ctrl_w_wb_r.rd_sel <= 5'b0000;
-            ctrl_w_WB_o.regfilemux_sel <= regfilemux::alu_out;
-            ctrl_w_WB_o.ld_reg <= 1'b0;
-            ctrl_w_WB_o.rd_sel <= 5'b0000;
-        end
-        else if((exe_mem_ld == 1) && (de_exe_valid == 1)) begin
-            ctrl_w_wb_r <= ctrl_w_WB_i;
-            ctrl_w_WB_o <= ctrl_w_WB_i;
-        end
-        else begin
-            ctrl_w_WB_o <= ctrl_w_wb_r;
+            cw_out <= cw_data;
         end
     end
 
@@ -323,16 +366,11 @@ import cpuIO::*;
     //include these here bc they need to be loaded at same time as EXE_MEM
     //also have rvfi signals here, mem_byte_enable is only able to be calculated once
     //we have address(which is only available after exe computes it)
-    logic [31:0] marmux_o, mem_addr;
-    logic trap;
-    logic [3:0] rmask_temp, wmask_temp; 
-
-    assign rmask = rmask_temp;
     assign wmask = wmask_temp;
 
     always_comb begin : mem_mux
-        unique case (ctrl_w_MEM_i.mar_sel)
-            marmux::pc_out: marmux_o = exe_pc_x;
+        unique case (cw_in.mem.mar_sel)
+            marmux::pc_out: marmux_o = cw_in.rvfi.pc_rdata;
             marmux::alu_out: marmux_o = alu_out_i;
         endcase
     end
@@ -340,35 +378,35 @@ import cpuIO::*;
     mem_data_out mdo_reg(
         .clk(clk),
         .reset(rst),
-        .load_data_out((exe_mem_ld == 1) && (de_exe_valid == 1) && ((ctrl_w_MEM_i.mem_read_d) || (ctrl_w_MEM_i.mem_write_d))),
+        .load_data_out((exe_mem_ld == 1) && (de_exe_valid == 1) && ((cw_in.mem.mem_read_d) || (cw_in.mem.mem_write_d))),
         .mdo_in(rs2_out_i),
         .mdo_out(mem_wdata_d)
     );
 
     always_comb begin : calc_addr
-        rmask_temp = 4'b0000;
+        rmask = 4'b0000;
         wmask_temp = 4'b0000;
         mem_addr = marmux_o;
         trap = 1'b0;
 
-        if(ctrl_w_MEM_i.mem_read_d) begin
-            case (ctrl_w_MEM_i.load_funct3)
+        if(cw_in.mem.mem_read_d) begin
+            case (cw_in.mem.load_funct3)
                 lw: begin
-                    rmask_temp = 4'b1111;
+                    rmask = 4'b1111;
                 end
                 lh, lhu: begin
-                    rmask_temp = (4'b0011) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
+                    rmask = (4'b0011) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
                     mem_addr = marmux_o - (marmux_o%4);
                 end
                 lb, lbu: begin
-                    rmask_temp = (4'b0001) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
+                    rmask = (4'b0001) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
                     mem_addr = marmux_o - (marmux_o%4);
                 end
                 default: trap = '1;
             endcase
         end
-        else if(ctrl_w_MEM_i.mem_write_d) begin
-            case (ctrl_w_MEM_i.store_funct3)
+        else if(cw_in.mem.mem_write_d) begin
+            case (cw_in.mem.store_funct3)
                 sw: begin
                     wmask_temp = 4'b1111;
                 end
@@ -394,12 +432,12 @@ import cpuIO::*;
             mem_byte_enable <= 4'b0000;
             mem_byte_enable_r <= 4'b0000;
         end
-        else if((exe_mem_ld == 1) && (de_exe_valid == 1) && ((ctrl_w_MEM_i.mem_read_d) || (ctrl_w_MEM_i.mem_write_d))) begin
-            if(ctrl_w_MEM_i.mem_read_d) begin
-                mem_byte_enable <= rmask_temp;
-                mem_byte_enable_r <= rmask_temp;
+        else if((exe_mem_ld == 1) && (de_exe_valid == 1) && ((cw_in.mem.mem_read_d) || (cw_in.mem.mem_write_d))) begin
+            if(cw_in.mem.mem_read_d) begin
+                mem_byte_enable <= rmask;
+                mem_byte_enable_r <= rmask;
             end
-            else if(ctrl_w_MEM_i.mem_write_d) begin
+            else if(cw_in.mem.mem_write_d) begin
                 mem_byte_enable <= wmask_temp;
                 mem_byte_enable_r <= wmask_temp;
             end
@@ -412,7 +450,7 @@ import cpuIO::*;
     mar mar_reg(
         .clk(clk),
         .reset(rst),
-        .load_mar((exe_mem_ld == 1) && (de_exe_valid == 1) && ((ctrl_w_MEM_i.mem_read_d) || (ctrl_w_MEM_i.mem_write_d))),
+        .load_mar((exe_mem_ld == 1) && (de_exe_valid == 1) && ((cw_in.mem.mem_read_d) || (cw_in.mem.mem_write_d))),
         .mar_in(mem_addr),
         .mar_out(mem_address_d)
     );
@@ -431,22 +469,21 @@ module mem_wb_reg
     input logic mem_rdy,
     input logic [31:0] alu_out_i, //aka exe_fwd_data
     input logic br_en_i,
-    input logic [31:0] mem_pc_x,
     input logic [31:0] u_imm_i,
     input logic [31:0] mem_rdata_D_i,
     input logic exe_mem_valid,
-    input cw_writeback ctrl_w_WB_i,
-    output cw_writeback ctrl_w_WB_o,
-    output logic [31:0] wb_pc_x,
     output logic [31:0] u_imm_o,
     output logic [31:0] mem_rdata_D_o,
     output logic mem_wb_rdy,
     output logic mem_wb_valid,
     output logic [31:0] alu_out_o, //aka exe_fwd_data
-    output logic br_en_o
+    output logic br_en_o,
+
+    input control_word cw_in,
+    output control_word cw_out
 );
-    logic [31:0] alu_out_r, pc_x_r, u_imm_r, mem_rdata_r;
-    cw_writeback ctrl_w_wb_r;
+    logic [31:0] alu_out_r, u_imm_r, mem_rdata_r;
+    control_word cw_data;
     logic br_en_r, valid_r, ready_r;
 
     //mem_rdata reg
@@ -479,37 +516,109 @@ module mem_wb_reg
         end
     end
 
-    //serves as pc_x reg
-    always_ff @ (posedge clk, posedge rst) begin : pc_x_register
-        if(rst)begin
-            wb_pc_x <= 32'h40000000;
-            pc_x_r <= 32'h40000000;
-        end
-        else if((mem_wb_ld == 1) && (exe_mem_valid == 1)) begin
-            wb_pc_x <= mem_pc_x;
-            pc_x_r <= mem_pc_x;
-        end
-        else begin
-            wb_pc_x <= pc_x_r;
-        end
-    end
 
     //control word for WB 
-    always_ff @ (posedge clk, posedge rst) begin : ctrl_w_wb_register
+    always_ff @ (posedge clk, posedge rst) begin : cw_register
         if(rst)begin
-            ctrl_w_wb_r.regfilemux_sel <= regfilemux::alu_out;
-            ctrl_w_wb_r.ld_reg <= 1'b0;
-            ctrl_w_wb_r.rd_sel <= 5'b0000;
-            ctrl_w_WB_o.regfilemux_sel <= regfilemux::alu_out;
-            ctrl_w_WB_o.ld_reg <= 1'b0;
-            ctrl_w_WB_o.rd_sel <= 5'b0000;
+            cw_data.exe.cmp_sel <= cmpmux::rs2_out;
+            cw_data.exe.alumux1_sel <= alumux::rs1_out;
+            cw_data.exe.alumux2_sel <= alumux::i_imm;
+            cw_data.exe.rs1_sel <= rs1mux::rs1_data;
+            cw_data.exe.rs2_sel <= rs2mux::rs2_data;
+            cw_data.exe.cmpop <= beq;
+            cw_data.exe.aluop <= alu_add;
+            cw_data.mem.mem_read_d <= 1'b0;
+            cw_data.mem.mem_write_d <= 1'b0;
+            cw_data.mem.mar_sel <= marmux::pc_out;
+            cw_data.wb.ld_reg <= 1'b0;
+            cw_data.wb.regfilemux_sel <= regfilemux::alu_out;
+            cw_data.wb.rd_sel <= 5'b00000;
+            cw_data.rvfi.valid_commit <= 1'b0;//done
+            cw_data.rvfi.order_commit <= 64'b0;//done
+            cw_data.rvfi.instruction <= 32'b0;//done
+            cw_data.rvfi.rs1_addr <= 5'b0; //done
+            cw_data.rvfi.rs2_addr <= 5'b0; //dome
+            cw_data.rvfi.rs1_data <= 32'b0; //done
+            cw_data.rvfi.rs2_data <= 32'b0; //done
+            cw_data.rvfi.rd_wdata <= 32'b0;//done
+            cw_data.rvfi.pc_rdata <= 32'h40000000;//done
+            cw_data.rvfi.pc_wdata <= 32'b0;//done
+            cw_data.rvfi.mem_addr <= 32'b0;//done
+            cw_data.rvfi.rmask <= 4'b0;//done
+            cw_data.rvfi.wmask <= 4'b0;//done
+            cw_data.rvfi.mem_rdata <= 32'b0;//done
+            cw_data.rvfi.mem_wdata <= 32'b0;//done
+
+            cw_out.exe.cmp_sel <= cmpmux::rs2_out;
+            cw_out.exe.alumux1_sel <= alumux::rs1_out;
+            cw_out.exe.alumux2_sel <= alumux::i_imm;
+            cw_out.exe.rs1_sel <= rs1mux::rs1_data;
+            cw_out.exe.rs2_sel <= rs2mux::rs2_data;
+            cw_out.exe.cmpop <= beq;
+            cw_out.exe.aluop <= alu_add;
+            cw_out.mem.mem_read_d <= 1'b0;
+            cw_out.mem.mem_write_d <= 1'b0;
+            cw_out.mem.mar_sel <= marmux::pc_out;
+            cw_out.wb.ld_reg <= 1'b0;
+            cw_out.wb.regfilemux_sel <= regfilemux::alu_out;
+            cw_out.wb.rd_sel <= 5'b00000;
+            cw_out.rvfi.valid_commit <= 1'b0;//done
+            cw_out.rvfi.order_commit <= 64'b0;//done
+            cw_out.rvfi.instruction <= 32'b0;//done
+            cw_out.rvfi.rs1_addr <= 5'b0; //done
+            cw_out.rvfi.rs2_addr <= 5'b0; //dome
+            cw_out.rvfi.rs1_data <= 32'b0; //done
+            cw_out.rvfi.rs2_data <= 32'b0; //done
+            cw_out.rvfi.rd_wdata <= 32'b0;//done
+            cw_out.rvfi.pc_rdata <= 32'h40000000;//done
+            cw_out.rvfi.pc_wdata <= 32'b0;//done
+            cw_out.rvfi.mem_addr <= 32'b0;//done
+            cw_out.rvfi.rmask <= 4'b0;//done
+            cw_out.rvfi.wmask <= 4'b0;//done
+            cw_out.rvfi.mem_rdata <= 32'b0;//done
+            cw_out.rvfi.mem_wdata <= 32'b0;//done
         end
         else if((mem_wb_ld == 1) && (exe_mem_valid == 1)) begin
-            ctrl_w_wb_r<= ctrl_w_WB_i;
-            ctrl_w_WB_o <= ctrl_w_WB_i;
+            cw_data.exe <= cw_in.exe;
+            cw_data.mem <= cw_in.mem;
+            cw_data.wb <= cw_in.wb;
+            cw_data.rvfi.valid_commit <= cw_in.rvfi.valid_commit;//done
+            cw_data.rvfi.order_commit <= cw_in.rvfi.order_commit;//done
+            cw_data.rvfi.instruction <= cw_in.rvfi.instruction;//done
+            cw_data.rvfi.rs1_addr <= cw_in.rvfi.rs1_addr; //done
+            cw_data.rvfi.rs2_addr <= cw_in.rvfi.rs2_addr; //dome
+            cw_data.rvfi.rs1_data <= cw_in.rvfi.rs1_data; //done
+            cw_data.rvfi.rs2_data <= cw_in.rvfi.rs2_data; //done
+            cw_data.rvfi.rd_wdata <= cw_in.rvfi.rd_wdata;//done
+            cw_data.rvfi.pc_rdata <= cw_in.rvfi.pc_rdata;//done
+            cw_data.rvfi.pc_wdata <= cw_in.rvfi.pc_wdata;//done
+            cw_data.rvfi.mem_addr <= cw_in.rvfi.mem_addr;//done
+            cw_data.rvfi.rmask <= cw_in.rvfi.rmask;//done
+            cw_data.rvfi.wmask <= cw_in.rvfi.wmask;//done
+            cw_data.rvfi.mem_rdata <= mem_rdata_D_i;//done
+            cw_data.rvfi.mem_wdata <= cw_in.rvfi.mem_wdata;//done
+
+            cw_out.exe <= cw_in.exe;
+            cw_out.mem <= cw_in.mem;
+            cw_out.wb <= cw_in.wb;
+            cw_out.rvfi.valid_commit <= cw_in.rvfi.valid_commit;//done
+            cw_out.rvfi.order_commit <= cw_in.rvfi.order_commit;//done
+            cw_out.rvfi.instruction <= cw_in.rvfi.instruction;//done
+            cw_out.rvfi.rs1_addr <= cw_in.rvfi.rs1_addr; //done
+            cw_out.rvfi.rs2_addr <= cw_in.rvfi.rs2_addr; //dome
+            cw_out.rvfi.rs1_data <= cw_in.rvfi.rs1_data; //done
+            cw_out.rvfi.rs2_data <= cw_in.rvfi.rs2_data; //done
+            cw_out.rvfi.rd_wdata <= cw_in.rvfi.rd_wdata;//done
+            cw_out.rvfi.pc_rdata <= cw_in.rvfi.pc_rdata;//done
+            cw_out.rvfi.pc_wdata <= cw_in.rvfi.pc_wdata;//done
+            cw_out.rvfi.mem_addr <= cw_in.rvfi.mem_addr;//done
+            cw_out.rvfi.rmask <= cw_in.rvfi.rmask;//done
+            cw_out.rvfi.wmask <= cw_in.rvfi.wmask;//done
+            cw_out.rvfi.mem_rdata <= mem_rdata_D_i;//done
+            cw_out.rvfi.mem_wdata <= cw_in.rvfi.mem_wdata;//done
         end
         else begin
-            ctrl_w_WB_o <= ctrl_w_wb_r;
+            cw_out <= cw_data;
         end
     end
 
