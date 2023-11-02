@@ -1,5 +1,6 @@
 module decode_stage
     import rv32i_types::*;
+    import cpuIO::*;
     import immediates::*;   
 (
     input logic clk,
@@ -9,7 +10,7 @@ module decode_stage
     input rv32i_reg rd_sel,
 
     input rv32i_word instruction,
-
+    input rv32i_word pc_rdata,
     output rv32i_reg rs1_o,
     output rv32i_reg rs2_o,
     output rv32i_reg rd_o,
@@ -24,17 +25,24 @@ module decode_stage
     input logic ready_i,
     input logic valid_i,
     output logic ready_o,
-    output logic valid_o
+    output logic valid_o,
+
+    output control_read cr
 );
 /*
-    output rv32i_reg rd,
-    output rv32i_word i_imm,
-    output rv32i_word u_imm,
-    output rv32i_word b_imm,
-    output rv32i_word s_imm,
-    output rv32i_word j_imm
-    output rv32i_reg rs1,
-    output rv32i_reg rs2,
+        typedef struct {
+        logic[6:0] opcode;
+        logic [2:0] func3;
+        logic [6:0] func7;
+        logic [63:0] order_commit;
+        logic [31:0] instruction;
+        logic [31:0] pc_rdata;
+        logic [4:0] rs1_addr;
+        logic [4:0] rs2_addr;
+        logic [31:0] rs1_data;
+        logic [31:0] rs2_data;
+        logic [4:0] rd_addr;
+    } control_read;
 */
     rv32i_reg rd,rs1,rs2;
     assign rd_o = rd;
@@ -42,6 +50,10 @@ module decode_stage
     assign rs2_o = rs2;
     assign ready_o = 1'b1;
     assign valid_o = ready_i & valid_i;
+
+
+
+    //logic [63:0] order_commit;
 
     //decode logic 
     //begin decode_logic
