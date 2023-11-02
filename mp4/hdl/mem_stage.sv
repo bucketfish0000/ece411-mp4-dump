@@ -23,6 +23,11 @@ import cpuIO::*;
     output logic mem_w_d, //to data cache
     output logic mem_rdy //to ctrl / MEM_WB reg
 );
+    logic mem_resp_flag;
+    logic mem_ready;
+
+    assign mem_rdy = mem_ready;
+
     function void do_default();
         mem_r_d = 1'b0;
         mem_w_d = 1'b0;
@@ -30,23 +35,36 @@ import cpuIO::*;
 
     //essentialy clocked by dram resp signal
     always_comb begin : rdy_ctrl
-        if((mem_resp_d == 1) && ((ctrl_w_MEM.mem_read_d == 1) || (ctrl_w_MEM.mem_write_d == 1)))
-            mem_rdy = 1'b1;
+        if(((mem_resp_d == 1) && ((ctrl_w_MEM.mem_read_d == 1) || (ctrl_w_MEM.mem_write_d == 1))) 
+        || ((ctrl_w_MEM.mem_read_d == 0) && (ctrl_w_MEM.mem_write_d == 0)))
+            mem_ready = 1'b1;
         else
-            mem_rdy = 1'b0;
+            mem_ready = 1'b0;
     end
 
     always_comb begin : mem_ctrl
         if(rst) begin
             do_default();
         end
-        else if(exe_mem_valid)begin
+        else if(exe_mem_valid && !mem_resp_flag)begin
             do_default();
             mem_r_d = ctrl_w_MEM.mem_read_d;
             mem_w_d = ctrl_w_MEM.mem_write_d;
         end
         else begin
             do_default();
+        end
+    end
+
+    always_ff @(posedge clk) begin
+        if(rst) begin
+            mem_resp_flag <= 1'b0;
+        end
+        else if(mem_ready && ((ctrl_w_MEM.mem_read_d == 1) || (ctrl_w_MEM.mem_write_d == 1))) begin
+            mem_resp_flag <= 1'b1;
+        end
+        else begin
+            mem_resp_flag <= 1'b0;
         end
     end
 

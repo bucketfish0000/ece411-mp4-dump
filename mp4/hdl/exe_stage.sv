@@ -73,6 +73,20 @@ import immediates::*;
     );
 
     always_comb begin : exe_mux
+        unique case (ctrl_w_EXE.rs1_sel)
+            2'b00: rs1_o = rs1_data;
+            2'b01: rs1_o = exe_fwd_data;
+            2'b10: rs1_o = mem_fwd_data;
+            2'b11: ;
+        endcase
+
+        unique case (ctrl_w_EXE.rs2_sel)
+            2'b00: rs2_o = rs2_data;
+            2'b01: rs2_o = exe_fwd_data;
+            2'b10: rs2_o = mem_fwd_data;
+            2'b11: ;
+        endcase
+
         unique case (ctrl_w_EXE.cmp_sel)
             cmpmux::rs2_out: cmpmux_o = rs2_o;
             cmpmux::i_imm: cmpmux_o = i_imm;
@@ -91,21 +105,6 @@ import immediates::*;
             alumux::j_imm: alumux2_o = j_imm;
             alumux::rs2_out: alumux2_o = rs2_o;
         endcase
-
-        unique case (ctrl_w_EXE.rs1_sel)
-            2'b00: rs1_o = rs1_data;
-            2'b01: rs1_o = exe_fwd_data;
-            2'b10: rs1_o = mem_fwd_data;
-            2'b11: ;
-        endcase
-
-        unique case (ctrl_w_EXE.rs2_sel)
-            2'b00: rs2_o = rs2_data;
-            2'b01: rs2_o = exe_fwd_data;
-            2'b10: rs2_o = mem_fwd_data;
-            2'b11: ;
-        endcase
-
     end
 
 endmodule : exe_stage
