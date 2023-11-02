@@ -232,7 +232,7 @@ always_comb begin : cpu_cw
 
                 //fetch
                 pcmux_sel = pcmux::pc_plus4;
-                ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;
+               
                 
                 //decode nothing here
                 
@@ -253,7 +253,7 @@ always_comb begin : cpu_cw
 
                 //fetch
                 pcmux_sel = pcmux::pc_plus4;
-                ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;
+               
 
                 //decode nothing        
             end
@@ -273,7 +273,7 @@ always_comb begin : cpu_cw
 
                 //fetch
                 pcmux_sel = pcmux::alu_out;
-                ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;
+               
             
                 //decode nothing
             end
@@ -293,7 +293,6 @@ always_comb begin : cpu_cw
 
                 //fetch
                 pcmux_sel = pcmux::alu_mod2;
-                ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;//will be changed later in pipeline
             
                 //decode
                 ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
@@ -325,11 +324,10 @@ always_comb begin : cpu_cw
 
                     //fetch
                     pcmux_sel = pcmux::alu_out;
-                    ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04; //will change later in pipeline
                 end
                 else begin
                     pcmux_sel = pcmux::pc_plus4;
-                    ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;
+                   
                 end
 
                 //decode
@@ -372,7 +370,7 @@ always_comb begin : cpu_cw
 
                 //fetch
                 pcmux_sel = pcmux::pc_plus4;
-                ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;
+               
             
                 //decode
                 ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
@@ -392,7 +390,7 @@ always_comb begin : cpu_cw
 
                 //fetch
                 pcmux_sel = pcmux::pc_plus4;
-                ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;
+               
             
                 //decode
                 ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
@@ -508,7 +506,7 @@ always_comb begin : cpu_cw
 
                 //fetch
                 pcmux_sel = pcmux::pc_plus4;
-                ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;
+               
             
                 //decode
                 ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
@@ -627,7 +625,7 @@ always_comb begin : cpu_cw
 
                 //fetch
                 pcmux_sel = pcmux::pc_plus4;
-                ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;
+               
             
                 //decode
                 ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
