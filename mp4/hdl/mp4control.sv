@@ -346,6 +346,7 @@ always_comb begin : cpu_cw
 
                 //mem
                 ctrl_word.mem.mem_read_d = 1'b1;
+                ctrl_word.mem.mar_sel = marmux::alu_out;
 
                 //writeback
                 ctrl_word.wb.ld_reg = 1'b1;
@@ -386,6 +387,7 @@ always_comb begin : cpu_cw
 
                 //mem
                 ctrl_word.mem.mem_write_d = 1'b1;
+                ctrl_word.mem.mar_sel = marmux::alu_out;
 
                 //writeback doesn't do anything here
 
