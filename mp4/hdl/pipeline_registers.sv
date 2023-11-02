@@ -13,15 +13,17 @@ module fet_dec_reg
 
     input rv32i_word instr_fetch,
     input rv32i_word pc_fetch,
+    input rv32i_word pc_wdata,
 
     output rv32i_word instr_decode,
     output rv32i_word pc_decode,
+    output rv32i_word pc_wdata_decode,
 
     output logic [63:0] commit_order
 );
 
     logic ready,valid;
-    logic[31:0] instr,pc;
+    logic[31:0] instr,pc_r, pc_w;
     logic [63:0] order_counter;
 
     always_ff @(posedge clk)
@@ -31,7 +33,8 @@ module fet_dec_reg
             ready<='0;
             valid<='0;
             instr<=0;
-            pc<=0;
+            pc_r<=0;
+            pc_w<=0;
             order_counter <= 64'b0;
         end
         else if (load)
@@ -39,7 +42,8 @@ module fet_dec_reg
             ready<=ready_i;
             valid<=valid_i;
             instr<=instr_fetch;
-            pc<=pc_fetch;
+            pc_r<=pc_fetch;
+            pc_w<=pc_wdata;
             order_counter <= order_counter + 64'b01;
         end
     end
@@ -49,7 +53,8 @@ module fet_dec_reg
         ready_o=ready;
         valid_o=valid;
         instr_decode=instr;
-        pc_decode=pc;
+        pc_decode=pc_r;
+        pc_wdata_decode=pc_w;
         commit_order = order_counter; 
     end
 endmodule : fet_dec_reg

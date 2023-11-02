@@ -11,16 +11,10 @@ module decode_stage
 
     input rv32i_word instruction,
     input rv32i_word pc_rdata,
-    output rv32i_reg rs1_o,
-    output rv32i_reg rs2_o,
-    output rv32i_reg rd_o,
-    output rv32i_word rs1_data,
-    output rv32i_word rs2_data,
+    input rv32i_word pc_wdata,
+    input logic [63:0] commit_order,
 
-    output rv32i_opcode opcode,
     output immediates::imm imm_data,
-    output logic[2:0] func3,
-    output logic[6:0] func7,
 
     input logic ready_i,
     input logic valid_i,
@@ -29,25 +23,11 @@ module decode_stage
 
     output control_read cr
 );
-/*
-        typedef struct {
-        logic[6:0] opcode;
-        logic [2:0] func3;
-        logic [6:0] func7;
-        logic [63:0] order_commit;
-        logic [31:0] instruction;
-        logic [31:0] pc_rdata;
-        logic [4:0] rs1_addr;
-        logic [4:0] rs2_addr;
-        logic [31:0] rs1_data;
-        logic [31:0] rs2_data;
-        logic [4:0] rd_addr;
-    } control_read;
-*/
     rv32i_reg rd,rs1,rs2;
-    assign rd_o = rd;
-    assign rs1_o = rs1;
-    assign rs2_o = rs2;
+    logic [31:0] rs1_data, rs2_data;
+    rv32i_opcode opcode;
+    logic [2:0] func3;
+    logic [6:0] func7;
     assign ready_o = 1'b1;
     assign valid_o = ready_i & valid_i;
 
@@ -82,6 +62,18 @@ module decode_stage
     .reg_b(rs2_data)
     );
 
-    
+    //control read word to send to cpu
+    assign cr.order_commit = commit_order;
+    assign cr.opcode = opcode;
+    assign cr.func3 = func3;
+    assign cr.func7 = func7;
+    assign cr.instruction = instruction;
+    assign cr.pc_rdata = pc_rdata; //TODO ?????
+    assign cr.pc_wdata = pc_wdata;
+    assign cr.rs1_addr = rs1;
+    assign cr.rs2_addr = rs2;
+    assign cr.rs1_data = rs1_data;
+    assign cr.rs2_data = rs2_data;
+    assign cr.rd_addr = rd;
     
 endmodule : decode_stage
