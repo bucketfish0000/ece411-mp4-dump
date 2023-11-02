@@ -28,21 +28,49 @@ package cpuIO;
     typedef struct {
         logic ld_reg;
         regfilemux::regfilemux_sel_t regfilemux_sel;
-        logic [4:0] rd_sel;
+        logic [4:0] rd_sel; //rvfi needs this, but we'll leave it here
     } cw_writeback;
 
+    typedef struct {
+        logic valid_commit; //set in ctrl
+        logic [63:0] order_commit; //set in ctrl(from fe_de)
+        logic [31:0] instruction; //set in ctrl(from fe_de?)
+        logic [4:0] rs1_addr;  //set in ctrl(from decode)
+        logic [4:0] rs2_addr;  //set in ctrl(from decode)
+        logic [31:0] rs1_data;  //set in ctrl(from decode)
+        logic [31:0] rs2_data;  //set in ctrl(from decode)
+        // logic [4:0] rd_addr;  this in cw_wb
+        logic [31:0] rd_wdata; //set in wb
+        logic [31:0] pc_rdata; //set in ctrl(from fe_de?)
+        logic [31:0] pc_wdata; //set in ctrl, overwritten in br?
+        logic [31:0] mem_addr; //set in exe_mem(mar)
+        logic [3:0] rmask; //set in exe_mem
+        logic [3:0] wmask; //set in exe_mem
+        logic [31:0] mem_rdata; //set in mem_wb(from mem)
+        logic [31:0] mem_wdata; //set in exe_mem(mdo)
+    } rvfi_sigs;
 
     typedef struct {
         logic[6:0] opcode;
         logic [2:0] func3;
         logic [6:0] func7;
+        logic [63:0] order_commit;
+        logic [31:0] instruction;
+        logic [31:0] pc_rdata;
+        logic [4:0] rs1_addr;
+        logic [4:0] rs2_addr;
+        logic [31:0] rs1_data;
+        logic [31:0] rs2_data;
+        logic [4:0] rd_addr;
     } control_read;
     
     typedef struct {
         cw_execute exe;
         cw_mem mem;
         cw_writeback wb;
+        rvfi_sigs rvfi;
     } control_word;
+
 endpackage : cpuIO
 
 package immediates;
