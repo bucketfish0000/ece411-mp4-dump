@@ -1,5 +1,5 @@
 # AG Report MP4CP1 2023-11-01T23:59:59-05:00 
-Report generated at 2023-11-02T00:34:20-05:00, using commit ``4ecdfb03097f54de1eca4d6e9a44301e57709115``
+Report generated at 2023-11-02T00:38:01-05:00, using commit ``4ecdfb03097f54de1eca4d6e9a44301e57709115``
 
 Autograder Run ID: b3b52aaf-d2f7-4e96-bea7-9c4c3414225b
 
@@ -13,7 +13,7 @@ Autograder Job ID: 46fec43e-70ee-468a-83b1-d319ad2c42f7
  mkdir -p sim
 cd sim && vcs /tmp/dut/pkg/types.sv /tmp/dut/hdl/mp4control.sv /tmp/dut/hdl/mp4.sv /tmp/dut/hdl/decode_stage.sv /tmp/dut/hdl/register.sv /tmp/dut/hdl/regfile.sv /tmp/dut/hdl/mem_stage.sv /tmp/dut/hdl/mem_data_out.sv /tmp/dut/hdl/mar.sv /tmp/dut/hdl/mp4datapath.sv /tmp/dut/hdl/alu.sv /tmp/dut/hdl/cmp.sv /tmp/dut/hdl/wb_stage.sv /tmp/dut/hdl/pipeline_registers.sv /tmp/dut/hdl/fetch_stage.sv /tmp/dut/hdl/exe_stage.sv /tmp/dut/hvl/top_tb.sv /tmp/dut/hvl/rvfimon.v /tmp/dut/hvl/monitor.sv /tmp/dut/hvl/mon_itf.sv /tmp/dut/hvl/mem_itf.sv /tmp/dut/hvl/magic_dual_port.sv /tmp/dut/hvl/burst_memory.sv /tmp/dut/hvl/bmem_itf.sv  -full64 -lca -sverilog +lint=all,noNS -timescale=1ns/1ns -debug_acc+all -kdb -fsdb -suppress=LCA_FEATURES_ENABLED -licqueue -msg_config=../vcs_warn.config -l compile.log -top top_tb -o top_tb
                          Chronologic VCS (TM)
-      Version R-2020.12-SP1-1_Full64 -- Thu Nov  2 00:34:24 2023
+      Version R-2020.12-SP1-1_Full64 -- Thu Nov  2 00:38:04 2023
 
                     Copyright (c) 1991 - 2021 Synopsys, Inc.
    This software and the associated documentation are proprietary to Synopsys,
@@ -46,7 +46,7 @@ Error-[SE] Syntax error
                            ^
 
 3 errors
-CPU time: .225 seconds to compile
+CPU time: .239 seconds to compile
 make: *** [Makefile:16: sim/top_tb] Error 255
  
  ``` 
