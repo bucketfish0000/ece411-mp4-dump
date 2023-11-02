@@ -41,8 +41,8 @@ package cpuIO;
         logic [31:0] rs2_data;  //set in ctrl(from decode)
         // logic [4:0] rd_addr;  this in cw_wb
         logic [31:0] rd_wdata; //set in wb
-        logic [31:0] pc_rdata; //set in ctrl(from fe_de?)
-        logic [31:0] pc_wdata; //set in ctrl, overwritten in br?
+        logic [31:0] pc_rdata; //set in ctrl(from decode)
+        logic [31:0] pc_wdata; //set in ctrl(from decode), overwritten in br?
         logic [31:0] mem_addr; //set in exe_mem(mar)
         logic [3:0] rmask; //set in exe_mem
         logic [3:0] wmask; //set in exe_mem
@@ -57,6 +57,7 @@ package cpuIO;
         logic [63:0] order_commit;
         logic [31:0] instruction;
         logic [31:0] pc_rdata;
+        logic [31:0] pc_wdata;
         logic [4:0] rs1_addr;
         logic [4:0] rs2_addr;
         logic [31:0] rs1_data;
