@@ -48,30 +48,22 @@ import cpuIO::*;
             logic if_valid, de_valid, exe_valid, mem_valid, wb_valid;
             logic if_de_ld, de_exe_ld, exe_mem_ld, mem_wb_ld;
             logic mem_r_d, mem_w_d;
-            //cw_cpu cpu_ctrl_word;
-            cw_execute exe_ctrl_word;
-            cw_mem mem_ctrl_word;
-            cw_writeback wb_ctrl_word;
-            rv32i_opcode opcode;
-            logic[2:0] func3;
-            logic[6:0] func7;
             logic br_en;
             logic [3:0] mem_byte_enable; 
-    control_read ctrl_rd;
+            control_read ctrl_rd;
+            logic load_pc;
+            control_word cw_control, ctrl_rvfi;
     
     mp4control control(
         .clk(clk),
         .rst(rst),
 
         /*---if signals---*/
-        //...none?
+        //none...?
+        .load_pc(load_pc),
         .imem_read(imem_read),
         .icache_resp(imem_resp),
-        /*---de signals---*/
-        .opcode(rv32i_opcode'(ctrl_rd.opcode)),
-        .func3(ctrl_rd.func3),
-        .func7(ctrl_rd.func7),
-        //anything else...?
+        /*---de signals... none?---*/
 
         /*---exe signals---*/
         .br_en(br_en),
@@ -81,8 +73,6 @@ import cpuIO::*;
         .mem_read_D(mem_r_d),
         .mem_write_D(mem_w_d),
         //...anything else?
-        .rd_addr(rd_addr),
-
 
         /*---ready signals---*/
         .if_rdy(if_rdy),
@@ -105,17 +95,11 @@ import cpuIO::*;
         .mem_wb_ld(mem_wb_ld),
 
         /*---cpu_cw---*/
-        //.cw_cpu(cpu_ctrl_word), 
-        .cw_exe(exe_ctrl_word),
-        .cw_memory(mem_ctrl_word),
-        .cw_wb(wb_ctrl_word),
+        .cw_read(ctrl_rd), 
+        .ctrl_word(cw_control),
 
-        .pcmux_sel(pcmux_sel)
+        .pcmux_sel(pcmux_sel)      
     );
-    control_word cw_control;
-    assign cw_control.exe = exe_ctrl_word;
-    assign cw_control.mem = mem_ctrl_word;
-    assign cw_control.wb = wb_ctrl_word;
 
     mp4datapath datapath(
         .clk(clk),
@@ -125,6 +109,7 @@ import cpuIO::*;
         .dcache_resp(dmem_resp),
         .icache_out(imem_rdata),
         .dcache_out(dmem_rdata),
+        .load_pc(load_pc),
         //.imem_read(imem_read),
         .pcmux_sel(pcmux_sel),
 
@@ -137,14 +122,7 @@ import cpuIO::*;
         .cw_dec(cw_control),
         .cr(ctrl_rd),
 
-        .rs1_addr(rs1_address),
-        .rs2_addr(rs2_address),
-        .rs1_rdata(rs1_rdata),
-        .rs2_rdata(rs2_rdata),
-        .rd_addr(rd_addr),
-        .rd_wdata(rd_wdata),
         .pc_rdata(pc_rdata),
-        .pc_wdata(pc_wdata),
 
         .br_en(br_en),
 
@@ -167,10 +145,10 @@ import cpuIO::*;
         .mem_address_d(mem_addr_d),
         .mem_byte_enable(mem_byte_enable),
 
-        .rmask(rmask),
-        .wmask(wmask)
+        .wmask(wmask),
 
-        // .rd_addr_sel(rd_addr_sel)
+        .control_rvfi(ctrl_rvfi),
+        .rd_addr_o(rd_addr)
     );
 
     
@@ -185,21 +163,21 @@ import cpuIO::*;
     // Fill this out
     // Only use hierarchical references here for verification
     // **DO NOT** use hierarchical references in the actual design!
-    assign monitor_valid     = 1'b1; //???
-    assign monitor_order     = 0; //???
-    assign monitor_inst      = imem_rdata; //???
-    assign monitor_rs1_addr  = rs1_address;
-    assign monitor_rs2_addr  = rs2_address;
-    assign monitor_rs1_rdata = rs1_rdata;
-    assign monitor_rs2_rdata = rs2_rdata;
+    assign monitor_valid     = ctrl_rvfi.rvfi.valid_commit; //???
+    assign monitor_order     = ctrl_rvfi.rvfi.order_commit; //???
+    assign monitor_inst      = ctrl_rvfi.rvfi.instruction; //???
+    assign monitor_rs1_addr  = ctrl_rvfi.rvfi.rs1_addr;
+    assign monitor_rs2_addr  = ctrl_rvfi.rvfi.rs2_addr;
+    assign monitor_rs1_rdata = ctrl_rvfi.rvfi.rs1_data;
+    assign monitor_rs2_rdata = ctrl_rvfi.rvfi.rs2_data;
     assign monitor_rd_addr   = rd_addr;
-    assign monitor_rd_wdata  = rd_wdata;
-    assign monitor_pc_rdata  = pc_rdata;
-    assign monitor_pc_wdata  = pc_wdata;
-    assign monitor_mem_addr  = mem_addr_d;
-    assign monitor_mem_rmask = rmask;
-    assign monitor_mem_wmask = wmask;
-    assign monitor_mem_rdata = dmem_rdata;
-    assign monitor_mem_wdata = mem_wdata_d;
+    assign monitor_rd_wdata  = ctrl_rvfi.rvfi.rd_wdata;
+    assign monitor_pc_rdata  = ctrl_rvfi.rvfi.pc_rdata;
+    assign monitor_pc_wdata  = ctrl_rvfi.rvfi.pc_wdata;
+    assign monitor_mem_addr  = ctrl_rvfi.rvfi.mem_addr;
+    assign monitor_mem_rmask = ctrl_rvfi.rvfi.rmask;
+    assign monitor_mem_wmask = ctrl_rvfi.rvfi.wmask;
+    assign monitor_mem_rdata = ctrl_rvfi.rvfi.mem_rdata;
+    assign monitor_mem_wdata = ctrl_rvfi.rvfi.mem_wdata;
 
 endmodule : mp4

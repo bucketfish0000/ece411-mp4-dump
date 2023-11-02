@@ -21,10 +21,6 @@ import cpuIO::*;
     output logic  imem_read,
     input logic icache_resp,
     /*---de signals... none?---*/
-    input rv32i_opcode opcode,
-    input logic[2:0] func3,
-    input logic[6:0] func7,
-    //...anything else?
 
     /*---exe signals---*/
     input logic br_en,
@@ -41,7 +37,6 @@ import cpuIO::*;
     input logic exe_rdy,
     input logic mem_rdy,
     input logic wb_rdy,
-    input rv32i_reg rd_addr,
 
     /*---valid signals---*/
     input logic if_valid,
@@ -57,10 +52,8 @@ import cpuIO::*;
     output logic mem_wb_ld,
 
     /*---cpu_cw---*/
-    //output control_word cw_cpu, 
-    output cw_execute cw_exe,
-    output cw_mem cw_memory,
-    output cw_writeback cw_wb,
+    input control_read cw_read, 
+    output control_word ctrl_word,
 
     output pcmux::pcmux_sel_t pcmux_sel 
 );
@@ -180,28 +173,40 @@ store_funct3_t store_funct3;
 load_funct3_t load_funct3;
 arith_funct3_t arith_funct3;
 
-assign arith_funct3 = arith_funct3_t'(func3);
-assign branch_funct3 = branch_funct3_t'(func3);
-assign load_funct3 = load_funct3_t'(func3);
-assign store_funct3 = store_funct3_t'(func3);
+assign arith_funct3 = arith_funct3_t'(cw_read.func3);
+assign branch_funct3 = branch_funct3_t'(cw_read.func3);
+assign load_funct3 = load_funct3_t'(cw_read.func3);
+assign store_funct3 = store_funct3_t'(cw_read.func3);
 
 function void set_def();
-    // cw_cpu.opcode = 7'b0;
-    // cw_cpu.funct3 = 3'b0;
-    // cw_cpu.funct7 = 7'b0;
-    cw_exe.cmp_sel = cmpmux::rs2_out;
-    cw_exe.alumux1_sel = alumux::rs1_out;
-    cw_exe.alumux2_sel = alumux::i_imm;
-    cw_exe.rs1_sel = rs1mux::rs1_data;
-    cw_exe.rs2_sel = rs2mux::rs2_data;
-    cw_exe.cmpop = beq;
-    cw_exe.aluop = alu_add;
-    cw_memory.mem_read_d = 1'b0;
-    cw_memory.mem_write_d = 1'b0;
-    cw_memory.mar_sel = marmux::pc_out;
-    cw_wb.ld_reg = 1'b0;
-    cw_wb.regfilemux_sel = regfilemux::alu_out;
-    cw_wb.rd_sel = 5'b00000;
+    ctrl_word.exe.cmp_sel = cmpmux::rs2_out;
+    ctrl_word.exe.alumux1_sel = alumux::rs1_out;
+    ctrl_word.exe.alumux2_sel = alumux::i_imm;
+    ctrl_word.exe.rs1_sel = rs1mux::rs1_data;
+    ctrl_word.exe.rs2_sel = rs2mux::rs2_data;
+    ctrl_word.exe.cmpop = beq;
+    ctrl_word.exe.aluop = alu_add;
+    ctrl_word.mem.mem_read_d = 1'b0;
+    ctrl_word.mem.mem_write_d = 1'b0;
+    ctrl_word.mem.mar_sel = marmux::pc_out;
+    ctrl_word.wb.ld_reg = 1'b0;
+    ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
+    ctrl_word.wb.rd_sel = 5'b00000;
+    ctrl_word.rvfi.valid_commit = 1'b0;//done
+    ctrl_word.rvfi.order_commit = 64'b0;//done
+    ctrl_word.rvfi.instruction = 32'b0;//done
+    ctrl_word.rvfi.rs1_addr = 5'b0; //done
+    ctrl_word.rvfi.rs2_addr = 5'b0; //dome
+    ctrl_word.rvfi.rs1_data = 32'b0; //done
+    ctrl_word.rvfi.rs2_data = 32'b0; //done
+    ctrl_word.rvfi.rd_wdata = 32'b0;//done
+    ctrl_word.rvfi.pc_rdata = 32'h40000000;//done
+    ctrl_word.rvfi.pc_wdata = 32'b0;//done
+    ctrl_word.rvfi.mem_addr = 32'b0;//done
+    ctrl_word.rvfi.rmask = 4'b0;//done
+    ctrl_word.rvfi.wmask = 4'b0;//done
+    ctrl_word.rvfi.mem_rdata = 32'b0;//done
+    ctrl_word.rvfi.mem_wdata = 32'b0;//done
 endfunction
 
 always_comb begin : cpu_cw
@@ -209,95 +214,110 @@ always_comb begin : cpu_cw
         set_def();
     end
     else if(rdy[4]) begin
-        // cw_cpu.opcode = opcode;
-        // cw_cpu.funct3 = func3;
-        // cw_cpu.funct7 = func7;
+        ctrl_word.rvfi.valid_commit = 1'b1;
+        ctrl_word.rvfi.order_commit = cw_read.order_commit;
+        ctrl_word.rvfi.instruction = cw_read.instruction;
+        ctrl_word.rvfi.pc_rdata = cw_read.pc_rdata;
 
-        unique case(opcode)
+        unique case(cw_read.opcode)
             op_lui: begin
                 //exe doesn't do anyting here
 
                 //mem doesn't do anything here
 
                 //writeback
-                cw_wb.ld_reg = 1'b1;
-                cw_wb.regfilemux_sel = regfilemux::u_imm;
-                cw_wb.rd_sel = rd_addr;
+                ctrl_word.wb.ld_reg = 1'b1;
+                ctrl_word.wb.regfilemux_sel = regfilemux::u_imm;
+                ctrl_word.wb.rd_sel = cw_read.rd_addr;
 
                 //fetch
                 pcmux_sel = pcmux::pc_plus4;
+                ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;
+                
+                //decode nothing here
                 
             end
 
             op_auipc: begin
                 //exe
-                cw_exe.aluop = alu_add;
-                cw_exe.alumux1_sel = alumux::pc_out;
-                cw_exe.alumux2_sel = alumux::u_imm;
+                ctrl_word.exe.aluop = alu_add;
+                ctrl_word.exe.alumux1_sel = alumux::pc_out;
+                ctrl_word.exe.alumux2_sel = alumux::u_imm;
 
                 //mem doesn't do anything here
 
                 //writeback
-                cw_wb.ld_reg = 1'b1;
-                cw_wb.rd_sel = rd_addr;
-                cw_wb.regfilemux_sel = regfilemux::alu_out;
+                ctrl_word.wb.ld_reg = 1'b1;
+                ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
 
                 //fetch
                 pcmux_sel = pcmux::pc_plus4;
+                ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;
+
+                //decode nothing        
             end
 
             op_jal: begin
                 //exe
-                cw_exe.aluop = alu_add;
-                cw_exe.alumux1_sel = alumux::pc_out;
-                cw_exe.alumux2_sel = alumux::j_imm;
+                ctrl_word.exe.aluop = alu_add;
+                ctrl_word.exe.alumux1_sel = alumux::pc_out;
+                ctrl_word.exe.alumux2_sel = alumux::j_imm;
 
                 //mem doesn't do anything here
 
                 //writeback
-                cw_wb.ld_reg = 1'b1;
-                cw_wb.regfilemux_sel = regfilemux::pc_plus4;
-                cw_wb.rd_sel = rd_addr;
+                ctrl_word.wb.ld_reg = 1'b1;
+                ctrl_word.wb.regfilemux_sel = regfilemux::pc_plus4;
+                ctrl_word.wb.rd_sel = cw_read.rd_addr;
 
                 //fetch
                 pcmux_sel = pcmux::alu_out;
+                ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;
+            
+                //decode nothing
             end
 
             op_jalr: begin
                 //exe
-                cw_exe.aluop =  alu_add;
-                cw_exe.alumux1_sel = alumux::rs1_out;
-                cw_exe.alumux2_sel = alumux::i_imm;
+                ctrl_word.exe.aluop =  alu_add;
+                ctrl_word.exe.alumux1_sel = alumux::rs1_out;
+                ctrl_word.exe.alumux2_sel = alumux::i_imm;
 
                 //mem doesn't do anything here
 
                 //writeback
-                cw_wb.ld_reg = 1'b1;
-                cw_wb.regfilemux_sel = regfilemux::pc_plus4;
-                cw_wb.rd_sel = rd_addr;
+                ctrl_word.wb.ld_reg = 1'b1;
+                ctrl_word.wb.regfilemux_sel = regfilemux::pc_plus4;
+                ctrl_word.wb.rd_sel = cw_read.rd_addr;
 
                 //fetch
                 pcmux_sel = pcmux::alu_mod2;
+                ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;//will be changed later in pipeline
+            
+                //decode
+                ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
+                ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
             end
 
             op_br: begin
                 //exe
-                cw_exe.cmp_sel = cmpmux::rs2_out;
-                unique case(func3)
-                    3'b000: cw_exe.cmpop = beq;
-                    3'b001: cw_exe.cmpop = bne;
-                    3'b100: cw_exe.cmpop = blt;
-                    3'b101: cw_exe.cmpop = bge;
-                    3'b110: cw_exe.cmpop = bltu;
-                    3'b111: cw_exe.cmpop = bgeu;
+                ctrl_word.exe.cmp_sel = cmpmux::rs2_out;
+                unique case(cw_read.func3)
+                    3'b000: ctrl_word.exe.cmpop = beq;
+                    3'b001: ctrl_word.exe.cmpop = bne;
+                    3'b100: ctrl_word.exe.cmpop = blt;
+                    3'b101: ctrl_word.exe.cmpop = bge;
+                    3'b110: ctrl_word.exe.cmpop = bltu;
+                    3'b111: ctrl_word.exe.cmpop = bgeu;
 
                     default: ;
                 endcase
 
                 if(br_en) begin
-                    cw_exe.aluop =  alu_add;
-                    cw_exe.alumux1_sel = alumux::pc_out;
-                    cw_exe.alumux2_sel = alumux::b_imm;
+                    ctrl_word.exe.aluop =  alu_add;
+                    ctrl_word.exe.alumux1_sel = alumux::pc_out;
+                    ctrl_word.exe.alumux2_sel = alumux::b_imm;
 
                     //mem doesn't do anything here
 
@@ -305,162 +325,182 @@ always_comb begin : cpu_cw
 
                     //fetch
                     pcmux_sel = pcmux::alu_out;
+                    ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04; //will change later in pipeline
                 end
                 else begin
                     pcmux_sel = pcmux::pc_plus4;
+                    ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;
                 end
+
+                //decode
+                ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
+                ctrl_word.rvfi.rs2_addr = cw_read.rs2_addr;
+                ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
+                ctrl_word.rvfi.rs2_data = cw_read.rs2_data;
             end
 
             op_load: begin
                 //exe
-                cw_exe.aluop = alu_add;
-                cw_exe.alumux1_sel = alumux::rs1_out;
-                cw_exe.alumux2_sel = alumux::i_imm;
+                ctrl_word.exe.aluop = alu_add;
+                ctrl_word.exe.alumux1_sel = alumux::rs1_out;
+                ctrl_word.exe.alumux2_sel = alumux::i_imm;
 
                 //mem
-                cw_memory.mem_read_d = 1'b1;
+                ctrl_word.mem.mem_read_d = 1'b1;
 
                 //writeback
-                cw_wb.ld_reg = 1'b1;
-                cw_wb.rd_sel = rd_addr;    
-                case (func3)
+                ctrl_word.wb.ld_reg = 1'b1;
+                ctrl_word.wb.rd_sel = cw_read.rd_addr;    
+                case (cw_read.func3)
                     3'b000: begin   //lb
-                        cw_wb.regfilemux_sel = regfilemux::lb; //lb 
+                        ctrl_word.wb.regfilemux_sel = regfilemux::lb; //lb 
                     end
                     3'b001: begin   //lh
-                        cw_wb.regfilemux_sel = regfilemux::lh; //lh
+                        ctrl_word.wb.regfilemux_sel = regfilemux::lh; //lh
                     end
                     3'b010: begin   //lw
-                        cw_wb.regfilemux_sel = regfilemux::lw; //lw
+                        ctrl_word.wb.regfilemux_sel = regfilemux::lw; //lw
                     end
                     3'b100: begin   //lbu
-                        cw_wb.regfilemux_sel = regfilemux::lbu; //lbu
+                        ctrl_word.wb.regfilemux_sel = regfilemux::lbu; //lbu
                     end
                     3'b101: begin   //lhu
-                        cw_wb.regfilemux_sel = regfilemux::lhu; //lhu
+                        ctrl_word.wb.regfilemux_sel = regfilemux::lhu; //lhu
                     end
                     default: ;
                 endcase
 
                 //fetch
                 pcmux_sel = pcmux::pc_plus4;
+                ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;
+            
+                //decode
+                ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
+                ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
             end
 
             op_store: begin
                 //exe
-                cw_exe.aluop =  alu_add;
-                cw_exe.alumux1_sel = alumux::rs1_out;
-                cw_exe.alumux2_sel = alumux::s_imm;
+                ctrl_word.exe.aluop =  alu_add;
+                ctrl_word.exe.alumux1_sel = alumux::rs1_out;
+                ctrl_word.exe.alumux2_sel = alumux::s_imm;
 
                 //mem
-                cw_memory.mem_write_d = 1'b1;
+                ctrl_word.mem.mem_write_d = 1'b1;
 
                 //writeback doesn't do anything here
 
                 //fetch
                 pcmux_sel = pcmux::pc_plus4;
+                ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;
+            
+                //decode
+                ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
+                ctrl_word.rvfi.rs2_addr = cw_read.rs2_addr;
+                ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
+                ctrl_word.rvfi.rs2_data = cw_read.rs2_data;
             end
 
             op_imm: begin
-                cw_wb.ld_reg = 1'b1;
-                case(func3)
+                ctrl_word.wb.ld_reg = 1'b1;
+                case(cw_read.func3)
                     3'b000: begin
                         //exe
-                        cw_exe.aluop =  alu_add;
-                        cw_exe.alumux1_sel = alumux::rs1_out;
-                        cw_exe.alumux2_sel = alumux::i_imm;
+                        ctrl_word.exe.aluop =  alu_add;
+                        ctrl_word.exe.alumux1_sel = alumux::rs1_out;
+                        ctrl_word.exe.alumux2_sel = alumux::i_imm;
                    
                         //writeback
-                        cw_wb.regfilemux_sel = regfilemux::alu_out;
-                        cw_wb.rd_sel = rd_addr;
-                        cw_wb.ld_reg = 1'b1;
+                        ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
+                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.ld_reg = 1'b1;
                     end
                      
                     3'b001: begin
                         //exe
-                        cw_exe.aluop =  alu_sll;
-                        cw_exe.alumux1_sel = alumux::rs1_out;
-                        cw_exe.alumux2_sel = alumux::i_imm;
+                        ctrl_word.exe.aluop =  alu_sll;
+                        ctrl_word.exe.alumux1_sel = alumux::rs1_out;
+                        ctrl_word.exe.alumux2_sel = alumux::i_imm;
 
                         //writeback
-                        cw_wb.regfilemux_sel = regfilemux::alu_out;
-                        cw_wb.rd_sel = rd_addr;
-                        cw_wb.ld_reg = 1'b1;
+                        ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
+                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.ld_reg = 1'b1;
                     end
 
                     3'b010: begin
                         //exe
-                        cw_exe.cmpop = blt;
-                        cw_exe.cmp_sel = cmpmux::i_imm;
+                        ctrl_word.exe.cmpop = blt;
+                        ctrl_word.exe.cmp_sel = cmpmux::i_imm;
 
                         //writeback
-                        cw_wb.regfilemux_sel = regfilemux::br_en;
-                        cw_wb.rd_sel = rd_addr;
-                        cw_wb.ld_reg = 1'b1;
+                        ctrl_word.wb.regfilemux_sel = regfilemux::br_en;
+                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.ld_reg = 1'b1;
                     end
 
                     3'b011: begin
                         //exe
-                        cw_exe.cmpop = bltu;
-                        cw_exe.cmp_sel = cmpmux::i_imm;
+                        ctrl_word.exe.cmpop = bltu;
+                        ctrl_word.exe.cmp_sel = cmpmux::i_imm;
 
                         //writeback
-                        cw_wb.regfilemux_sel = regfilemux::br_en;
-                        cw_wb.rd_sel = rd_addr;
-                        cw_wb.ld_reg = 1'b1;
+                        ctrl_word.wb.regfilemux_sel = regfilemux::br_en;
+                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.ld_reg = 1'b1;
                     end
 
                     3'b100: begin
                         //exe
-                        cw_exe.aluop =  alu_xor;
-                        cw_exe.alumux1_sel = alumux::rs1_out;
-                        cw_exe.alumux2_sel = alumux::i_imm;
+                        ctrl_word.exe.aluop =  alu_xor;
+                        ctrl_word.exe.alumux1_sel = alumux::rs1_out;
+                        ctrl_word.exe.alumux2_sel = alumux::i_imm;
 
                         //writeback
-                        cw_wb.regfilemux_sel = regfilemux::alu_out;
-                        cw_wb.rd_sel = rd_addr;
-                        cw_wb.ld_reg = 1'b1;
+                        ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
+                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.ld_reg = 1'b1;
                     end
 
                     3'b101: begin
                         //exe
-                        if(func7[5]) begin
-                            cw_exe.aluop =  alu_sra;
+                        if(cw_read.func7[5]) begin
+                            ctrl_word.exe.aluop =  alu_sra;
                         end
                         else begin
-                            cw_exe.aluop =  alu_srl;
+                            ctrl_word.exe.aluop =  alu_srl;
                         end
-                        cw_exe.alumux1_sel = alumux::rs1_out;
-                        cw_exe.alumux2_sel = alumux::i_imm;
+                        ctrl_word.exe.alumux1_sel = alumux::rs1_out;
+                        ctrl_word.exe.alumux2_sel = alumux::i_imm;
 
                         //writeback
-                        cw_wb.regfilemux_sel = regfilemux::alu_out;
-                        cw_wb.rd_sel = rd_addr;
-                        cw_wb.ld_reg = 1'b1;
+                        ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
+                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.ld_reg = 1'b1;
                     end
 
                     3'b110: begin
                         //exe
-                        cw_exe.aluop =  alu_or;
-                        cw_exe.alumux1_sel = alumux::rs1_out;
-                        cw_exe.alumux2_sel = alumux::i_imm;
+                        ctrl_word.exe.aluop =  alu_or;
+                        ctrl_word.exe.alumux1_sel = alumux::rs1_out;
+                        ctrl_word.exe.alumux2_sel = alumux::i_imm;
 
                         //writeback
-                        cw_wb.regfilemux_sel = regfilemux::alu_out;
-                        cw_wb.rd_sel = rd_addr;
-                        cw_wb.ld_reg = 1'b1;
+                        ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
+                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.ld_reg = 1'b1;
                     end
                     
                     3'b111: begin
                         //exe
-                        cw_exe.aluop =  alu_and;
-                        cw_exe.alumux1_sel = alumux::rs1_out;
-                        cw_exe.alumux2_sel = alumux::i_imm;
+                        ctrl_word.exe.aluop =  alu_and;
+                        ctrl_word.exe.alumux1_sel = alumux::rs1_out;
+                        ctrl_word.exe.alumux2_sel = alumux::i_imm;
 
                         //writeback
-                        cw_wb.regfilemux_sel = regfilemux::alu_out;
-                        cw_wb.rd_sel = rd_addr;
-                        cw_wb.ld_reg = 1'b1;
+                        ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
+                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.ld_reg = 1'b1;
                     end
                 endcase
 
@@ -468,113 +508,118 @@ always_comb begin : cpu_cw
 
                 //fetch
                 pcmux_sel = pcmux::pc_plus4;
+                ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;
+            
+                //decode
+                ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
+                ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
             end
 
             op_reg: begin
-                cw_wb.ld_reg = 1'b1;
-                case(func3)
+                ctrl_word.wb.ld_reg = 1'b1;
+                case(cw_read.func3)
                     3'b000: begin
                         //exe
-                        if(func7[5]) begin
-                            cw_exe.aluop =  alu_sub;
+                        if(cw_read.func7[5]) begin
+                            ctrl_word.exe.aluop =  alu_sub;
                         end
                         else begin
-                            cw_exe.aluop =  alu_add;
+                            ctrl_word.exe.aluop =  alu_add;
                         end
-                        cw_exe.alumux1_sel = alumux::rs1_out;
-                        cw_exe.alumux2_sel = alumux::rs2_out;
+                        ctrl_word.exe.alumux1_sel = alumux::rs1_out;
+                        ctrl_word.exe.alumux2_sel = alumux::rs2_out;
 
                         //writeback
-                        cw_wb.regfilemux_sel = regfilemux::alu_out;
-                        cw_wb.rd_sel = rd_addr;
-                        cw_wb.ld_reg = 1'b1;
+                        ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
+                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.ld_reg = 1'b1;
                     end
                     
                     3'b001: begin
                         //exe
-                        cw_exe.aluop =  alu_sll;
-                        cw_exe.alumux1_sel = alumux::rs1_out;
-                        cw_exe.alumux2_sel = alumux::rs2_out;
+                        ctrl_word.exe.aluop =  alu_sll;
+                        ctrl_word.exe.alumux1_sel = alumux::rs1_out;
+                        ctrl_word.exe.alumux2_sel = alumux::rs2_out;
 
                         //writeback
-                        cw_wb.regfilemux_sel = regfilemux::alu_out;
-                        cw_wb.rd_sel = rd_addr;
-                        cw_wb.ld_reg = 1'b1;
+                        ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
+                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.ld_reg = 1'b1;
                     end
 
                     3'b010: begin
                         //exe
-                        cw_exe.cmpop = blt;
-                        cw_exe.cmp_sel = cmpmux::rs2_out;
+                        ctrl_word.exe.cmpop = blt;
+                        ctrl_word.exe.cmp_sel = cmpmux::rs2_out;
 
                         //writeback
-                        cw_wb.regfilemux_sel = regfilemux::br_en;
-                        cw_wb.rd_sel = rd_addr;
-                        cw_wb.ld_reg = 1'b1;
+                        ctrl_word.wb.regfilemux_sel = regfilemux::br_en;
+                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.ld_reg = 1'b1;
                     end
 
                     3'b011: begin
                         //exe
-                        cw_exe.cmpop = bltu;
-                        cw_exe.cmp_sel = cmpmux::rs2_out;
+                        ctrl_word.exe.cmpop = bltu;
+                        ctrl_word.exe.cmp_sel = cmpmux::rs2_out;
 
                         //writeback
-                        cw_wb.regfilemux_sel = regfilemux::br_en;
-                        cw_wb.rd_sel = rd_addr;
-                        cw_wb.ld_reg = 1'b1;
+                        ctrl_word.wb.regfilemux_sel = regfilemux::br_en;
+                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.ld_reg = 1'b1;
                     end
 
                     3'b100: begin
                         //exe
-                        cw_exe.aluop =  alu_xor;
-                        cw_exe.alumux1_sel = alumux::rs1_out;
-                        cw_exe.alumux2_sel = alumux::rs2_out;
+                        ctrl_word.exe.aluop =  alu_xor;
+                        ctrl_word.exe.alumux1_sel = alumux::rs1_out;
+                        ctrl_word.exe.alumux2_sel = alumux::rs2_out;
 
                         //writeback
-                        cw_wb.regfilemux_sel = regfilemux::alu_out;
-                        cw_wb.rd_sel = rd_addr;
-                        cw_wb.ld_reg = 1'b1;
+                        ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
+                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.ld_reg = 1'b1;
                     end
 
                     3'b101: begin
                         //exe
-                        if(func7[5]) begin
-                            cw_exe.aluop =  alu_sra;
+                        if(cw_read.func7[5]) begin
+                            ctrl_word.exe.aluop =  alu_sra;
                         end
                         else begin
-                            cw_exe.aluop =  alu_srl;
+                            ctrl_word.exe.aluop =  alu_srl;
                         end
-                        cw_exe.alumux1_sel = alumux::rs1_out;
-                        cw_exe.alumux2_sel = alumux::rs2_out;
+                        ctrl_word.exe.alumux1_sel = alumux::rs1_out;
+                        ctrl_word.exe.alumux2_sel = alumux::rs2_out;
 
                         //writeback
-                        cw_wb.regfilemux_sel = regfilemux::alu_out;
-                        cw_wb.rd_sel = rd_addr;
-                        cw_wb.ld_reg = 1'b1;
+                        ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
+                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.ld_reg = 1'b1;
                     end
 
                     3'b110: begin
                         //exe
-                        cw_exe.aluop =  alu_or;
-                        cw_exe.alumux1_sel = alumux::rs1_out;
-                        cw_exe.alumux2_sel = alumux::rs2_out;
+                        ctrl_word.exe.aluop =  alu_or;
+                        ctrl_word.exe.alumux1_sel = alumux::rs1_out;
+                        ctrl_word.exe.alumux2_sel = alumux::rs2_out;
 
                         //writeback
-                        cw_wb.regfilemux_sel = regfilemux::alu_out;
-                        cw_wb.rd_sel = rd_addr;
-                        cw_wb.ld_reg = 1'b1;
+                        ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
+                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.ld_reg = 1'b1;
                     end
 
                     3'b111: begin
                         //exe
-                        cw_exe.aluop =  alu_and;
-                        cw_exe.alumux1_sel = alumux::rs1_out;
-                        cw_exe.alumux2_sel = alumux::rs2_out;
+                        ctrl_word.exe.aluop =  alu_and;
+                        ctrl_word.exe.alumux1_sel = alumux::rs1_out;
+                        ctrl_word.exe.alumux2_sel = alumux::rs2_out;
 
                         //writeback
-                        cw_wb.regfilemux_sel = regfilemux::alu_out;
-                        cw_wb.rd_sel = rd_addr;
-                        cw_wb.ld_reg = 1'b1;
+                        ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
+                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.ld_reg = 1'b1;
                     end
                 endcase
 
@@ -582,6 +627,13 @@ always_comb begin : cpu_cw
 
                 //fetch
                 pcmux_sel = pcmux::pc_plus4;
+                ctrl_word.rvfi.pc_wdata = cw_read.pc_rdata + 32'h04;
+            
+                //decode
+                ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
+                ctrl_word.rvfi.rs2_addr = cw_read.rs2_addr;
+                ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
+                ctrl_word.rvfi.rs2_data = cw_read.rs2_data;
             end
 
             default: ;
