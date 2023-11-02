@@ -51,7 +51,7 @@ module mp4datapath
     output logic [4:0] rd_addr_o
 );
 
-rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb;
+rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb, pc_wdata;
 rv32i_word regfilemux_out;
 rv32i_reg rd_sel;
 
@@ -104,7 +104,9 @@ fetch_stage fetch(
     //.imem_read(imem_read)
     );
 
-rv32i_word instr_decode;
+assign pc_rdata = pc_fetch;
+
+rv32i_word instr_decode, pc_wdata_decode;
 fet_dec_reg fet_dec_reg(
     .clk(clk),.rst(rst),
     .load(fet_dec_load),
@@ -116,8 +118,10 @@ fet_dec_reg fet_dec_reg(
 
     .instr_fetch(instr_fetch),
     .pc_fetch(pc_fetch),
+    .pc_wdata(pc_wdata),
     .instr_decode(instr_decode),
     .pc_decode(pc_decode),
+    .pc_wdata_decode(pc_wdata_decode),
 
     .commit_order(commit_order_decode_i)
 );
@@ -126,23 +130,23 @@ imm imm_decode;
 
 decode_stage decode(
     .clk(clk),.rst(rst),
-    .reg_load(load_reg_wb),//???
-    .rd_data(regfilemux_out),//???
-    .rd_sel(rd_sel),//
+    .reg_load(load_reg_wb),
+    .rd_data(regfilemux_out),
+    .rd_sel(rd_sel),
+
     .instruction(instr_decode),
-    .rs1_o(rs1_addr),
-    .rs2_o(rs2_addr),
-    .rd_o(rd_addr),
-    .rs1_data(rs1_data_decode),
-    .rs2_data(rs2_data_decode),
-    .opcode(opcode_decode),
+    .pc_rdata(pc_decode),
+    .pc_wdata(pc_wdata_decode),
+    .commit_order(commit_order_decode_i),
+
     .imm_data(imm_decode),
-    .func3(func3_decode),
-    .func7(func7_decode),
+
     .ready_i(decode_ready_i),
     .valid_i(decode_valid_i),
     .ready_o(decode_ready_o),
-    .valid_o(decode_valid_o)
+    .valid_o(decode_valid_o),
+
+    .cr(cr)
 );
 assign de_rdy = decode_ready_o;
 assign de_valid = decode_valid_o;
@@ -278,28 +282,5 @@ wb_stage writeback(
 
 assign wb_valid = 1'b1;
 assign wb_rdy = 1'b1;
-
-
-////
-rv32i_opcode opcode_decode;
-logic [2:0] func3_decode;
-logic [6:0] func7_decode;
-logic [63:0] order_commit;
-
-always_comb begin
-    if (rst) order_commit = 64'b0;
-    else if (fetch_ready_o & fetch_valid_o) order_commit +=1;
-end
-assign cr.order_commit = order_commit;
-assign cr.opcode = opcode_decode;
-assign cr.func3 = func3_decode;
-assign cr.func7 = func7_decode;
-assign cr.instruction = instr_fetch;
-assign cr.pc_rdata = cw_exec.rvfi.pc_rdata; //TODO ?????
-assign cr.rs1_addr = rs1_addr;
-assign cr.rs2_addr = rs2_addr;
-assign cr.rs1_data = rs1_data_decode;
-assign cr.rs2_data = rs2_data_decode;
-assign cr.rd_addr = rd_addr;
 
 endmodule : mp4datapath

@@ -218,6 +218,7 @@ always_comb begin : cpu_cw
         ctrl_word.rvfi.order_commit = cw_read.order_commit;
         ctrl_word.rvfi.instruction = cw_read.instruction;
         ctrl_word.rvfi.pc_rdata = cw_read.pc_rdata;
+        ctrl_word.rvfi.pc_wdata = cw_read.pc_wdata;
 
         unique case(cw_read.opcode)
             op_lui: begin
