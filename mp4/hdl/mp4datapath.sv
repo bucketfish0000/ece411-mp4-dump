@@ -80,12 +80,7 @@ assign exe_valid = mem_valid_i;
 assign mem_rdy = mem_ready_o;
 assign mem_valid = wb_valid_i;
 
-rv32i_opcode opcode_decode;
-logic [2:0] func3_decode;
-logic [6:0] func7_decode;
-assign cr.opcode = opcode_decode;
-assign cr.func3 = func3_decode;
-assign cr.func7 = func7_decode;
+
 
 rv32i_word instr_fetch;
 //logic load_pc;
@@ -283,5 +278,28 @@ wb_stage writeback(
 
 assign wb_valid = 1'b1;
 assign wb_rdy = 1'b1;
+
+
+////
+rv32i_opcode opcode_decode;
+logic [2:0] func3_decode;
+logic [6:0] func7_decode;
+logic [63:0] order_commit;
+
+always_comb begin
+    if (rst) order_commit = 64'b0;
+    else if (fetch_ready_o & fetch_valid_o) order_commit +=1;
+end
+assign cr.order_commit = order_commit;
+assign cr.opcode = opcode_decode;
+assign cr.func3 = func3_decode;
+assign cr.func7 = func7_decode;
+assign cr.instruction = instr_fetch;
+assign cr.pc_rdata = cw_exec.rvfi.pc_rdata; //TODO ?????
+assign cr.rs1_addr = rs1_addr;
+assign cr.rs2_addr = rs2_addr;
+assign cr.rs1_data = rs1_data_decode;
+assign cr.rs2_data = rs2_data_decode;
+assign cr.rd_addr = rd_addr;
 
 endmodule : mp4datapath
