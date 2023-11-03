@@ -7,7 +7,6 @@ module fet_dec_reg
     input logic load,
 
     input logic ready_i,
-    input logic valid_i,
     output logic ready_o,
     output logic valid_o,
 
@@ -22,7 +21,7 @@ module fet_dec_reg
     output logic [63:0] commit_order
 );
 
-    logic ready,valid;
+    logic ready,valid_r;
     logic[31:0] instr,pc_r, pc_w;
     logic [63:0] order_counter;
 
@@ -31,7 +30,6 @@ module fet_dec_reg
         if (rst)
         begin
             ready<='0;
-            valid<='0;
             instr<=0;
             pc_r<=0;
             pc_w<=0;
@@ -40,7 +38,6 @@ module fet_dec_reg
         else if (load)
         begin
             ready<=ready_i;
-            valid<=valid_i;
             instr<=instr_fetch;
             pc_r<=pc_fetch;
             pc_w<=pc_wdata;
@@ -51,11 +48,25 @@ module fet_dec_reg
     always_comb
     begin
         ready_o=ready;
-        valid_o=valid;
         instr_decode=instr;
         pc_decode=pc_r;
         pc_wdata_decode=pc_w;
         commit_order = order_counter; 
+    end
+
+    //valid register
+    always_ff @(posedge clk, posedge rst) begin : valid_reg
+        if(rst) begin
+            valid_r <= 1'b0;
+            valid_o <= 1'b0;
+        end
+        else if((load == 1)) begin
+            valid_r <= 1'b1;
+            valid_o <= 1'b1;
+        end
+        else begin
+            valid_o <= valid_r;
+        end
     end
 endmodule : fet_dec_reg
 
@@ -80,7 +91,7 @@ module dec_exe_reg
 );
 
     immediates::imm imm_data;
-    logic ready,valid;
+    logic ready,valid_r;
     control_word cw_data;
 
     always_ff @(posedge clk)
@@ -93,7 +104,6 @@ module dec_exe_reg
             imm_data.j_imm <= 32'b0;
 
             ready<= 1'b0;
-            valid<= 1'b0;
 
             cw_data.exe.cmp_sel <= cmpmux::rs2_out;
             cw_data.exe.alumux1_sel <= alumux::rs1_out;
@@ -129,7 +139,6 @@ module dec_exe_reg
         else if (load) begin
             imm_data<=imm_in;
             ready<=ready_i;
-            valid<=valid_i;
 
             cw_data<=cw_in;
         end
@@ -139,8 +148,22 @@ module dec_exe_reg
     begin
         imm_out=imm_data;
         ready_o = ready;
-        valid_o = valid;
         cw_out=cw_data;
+    end
+
+    //valid register
+    always_ff @(posedge clk, posedge rst) begin : valid_reg
+        if(rst) begin
+            valid_r <= 1'b0;
+            valid_o <= 1'b0;
+        end
+        else if((load == 1)) begin
+            valid_r <= 1'b1;
+            valid_o <= 1'b1;
+        end
+        else begin
+            valid_o <= valid_r;
+        end
     end
 
 endmodule : dec_exe_reg
@@ -196,7 +219,7 @@ import cpuIO::*;
             exe_fwd_data <= 32'b0;
             fwd_r_EX <= 32'b0;
         end
-        else if((exe_mem_ld == 1) && (de_exe_valid == 1)) begin
+        else if((exe_mem_ld == 1)) begin
             exe_fwd_data <= alu_out_i;
             fwd_r_EX <= alu_out_i;
         end
@@ -270,7 +293,7 @@ import cpuIO::*;
             cw_out.rvfi.mem_rdata <= 32'b0;//done
             cw_out.rvfi.mem_wdata <= 32'b0;//done
         end
-        else if((exe_mem_ld == 1) && (de_exe_valid == 1)) begin
+        else if((exe_mem_ld == 1)) begin
             cw_data.exe <= cw_in.exe;
             cw_data.mem <= cw_in.mem;
             cw_data.wb <= cw_in.wb;
@@ -320,7 +343,7 @@ import cpuIO::*;
             br_en_o <= 1'b0;
             br_en_r <= 1'b0;
         end
-        else if((exe_mem_ld == 1) && (de_exe_valid == 1)) begin
+        else if((exe_mem_ld == 1)) begin
             br_en_o <= br_en_i;
             br_en_r <= br_en_i;
         end
@@ -335,7 +358,7 @@ import cpuIO::*;
             valid_r <= 1'b0;
             exe_mem_valid <= 1'b0;
         end
-        else if((exe_mem_ld == 1) && (de_exe_valid == 1)) begin
+        else if((exe_mem_ld == 1)) begin
             valid_r <= 1'b1;
             exe_mem_valid <= 1'b1;
         end
@@ -350,7 +373,7 @@ import cpuIO::*;
             ready_r <= 1'b0;
             exe_mem_rdy <= 1'b0;
         end
-        else if((exe_mem_ld == 1) && (de_exe_valid == 1)) begin
+        else if((exe_mem_ld == 1)) begin
             ready_r <= exe_rdy;
             exe_mem_rdy <= exe_rdy;
         end
@@ -365,7 +388,7 @@ import cpuIO::*;
             u_imm_o <= 32'b0;
             u_imm_r <= 32'b0;
         end
-        else if((exe_mem_ld == 1) && (de_exe_valid == 1)) begin
+        else if((exe_mem_ld == 1)) begin
             u_imm_o <= u_imm_i;
             u_imm_r <= u_imm_i;
         end
@@ -389,7 +412,7 @@ import cpuIO::*;
     mem_data_out mdo_reg(
         .clk(clk),
         .reset(rst),
-        .load_data_out((exe_mem_ld == 1) && (de_exe_valid == 1) && ((cw_in.mem.mem_read_d) || (cw_in.mem.mem_write_d))),
+        .load_data_out((exe_mem_ld == 1) && ((cw_in.mem.mem_read_d) || (cw_in.mem.mem_write_d))),
         .mdo_in(rs2_out_i),
         .mdo_out(mem_wdata_d)
     );
@@ -443,7 +466,7 @@ import cpuIO::*;
             mem_byte_enable <= 4'b0000;
             mem_byte_enable_r <= 4'b0000;
         end
-        else if((exe_mem_ld == 1) && (de_exe_valid == 1) && ((cw_in.mem.mem_read_d) || (cw_in.mem.mem_write_d))) begin
+        else if((exe_mem_ld == 1) && ((cw_in.mem.mem_read_d) || (cw_in.mem.mem_write_d))) begin
             if(cw_in.mem.mem_read_d) begin
                 mem_byte_enable <= rmask;
                 mem_byte_enable_r <= rmask;
@@ -461,7 +484,7 @@ import cpuIO::*;
     mar mar_reg(
         .clk(clk),
         .reset(rst),
-        .load_mar((exe_mem_ld == 1) && (de_exe_valid == 1) && ((cw_in.mem.mem_read_d) || (cw_in.mem.mem_write_d))),
+        .load_mar((exe_mem_ld == 1) && ((cw_in.mem.mem_read_d) || (cw_in.mem.mem_write_d))),
         .mar_in(mem_addr),
         .mar_out(mem_address_d)
     );
@@ -503,7 +526,7 @@ module mem_wb_reg
             mem_rdata_D_o <= 32'b0;
             mem_rdata_r <= 32'b0;
         end
-        else if((mem_wb_ld == 1) && (exe_mem_valid == 1)) begin
+        else if((mem_wb_ld == 1)) begin
             mem_rdata_D_o <= mem_rdata_D_i;
             mem_rdata_r <= mem_rdata_D_i;
         end
@@ -518,7 +541,7 @@ module mem_wb_reg
             alu_out_o <= 32'b0;
             alu_out_r <= 32'b0;
         end
-        else if((mem_wb_ld == 1) && (exe_mem_valid == 1)) begin
+        else if((mem_wb_ld == 1)) begin
             alu_out_o <= alu_out_i;
             alu_out_r <= alu_out_i;
         end
@@ -593,7 +616,7 @@ module mem_wb_reg
             cw_out.rvfi.mem_rdata <= 32'b0;//done
             cw_out.rvfi.mem_wdata <= 32'b0;//done
         end
-        else if((mem_wb_ld == 1) && (exe_mem_valid == 1)) begin
+        else if((mem_wb_ld == 1)) begin
             cw_data.exe <= cw_in.exe;
             cw_data.mem <= cw_in.mem;
             cw_data.wb <= cw_in.wb;
@@ -643,7 +666,7 @@ module mem_wb_reg
             br_en_o <= 1'b0;
             br_en_r <= 1'b0;
         end
-        else if((mem_wb_ld == 1) && (exe_mem_valid == 1)) begin
+        else if((mem_wb_ld == 1)) begin
             br_en_o <= br_en_i;
             br_en_r <= br_en_i;
         end
@@ -658,7 +681,7 @@ module mem_wb_reg
             valid_r <= 1'b0;
             mem_wb_valid <= 1'b0;
         end
-        else if((mem_wb_ld == 1) && (exe_mem_valid == 1)) begin
+        else if((mem_wb_ld == 1)) begin
             valid_r <= 1'b1;
             mem_wb_valid <= 1'b1;
         end
@@ -673,7 +696,7 @@ module mem_wb_reg
             ready_r <= 1'b0;
             mem_wb_rdy <= 1'b0;
         end
-        else if((mem_wb_ld == 1) && (exe_mem_valid == 1)) begin
+        else if((mem_wb_ld == 1)) begin
             ready_r <= mem_rdy;
             mem_wb_rdy <= mem_rdy;
         end
@@ -688,7 +711,7 @@ module mem_wb_reg
             u_imm_o <= 32'b0;
             u_imm_r <= 32'b0;
         end
-        else if((mem_wb_ld == 1) && (exe_mem_valid == 1)) begin
+        else if((mem_wb_ld == 1)) begin
             u_imm_o <= u_imm_i;
             u_imm_r <= u_imm_i;
         end
