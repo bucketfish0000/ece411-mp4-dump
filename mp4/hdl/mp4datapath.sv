@@ -79,6 +79,8 @@ assign exe_rdy = exec_ready_o;
 assign exe_valid = mem_valid_i;
 assign mem_rdy = mem_ready_o;
 assign mem_valid = wb_valid_i;
+assign de_valid = exec_valid_i;
+assign if_valid = decode_valid_i;
 
 
 
@@ -86,7 +88,6 @@ rv32i_word instr_fetch;
 //logic load_pc;
 
 assign if_rdy = fetch_ready_o;
-assign if_valid = fetch_valid_o;
 
 fetch_stage fetch(
     .clk(clk),
@@ -99,8 +100,7 @@ fetch_stage fetch(
     .pc_out(pc_fetch),
     .pc_next(pc_wdata),
     .instr_out(instr_fetch),
-    .ready(fetch_ready_o),
-    .valid(fetch_valid_o)
+    .ready(fetch_ready_o)
     //.imem_read(imem_read)
     );
 
@@ -112,7 +112,6 @@ fet_dec_reg fet_dec_reg(
     .load(fet_dec_load),
 
     .ready_i(fetch_ready_o),
-    .valid_i(fetch_valid_o),
     .ready_o(decode_ready_i),
     .valid_o(decode_valid_i),
 
@@ -144,12 +143,10 @@ decode_stage decode(
     .ready_i(decode_ready_i),
     .valid_i(decode_valid_i),
     .ready_o(decode_ready_o),
-    .valid_o(decode_valid_o),
 
     .cr(cr)
 );
 assign de_rdy = decode_ready_o;
-assign de_valid = decode_valid_o;
 
 rv32i_word rs1_data_exec,rs2_data_exec;
 rv32i_opcode opcode_exec;
@@ -163,8 +160,8 @@ dec_exe_reg dec_exe_reg(
 
     .imm_out(imm_exec),
 
+    .valid_i(decode_valid_i),
     .ready_i(decode_ready_o),
-    .valid_i(decode_valid_o),
 
     .ready_o(exec_ready_i),
     .valid_o(exec_valid_i),
@@ -280,7 +277,7 @@ wb_stage writeback(
     .cw_out_rvfi(control_rvfi)
 );
 
-assign wb_valid = 1'b1;
+assign wb_valid = wb_valid_i;
 assign wb_rdy = 1'b1;
 
 endmodule : mp4datapath
