@@ -30,7 +30,17 @@ import cpuIO::*;
 );
 
 logic [31:0] regfile_data;
+logic [63:0] prev_order;
 assign regfilemux_out = regfile_data;
+
+//this keeps track of the previous order so we don't output valid signal more than one cycle for any
+//instruction
+always_ff @(posedge clk) begin : prev_order_tracker
+    if(!mem_wb_valid)
+        prev_order <= 64'hffffffffffffffff;
+    else
+        prev_order <= cw_in.rvfi.order_commit;
+end
 
 always_comb begin : regfile_ctrl_signals
 
@@ -71,10 +81,14 @@ always_comb begin : regfile_ctrl_signals
         load_reg = cw_in.wb.ld_reg;
         rd_sel =  cw_in.wb.rd_sel;
 
+        if(cw_in.rvfi.order_commit != prev_order)
+            cw_out_rvfi.rvfi.valid_commit = cw_in.rvfi.valid_commit;//done
+        else
+            cw_out_rvfi.rvfi.valid_commit = 1'b0;
+
         cw_out_rvfi.exe = cw_in.exe;
         cw_out_rvfi.mem = cw_in.mem;
         cw_out_rvfi.wb = cw_in.wb;
-        cw_out_rvfi.rvfi.valid_commit = cw_in.rvfi.valid_commit;//done
         cw_out_rvfi.rvfi.order_commit = cw_in.rvfi.order_commit;//done
         cw_out_rvfi.rvfi.instruction = cw_in.rvfi.instruction;//done
         cw_out_rvfi.rvfi.rs1_addr = cw_in.rvfi.rs1_addr; //done
