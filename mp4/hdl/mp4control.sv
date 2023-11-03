@@ -126,6 +126,22 @@ always_comb begin : ld_ctrl
         exe_mem_ld = 1'b1;
         mem_wb_ld = 1'b1;
 
+
+
+        //cold start/flush
+        if(vald[4] == 0) begin
+            de_exe_ld = 1'b0;
+        end
+
+        if(vald[3] == 0) begin
+            exe_mem_ld = 1'b0;
+        end
+
+        if(vald[2] == 0) begin
+            mem_wb_ld = 1'b0;
+        end
+
+        //stall
         //              de                          exe                                         mem                                     wb
         if(((rdy[3] == 0) && (vald[3] == 1)) || ((rdy[2] == 0) && (vald[2] == 1)) || ((rdy[1] == 0) && (vald[1] == 1)) || ((rdy[0] == 0) && (vald[0] == 1))) begin
             if_de_ld = 1'b0;
@@ -188,6 +204,8 @@ function void set_def();
     ctrl_word.exe.aluop = alu_add;
     ctrl_word.mem.mem_read_d = 1'b0;
     ctrl_word.mem.mem_write_d = 1'b0;
+    ctrl_word.mem.store_funct3 = sb;
+    ctrl_word.mem.load_funct3 = lb;
     ctrl_word.mem.mar_sel = marmux::pc_out;
     ctrl_word.wb.ld_reg = 1'b0;
     ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
@@ -347,8 +365,9 @@ always_comb begin : cpu_cw
                 //mem
                 ctrl_word.mem.mem_read_d = 1'b1;
                 ctrl_word.mem.mar_sel = marmux::alu_out;
+                ctrl_word.mem.load_funct3 = load_funct3;
 
-                //writeback
+                //writeback/more mem
                 ctrl_word.wb.ld_reg = 1'b1;
                 ctrl_word.wb.rd_sel = cw_read.rd_addr;    
                 case (cw_read.func3)
@@ -388,6 +407,7 @@ always_comb begin : cpu_cw
                 //mem
                 ctrl_word.mem.mem_write_d = 1'b1;
                 ctrl_word.mem.mar_sel = marmux::alu_out;
+                ctrl_word.mem.store_funct3 = store_funct3;
 
                 //writeback doesn't do anything here
 
