@@ -19,7 +19,6 @@ module decode_stage
     input logic ready_i,
     input logic valid_i,
     output logic ready_o,
-    output logic valid_o,
 
     output control_read cr
 );
@@ -29,7 +28,6 @@ module decode_stage
     logic [2:0] func3;
     logic [6:0] func7;
     assign ready_o = 1'b1;
-    assign valid_o = ready_i & valid_i;
 
 
 
