@@ -1,5 +1,5 @@
 # AG Report MP4CP2 2023-11-02T23:59:59-05:00 
-Report generated at 2023-11-03T00:00:41-05:00, using commit ``17d9fa613a45af3e14001d05524eecc793440b24``
+Report generated at 2023-11-03T00:04:38-05:00, using commit ``17d9fa613a45af3e14001d05524eecc793440b24``
 
 Autograder Run ID: 070e517c-94cf-4a59-be6e-1c9788d53f63
 
@@ -13,7 +13,7 @@ Autograder Job ID: 144962d3-329d-45cb-a949-04a1d40bbeb2
  mkdir -p sim
 cd sim && vcs /tmp/dut/pkg/types.sv /tmp/dut/hdl/mp4.sv /tmp/dut/hdl/mp4control.sv /tmp/dut/hdl/register.sv /tmp/dut/hdl/regfile.sv /tmp/dut/hdl/mem_stage.sv /tmp/dut/hdl/mem_data_out.sv /tmp/dut/hdl/mar.sv /tmp/dut/hdl/mp4datapath.sv /tmp/dut/hdl/alu.sv /tmp/dut/hdl/cmp.sv /tmp/dut/hdl/decode_stage.sv /tmp/dut/hdl/wb_stage.sv /tmp/dut/hdl/pipeline_registers.sv /tmp/dut/hdl/fetch_stage.sv /tmp/dut/hdl/exe_stage.sv /tmp/dut/hvl/top_tb.sv /tmp/dut/hvl/rvfimon.v /tmp/dut/hvl/monitor.sv /tmp/dut/hvl/mon_itf.sv /tmp/dut/hvl/burst_memory.sv /tmp/dut/hvl/bmem_itf.sv  -full64 -lca -sverilog +lint=all,noNS -timescale=1ns/1ns -debug_acc+all -kdb -fsdb -suppress=LCA_FEATURES_ENABLED -licqueue -msg_config=../vcs_warn.config -l compile.log -top top_tb -o top_tb
                          Chronologic VCS (TM)
-      Version R-2020.12-SP1-1_Full64 -- Fri Nov  3 00:00:44 2023
+      Version R-2020.12-SP1-1_Full64 -- Fri Nov  3 00:04:41 2023
 
                     Copyright (c) 1991 - 2021 Synopsys, Inc.
    This software and the associated documentation are proprietary to Synopsys,
@@ -46,7 +46,7 @@ Error-[SE] Syntax error
                            ^
 
 3 errors
-CPU time: .227 seconds to compile
+CPU time: .221 seconds to compile
 make: *** [Makefile:16: sim/top_tb] Error 255
  
  ``` 
