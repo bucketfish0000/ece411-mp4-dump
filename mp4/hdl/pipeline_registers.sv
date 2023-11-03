@@ -13,15 +13,17 @@ module fet_dec_reg
 
     input rv32i_word instr_fetch,
     input rv32i_word pc_fetch,
+    input rv32i_word pc_wdata,
 
     output rv32i_word instr_decode,
     output rv32i_word pc_decode,
+    output rv32i_word pc_wdata_decode,
 
     output logic [63:0] commit_order
 );
 
     logic ready,valid;
-    logic[31:0] instr,pc;
+    logic[31:0] instr,pc_r, pc_w;
     logic [63:0] order_counter;
 
     always_ff @(posedge clk)
@@ -31,7 +33,8 @@ module fet_dec_reg
             ready<='0;
             valid<='0;
             instr<=0;
-            pc<=0;
+            pc_r<=0;
+            pc_w<=0;
             order_counter <= 64'b0;
         end
         else if (load)
@@ -39,7 +42,8 @@ module fet_dec_reg
             ready<=ready_i;
             valid<=valid_i;
             instr<=instr_fetch;
-            pc<=pc_fetch;
+            pc_r<=pc_fetch;
+            pc_w<=pc_wdata;
             order_counter <= order_counter + 64'b01;
         end
     end
@@ -49,7 +53,8 @@ module fet_dec_reg
         ready_o=ready;
         valid_o=valid;
         instr_decode=instr;
-        pc_decode=pc;
+        pc_decode=pc_r;
+        pc_wdata_decode=pc_w;
         commit_order = order_counter; 
     end
 endmodule : fet_dec_reg
@@ -99,6 +104,8 @@ module dec_exe_reg
             cw_data.exe.aluop <= alu_add;
             cw_data.mem.mem_read_d <= 1'b0;
             cw_data.mem.mem_write_d <= 1'b0;
+            cw_data.mem.store_funct3 <= sb;
+            cw_data.mem.load_funct3 <= lb;
             cw_data.mem.mar_sel <= marmux::pc_out;
             cw_data.wb.ld_reg <= 1'b0;
             cw_data.wb.regfilemux_sel <= regfilemux::alu_out;
@@ -210,6 +217,8 @@ import cpuIO::*;
             cw_data.exe.aluop <= alu_add;
             cw_data.mem.mem_read_d <= 1'b0;
             cw_data.mem.mem_write_d <= 1'b0;
+            cw_data.mem.store_funct3 <= sb;
+            cw_data.mem.load_funct3 <= lb;
             cw_data.mem.mar_sel <= marmux::pc_out;
             cw_data.wb.ld_reg <= 1'b0;
             cw_data.wb.regfilemux_sel <= regfilemux::alu_out;
@@ -239,6 +248,8 @@ import cpuIO::*;
             cw_out.exe.aluop <= alu_add;
             cw_out.mem.mem_read_d <= 1'b0;
             cw_out.mem.mem_write_d <= 1'b0;
+            cw_out.mem.store_funct3 <= sb;
+            cw_out.mem.load_funct3 <= lb;
             cw_out.mem.mar_sel <= marmux::pc_out;
             cw_out.wb.ld_reg <= 1'b0;
             cw_out.wb.regfilemux_sel <= regfilemux::alu_out;
@@ -529,6 +540,8 @@ module mem_wb_reg
             cw_data.exe.aluop <= alu_add;
             cw_data.mem.mem_read_d <= 1'b0;
             cw_data.mem.mem_write_d <= 1'b0;
+            cw_data.mem.store_funct3 <= sb;
+            cw_data.mem.load_funct3 <= lb;
             cw_data.mem.mar_sel <= marmux::pc_out;
             cw_data.wb.ld_reg <= 1'b0;
             cw_data.wb.regfilemux_sel <= regfilemux::alu_out;
@@ -558,6 +571,8 @@ module mem_wb_reg
             cw_out.exe.aluop <= alu_add;
             cw_out.mem.mem_read_d <= 1'b0;
             cw_out.mem.mem_write_d <= 1'b0;
+            cw_out.mem.store_funct3 <= sb;
+            cw_out.mem.load_funct3 <= lb;
             cw_out.mem.mar_sel <= marmux::pc_out;
             cw_out.wb.ld_reg <= 1'b0;
             cw_out.wb.regfilemux_sel <= regfilemux::alu_out;
