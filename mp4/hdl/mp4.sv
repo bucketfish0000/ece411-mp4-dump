@@ -47,12 +47,14 @@ import cpuIO::*;
             logic if_rdy, de_rdy, exe_rdy, mem_rdy, wb_rdy;
             logic if_valid, de_valid, exe_valid, mem_valid, wb_valid;
             logic if_de_ld, de_exe_ld, exe_mem_ld, mem_wb_ld;
+            logic if_de_rst, de_exe_rst, exe_mem_rst, mem_wb_rst;
             logic mem_r_d, mem_w_d;
             logic br_en;
             logic [3:0] mem_byte_enable; 
             control_read ctrl_rd;
             logic load_pc;
             control_word cw_control, ctrl_rvfi;
+            rv32i_opcode opcode_exec;
     
     mp4control control(
         .clk(clk),
@@ -73,6 +75,11 @@ import cpuIO::*;
         .mem_read_D(mem_r_d),
         .mem_write_D(mem_w_d),
         //...anything else?
+        .opcode_exec(opcode_exec),
+        .if_de_rst(if_de_rst),
+        .de_exe_rst(de_exe_rst),
+        .exe_mem_rst(exe_mem_rst),
+        .mem_wb_rst(mem_wb_rst),
 
         /*---ready signals---*/
         .if_rdy(if_rdy),
@@ -118,10 +125,16 @@ import cpuIO::*;
         .exe_mem_load(exe_mem_ld),
         .mem_wb_load(mem_wb_ld),
 
+
+        .fet_dec_rst(if_de_rst),
+        .dec_exe_rst(de_exe_rst),
+        .exe_mem_rst(exe_mem_rst),
+        .mem_wb_rst(mem_wb_rst),
+
         //to decode
         .cw_dec(cw_control),
         .cr(ctrl_rd),
-
+        .opcode_exec(opcode_exec),
         .pc_rdata(pc_rdata),
 
         .br_en(br_en),

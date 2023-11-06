@@ -15,6 +15,11 @@ module mp4datapath
 
     input pcmux::pcmux_sel_t pcmux_sel,
 
+    input logic fet_dec_rst,
+    input logic dec_exe_rst,
+    input logic exe_mem_rst,
+    input mem_wb_rst,
+
     input logic fet_dec_load,
     input logic dec_exe_load,
     input logic exe_mem_load,
@@ -23,7 +28,7 @@ module mp4datapath
     input control_word cw_dec,
 
     output control_read cr,
-
+    output rv32i_opcode opcode_exec,
     output rv32i_word pc_rdata,
 
     output logic br_en,
@@ -108,7 +113,7 @@ assign pc_rdata = pc_fetch;
 
 rv32i_word instr_decode, pc_wdata_decode;
 fet_dec_reg fet_dec_reg(
-    .clk(clk),.rst(rst),
+    .clk(clk),.rst(fet_dec_rst),
     .load(fet_dec_load),
 
     .ready_i(fetch_ready_o),
@@ -149,12 +154,11 @@ decode_stage decode(
 assign de_rdy = decode_ready_o;
 
 rv32i_word rs1_data_exec,rs2_data_exec;
-rv32i_opcode opcode_exec;
 imm imm_exec;
 rv32i_word func3_exec, func7_exec;
 dec_exe_reg dec_exe_reg(
     .clk(clk),
-    .rst(rst),
+    .rst(dec_exe_rst),
     .load(dec_exe_load),
     .imm_in(imm_decode),
 
@@ -166,6 +170,8 @@ dec_exe_reg dec_exe_reg(
     .ready_o(exec_ready_i),
     .valid_o(exec_valid_i),
 
+    .opcode_dec(cr.opcode),
+    .opcode_dec_exe(opcode_exec), 
     .cw_in(cw_dec),
     .cw_out(cw_exec)
 );
@@ -196,7 +202,7 @@ rv32i_word pc_exe_mem_reg;
 //exe_mem_reg
 exe_mem_reg exe_mem_register(
     .clk(clk), //from datapath
-    .rst(rst), //from datapath
+    .rst(exe_mem_rst), //from datapath
 
     .br_en_i(br_en_exe_o), //from exe_stage
     .exe_mem_ld(exe_mem_load), //from cpu_ctrl
@@ -239,7 +245,7 @@ rv32i_word u_imm_wb;
 //mem_wb_reg
 mem_wb_reg mem_wb_register(
     .clk(clk),
-    .rst(rst),
+    .rst(mem_wb_rst),
     .mem_wb_ld(mem_wb_load),
     .mem_rdy(mem_ready_o),
     .alu_out_i(exe_fwd_data), //aka exe_fwd_data
