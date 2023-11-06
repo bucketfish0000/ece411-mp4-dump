@@ -85,7 +85,9 @@ module dec_exe_reg
     input logic valid_i,
     output logic ready_o,
     output logic valid_o,
-
+    input rv32i_opcode opcode_dec,
+    output rv32i_opcode opcode_dec_exe,
+    
     input control_word cw_in,
     output control_word cw_out
 );
