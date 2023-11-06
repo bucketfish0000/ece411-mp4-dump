@@ -9,7 +9,6 @@ import alumux::*;
 import regfilemux::*;
 import rs1mux::*;
 import rs2mux::*;
-import rv32i_cache_types::*; 
 
 typedef logic [31:0] rv32i_word;
 typedef logic [4:0] rv32i_reg;
