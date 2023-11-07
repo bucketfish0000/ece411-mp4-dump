@@ -9,6 +9,8 @@ import alumux::*;
 import regfilemux::*;
 import rs1mux::*;
 import rs2mux::*;
+import memfwdmux::*;
+import exefwdmux::*;
 
 typedef logic [31:0] rv32i_word;
 typedef logic [4:0] rv32i_reg;
