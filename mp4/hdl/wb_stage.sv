@@ -58,6 +58,7 @@ always_comb begin : regfile_ctrl_signals
         cw_out_rvfi.mem.mem_read_d = 1'b0;
         cw_out_rvfi.mem.mem_write_d = 1'b0;
         cw_out_rvfi.mem.mar_sel = marmux::pc_out;
+        cw_out_rvfi.mem.memfwdmux_sel = memfwdmux::mem_fwd_data;
         cw_out_rvfi.wb.ld_reg = 1'b0;
         cw_out_rvfi.wb.regfilemux_sel = regfilemux::alu_out;
         cw_out_rvfi.wb.rd_sel = 5'b00000;
@@ -130,5 +131,12 @@ always_comb begin : regfilemux_sel
             regfile_data = 32'hdeadbeef;  //wat is dis?
         end
     endcase
+
+    if(cw_in.mem.mem_write_d) begin
+        regfile_data = 32'b0;
+    end
+    else begin
+        //do nothing
+    end
 end
 endmodule : wb_stage
