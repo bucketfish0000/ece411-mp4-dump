@@ -515,8 +515,7 @@ always_comb begin : cpu_cw
                 //mem
                 ctrl_word.mem.memfwdmux_sel = memfwdmux::exe_fwd_data;
 
-                //fetch
-                pcmux_sel = pcmux::pc_plus4;
+                //fetch doesn't do anything here
 
                 //     ctrl_word.exe.aluop =  alu_add;
                 //     ctrl_word.exe.alumux1_sel = alumux::pc_out;
