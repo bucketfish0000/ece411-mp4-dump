@@ -15,6 +15,7 @@ package cpuIO;
         cmpmux::cmpmux_sel_t cmp_sel;
         rv32i_types::alu_ops aluop;
         rv32i_types::branch_funct3_t cmpop;
+        exefwdmux::exefwdmux_sel_t exefwdmux_sel;
     } cw_execute;
 
     typedef struct {
@@ -23,6 +24,7 @@ package cpuIO;
         store_funct3_t store_funct3;
         load_funct3_t load_funct3;
         marmux::marmux_sel_t mar_sel;
+        memfwdmux::memfwdmux_sel_t memfwdmux_sel;
     } cw_mem;
 
     typedef struct {
@@ -51,7 +53,7 @@ package cpuIO;
     } rvfi_sigs;
 
     typedef struct {
-        logic[6:0] opcode;
+        rv32i_opcode opcode;
         logic [2:0] func3;
         logic [6:0] func7;
         logic [63:0] order_commit;
