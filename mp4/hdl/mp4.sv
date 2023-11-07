@@ -70,16 +70,16 @@ import cpuIO::*;
         /*---exe signals---*/
         .br_en(br_en),
         //...anything else?
+        .opcode_exec(opcode_exec),
+        .if_de_rst(if_de_rst),
+        .de_exe_rst(de_exe_rst),
+        .exe_mem_rst(exe_mem_rst),
+        .mem_wb_rst(mem_wb_rst)
 
         /*---mem_stage signals---*/
         .mem_read_D(mem_r_d),
         .mem_write_D(mem_w_d),
         //...anything else?
-        .opcode_exec(opcode_exec),
-        .if_de_rst(if_de_rst),
-        .de_exe_rst(de_exe_rst),
-        .exe_mem_rst(exe_mem_rst),
-        .mem_wb_rst(mem_wb_rst),
 
         /*---ready signals---*/
         .if_rdy(if_rdy),
@@ -125,7 +125,6 @@ import cpuIO::*;
         .exe_mem_load(exe_mem_ld),
         .mem_wb_load(mem_wb_ld),
 
-
         .fet_dec_rst(if_de_rst),
         .dec_exe_rst(de_exe_rst),
         .exe_mem_rst(exe_mem_rst),
@@ -134,6 +133,7 @@ import cpuIO::*;
         //to decode
         .cw_dec(cw_control),
         .cr(ctrl_rd),
+
         .opcode_exec(opcode_exec),
         .pc_rdata(pc_rdata),
 
