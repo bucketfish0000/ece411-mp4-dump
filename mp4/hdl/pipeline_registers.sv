@@ -87,7 +87,7 @@ module dec_exe_reg
     output logic valid_o,
     input rv32i_opcode opcode_dec,
     output rv32i_opcode opcode_dec_exe,
-    
+
     input control_word cw_in,
     output control_word cw_out
 );
@@ -114,11 +114,13 @@ module dec_exe_reg
             cw_data.exe.rs2_sel <= rs2mux::rs2_data;
             cw_data.exe.cmpop <= beq;
             cw_data.exe.aluop <= alu_add;
+            cw_data.exe.exefwdmux_sel = exefwdmux::alu_out;
             cw_data.mem.mem_read_d <= 1'b0;
             cw_data.mem.mem_write_d <= 1'b0;
             cw_data.mem.store_funct3 <= sb;
             cw_data.mem.load_funct3 <= lb;
             cw_data.mem.mar_sel <= marmux::pc_out;
+            cw_data.mem.memfwdmux_sel <= memfwdmux::mem_fwd_data;
             cw_data.wb.ld_reg <= 1'b0;
             cw_data.wb.regfilemux_sel <= regfilemux::alu_out;
             cw_data.wb.rd_sel <= 5'b00000;
@@ -186,7 +188,8 @@ import cpuIO::*;
     input logic exe_mem_ld, 
     input logic exe_rdy,
     input logic de_exe_valid,
-    input logic [31:0] alu_out_i, 
+    input logic [31:0] alu_out_i,
+    input logic [31:0] rs1_out_i, 
     input logic [31:0] rs2_out_i,
     input logic [31:0] u_imm_i, 
 
@@ -206,7 +209,7 @@ import cpuIO::*;
     output logic [3:0] wmask
 );
 
-    logic [31:0] fwd_r_EX, u_imm_r;
+    logic [31:0] fwd_r_EX, u_imm_r, fwd_temp;
     logic [3:0] mem_byte_enable_r;
     control_word cw_data;
     logic br_en_r, valid_r, ready_r;
@@ -215,6 +218,14 @@ import cpuIO::*;
     logic trap;
     logic [3:0] rmask, wmask_temp;
 
+    always_comb begin : exe_fwd_mux
+        unique case(cw_in.exe.exefwdmux_sel)
+            exefwdmux::alu_out: fwd_temp = alu_out_i;
+            exefwdmux::br_en_zext: fwd_temp = {31'b0, br_en_i};
+            exefwdmux::u_imm: fwd_temp = u_imm_i;
+        endcase
+    end
+
     //serves as alu_out reg/fwding exe data reg for cp2 onward
     always_ff @ (posedge clk, posedge rst) begin : fwd_EX_reg
         if(rst)begin
@@ -222,8 +233,8 @@ import cpuIO::*;
             fwd_r_EX <= 32'b0;
         end
         else if((exe_mem_ld == 1)) begin
-            exe_fwd_data <= alu_out_i;
-            fwd_r_EX <= alu_out_i;
+            exe_fwd_data <= fwd_temp;
+            fwd_r_EX <= fwd_temp ;
         end
         else begin
             exe_fwd_data <= fwd_r_EX;
@@ -240,11 +251,13 @@ import cpuIO::*;
             cw_data.exe.rs2_sel <= rs2mux::rs2_data;
             cw_data.exe.cmpop <= beq;
             cw_data.exe.aluop <= alu_add;
+            cw_data.exe.exefwdmux_sel = exefwdmux::alu_out;
             cw_data.mem.mem_read_d <= 1'b0;
             cw_data.mem.mem_write_d <= 1'b0;
             cw_data.mem.store_funct3 <= sb;
             cw_data.mem.load_funct3 <= lb;
             cw_data.mem.mar_sel <= marmux::pc_out;
+            cw_data.mem.memfwdmux_sel <= memfwdmux::mem_fwd_data;
             cw_data.wb.ld_reg <= 1'b0;
             cw_data.wb.regfilemux_sel <= regfilemux::alu_out;
             cw_data.wb.rd_sel <= 5'b00000;
@@ -271,11 +284,13 @@ import cpuIO::*;
             cw_out.exe.rs2_sel <= rs2mux::rs2_data;
             cw_out.exe.cmpop <= beq;
             cw_out.exe.aluop <= alu_add;
+            cw_out.exe.exefwdmux_sel = exefwdmux::alu_out;
             cw_out.mem.mem_read_d <= 1'b0;
             cw_out.mem.mem_write_d <= 1'b0;
             cw_out.mem.store_funct3 <= sb;
             cw_out.mem.load_funct3 <= lb;
             cw_out.mem.mar_sel <= marmux::pc_out;
+            cw_out.mem.memfwdmux_sel <= memfwdmux::mem_fwd_data;
             cw_out.wb.ld_reg <= 1'b0;
             cw_out.wb.regfilemux_sel <= regfilemux::alu_out;
             cw_out.wb.rd_sel <= 5'b00000;
@@ -304,8 +319,8 @@ import cpuIO::*;
             cw_data.rvfi.instruction <= cw_in.rvfi.instruction;//done
             cw_data.rvfi.rs1_addr <= cw_in.rvfi.rs1_addr; //done
             cw_data.rvfi.rs2_addr <= cw_in.rvfi.rs2_addr; //dome
-            cw_data.rvfi.rs1_data <= cw_in.rvfi.rs1_data; //done
-            cw_data.rvfi.rs2_data <= cw_in.rvfi.rs2_data; //done
+            cw_data.rvfi.rs1_data <= rs1_out_i; //done
+            cw_data.rvfi.rs2_data <= rs2_out_i; //done
             cw_data.rvfi.rd_wdata <= cw_in.rvfi.rd_wdata;//done
             cw_data.rvfi.pc_rdata <= cw_in.rvfi.pc_rdata;//done
             cw_data.rvfi.pc_wdata <= cw_in.rvfi.pc_wdata;//done
@@ -323,8 +338,8 @@ import cpuIO::*;
             cw_out.rvfi.instruction <= cw_in.rvfi.instruction;//done
             cw_out.rvfi.rs1_addr <= cw_in.rvfi.rs1_addr; //done
             cw_out.rvfi.rs2_addr <= cw_in.rvfi.rs2_addr; //dome
-            cw_out.rvfi.rs1_data <= cw_in.rvfi.rs1_data; //done
-            cw_out.rvfi.rs2_data <= cw_in.rvfi.rs2_data; //done
+            cw_out.rvfi.rs1_data <= rs1_out_i; //done
+            cw_out.rvfi.rs2_data <= rs2_out_i; //done
             cw_out.rvfi.rd_wdata <= cw_in.rvfi.rd_wdata;//done
             cw_out.rvfi.pc_rdata <= cw_in.rvfi.pc_rdata;//done
             cw_out.rvfi.pc_wdata <= cw_in.rvfi.pc_wdata;//done
@@ -510,6 +525,7 @@ module mem_wb_reg
     input logic exe_mem_valid,
     output logic [31:0] u_imm_o,
     output logic [31:0] mem_rdata_D_o,
+    output logic [31:0] mem_fwd_data,
     output logic mem_wb_rdy,
     output logic mem_wb_valid,
     output logic [31:0] alu_out_o, //aka exe_fwd_data
@@ -518,9 +534,31 @@ module mem_wb_reg
     input control_word cw_in,
     output control_word cw_out
 );
-    logic [31:0] alu_out_r, u_imm_r, mem_rdata_r;
+    logic [31:0] alu_out_r, u_imm_r, mem_rdata_r, memfwdmux_o, mem_fwd_data_r;
     control_word cw_data;
     logic br_en_r, valid_r, ready_r;
+
+    always_comb begin : memfwdmux
+        unique case(cw_in.mem.memfwdmux_sel)
+            memfwdmux::mem_fwd_data: memfwdmux_o = mem_rdata_D_i;
+            memfwdmux::exe_fwd_data: memfwdmux_o = alu_out_i;
+        endcase
+    end
+
+    //mem_fwd_data reg
+    always_ff @ (posedge clk, posedge rst) begin : mem_fwd_data_reg
+        if(rst)begin
+            mem_fwd_data <= 32'b0;
+            mem_fwd_data_r <= 32'b0;
+        end
+        else if((mem_wb_ld == 1)) begin
+            mem_fwd_data <= memfwdmux_o;
+            mem_fwd_data_r <= memfwdmux_o;
+        end
+        else begin
+            mem_fwd_data <= mem_fwd_data_r;
+        end
+    end
 
     //mem_rdata reg
     always_ff @ (posedge clk, posedge rst) begin : mem_rdata_reg
@@ -563,11 +601,13 @@ module mem_wb_reg
             cw_data.exe.rs2_sel <= rs2mux::rs2_data;
             cw_data.exe.cmpop <= beq;
             cw_data.exe.aluop <= alu_add;
+            cw_data.exe.exefwdmux_sel = exefwdmux::alu_out;
             cw_data.mem.mem_read_d <= 1'b0;
             cw_data.mem.mem_write_d <= 1'b0;
             cw_data.mem.store_funct3 <= sb;
             cw_data.mem.load_funct3 <= lb;
             cw_data.mem.mar_sel <= marmux::pc_out;
+            cw_data.mem.memfwdmux_sel <= memfwdmux::mem_fwd_data;
             cw_data.wb.ld_reg <= 1'b0;
             cw_data.wb.regfilemux_sel <= regfilemux::alu_out;
             cw_data.wb.rd_sel <= 5'b00000;
@@ -594,11 +634,13 @@ module mem_wb_reg
             cw_out.exe.rs2_sel <= rs2mux::rs2_data;
             cw_out.exe.cmpop <= beq;
             cw_out.exe.aluop <= alu_add;
+            cw_out.exe.exefwdmux_sel = exefwdmux::alu_out;
             cw_out.mem.mem_read_d <= 1'b0;
             cw_out.mem.mem_write_d <= 1'b0;
             cw_out.mem.store_funct3 <= sb;
             cw_out.mem.load_funct3 <= lb;
             cw_out.mem.mar_sel <= marmux::pc_out;
+            cw_out.mem.memfwdmux_sel <= memfwdmux::mem_fwd_data;
             cw_out.wb.ld_reg <= 1'b0;
             cw_out.wb.regfilemux_sel <= regfilemux::alu_out;
             cw_out.wb.rd_sel <= 5'b00000;
@@ -725,3 +767,23 @@ module mem_wb_reg
 
 
 endmodule : mem_wb_reg
+
+
+module wb_fwd_reg(
+    input clk,
+    input rst,
+    input load_wb_fwd_reg,
+    input logic [31:0] wb_fwd_data_i,
+
+    output logic [31:0] wb_fwd_data_o
+);
+    always_ff @ (posedge clk, posedge rst) begin : wb_fwd_register
+        if(rst) begin
+            wb_fwd_data_o <= 32'b0;
+        end
+        else if(load_wb_fwd_reg) begin
+            wb_fwd_data_o <= wb_fwd_data_i;
+        end
+    end
+
+endmodule : wb_fwd_reg
