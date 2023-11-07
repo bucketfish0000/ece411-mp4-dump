@@ -114,7 +114,7 @@ module dec_exe_reg
             cw_data.exe.rs2_sel <= rs2mux::rs2_data;
             cw_data.exe.cmpop <= beq;
             cw_data.exe.aluop <= alu_add;
-            cw_data.exe.exefwdmux_sel = exefwdmux::alu_out;
+            cw_data.exe.exefwdmux_sel <= exefwdmux::alu_out;
             cw_data.mem.mem_read_d <= 1'b0;
             cw_data.mem.mem_write_d <= 1'b0;
             cw_data.mem.store_funct3 <= sb;
