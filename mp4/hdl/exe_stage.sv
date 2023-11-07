@@ -19,8 +19,10 @@ import immediates::*;
     input logic [31:0] pc_x,
     input logic [31:0] mem_fwd_data,
     input logic [31:0] exe_fwd_data,
+    input logic [31:0] wb_fwd_data,
     input immediates::imm imm_in,
     
+    output logic [31:0] rs1_out,
     output logic [31:0] rs2_out,
     output logic [31:0] alu_out,
     output logic br_en,
@@ -47,6 +49,7 @@ import immediates::*;
     assign u_imm = imm_in.u_imm;
     assign j_imm = imm_in.j_imm;
     assign rs2_out = rs2_o;
+    assign rs1_out = rs1_o;
 
     //always_ff or always_comb??
     always_ff @(posedge clk, posedge rst) begin : exe_rdy_ctrl
@@ -77,14 +80,14 @@ import immediates::*;
             2'b00: rs1_o = rs1_data;
             2'b01: rs1_o = exe_fwd_data;
             2'b10: rs1_o = mem_fwd_data;
-            2'b11: ;
+            2'b11: rs1_o = wb_fwd_data;
         endcase
 
         unique case (ctrl_w_EXE.rs2_sel)
             2'b00: rs2_o = rs2_data;
             2'b01: rs2_o = exe_fwd_data;
             2'b10: rs2_o = mem_fwd_data;
-            2'b11: ;
+            2'b11: rs2_o = wb_fwd_data;
         endcase
 
         unique case (ctrl_w_EXE.cmp_sel)
