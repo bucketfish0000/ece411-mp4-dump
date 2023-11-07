@@ -11,6 +11,7 @@ module fetch_stage
     input rv32i_word instr_in,
     
     output rv32i_word pc_out,
+    output rv32i_word pc_prev,
     output rv32i_word pc_next,
     output rv32i_word instr_out,
     output logic imem_read,
@@ -26,7 +27,10 @@ module fetch_stage
     //assign imem_read = 1'b1;
 
     register #(.width(32), .resetData(32'h40000000)) 
-        PC(.clk(clk),.rst(rst),.load(load_pc),.in(pc_in), .out(pc));
+        PC0(.clk(clk),.rst(rst),.load(load_pc),.in(pc_in), .out(pc));
+
+        register #(.width(32), .resetData(32'h40000000)) 
+        PC1(.clk(clk),.rst(rst),.load(load_pc),.in(pc), .out(pc_prev));
 
     //pcmux
     always_comb begin : pc_mux_logic

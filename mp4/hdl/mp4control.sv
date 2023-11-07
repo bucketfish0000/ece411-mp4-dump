@@ -1,18 +1,45 @@
-/*ld and READY signals:
-    ld(Output): 
-        -Always load unless one of the stages in front of you is stalling(valid == 1 and rdy == 0)
-    valid(Input):
-        -If high then register has been initialized after cold start(or flush)
-        -Otherwise value is unitialized
-    ready(Input):
-        -If high then stage has finished computation
-        -If low still computing so don't load the register before stage yet(stalling if valid is high)
+/*  ld and READY signals:
+        ld(Output): 
+            -Always load unless one of the stages in front of you is stalling(valid == 1 and rdy == 0)
+        valid(Input):
+            -If high then register has been initialized after cold start(or flush)
+            -Otherwise value is unitialized
+        ready(Input):
+            -If high then stage has finished computation
+            -If low still computing so don't load the register before stage yet(stalling if valid is high)
 
     ~valid, x -- cold, wait for filling
     valid, ~ready -- pending output, stall
     valid, ready -- output ready, load
-
     v/r ops: reset--flushes ppr, clears valid/ready; load (only when previous valid&ready) --loads ppr, forces valid to high
+
+    Data Hazard Detection:
+        If the instruction ahead of the current one is going to write to one of the registers the current needs during execute
+        the set the rs1mux to use the exe_fwd_data. This is because the next instruction will have just finished exe and will be in
+        mem stage. This means the data that will be in rsX will be in the exe_mem_reg will be the data this current instruction needs.
+
+        Similarly if the instuction in exe (2nd one ahead of you) it will be in wb by the time the current is in exe, so grab the 
+        mem_fwd_data.
+
+        If instuction is 3rd ahead(aka in mem), then will have just left wb when you reach exe...
+        that's an issue since that means that you decoded while it was writing to regfile and as a result have the wrong data.
+        So grab data from wb_fwd_data.
+
+        Prioritize hazard closest:
+
+            if((cw_read.rs1_addr == instruct_in_de[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                ctrl_word.exe.rs1_sel = rs1mux::exe_fwd_data;
+            end
+            else if((cw_read.rs1_addr == instruct_in_exe[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                ctrl_word.exe.rs1_sel = rs1mux::mem_fwd_data;
+            end
+            else if((cw_read.rs1_addr == instruct_in_mem[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                ctrl_word.exe.rs1_sel = rs1mux::wb_fwd_data;
+            end
+            else begin
+                ctrl_word.exe.rs1_sel = rs1mux::rs1_data;
+            end
+
 */
 module mp4control
 import rv32i_types::*;
@@ -36,6 +63,7 @@ import cpuIO::*;
     input logic mem_read_D,
     input logic mem_write_D,
     //...anything else?
+
     input rv32i_opcode opcode_exec,
     /*---ready signals---*/
     input logic if_rdy,
@@ -67,49 +95,72 @@ import cpuIO::*;
 
     output pcmux::pcmux_sel_t pcmux_sel 
 );
-
 logic branch_taken;
 assign branch_taken = br_en && (opcode_exec == op_br);
 
 logic [4:0] rdy;
 logic [4:0] vald;
+logic [85:0] instruct_in_if, instruct_in_de, instruct_in_exe, instruct_in_mem, instruct_in_wb;
+logic flush_data_hzd_q, load_hzd_q, fetch_delay;
 
 assign rdy = {if_rdy, de_rdy, exe_rdy, mem_rdy, wb_rdy};
 assign vald = {if_valid, de_valid, exe_valid, mem_valid, wb_valid};
 
-logic stall_if_de, stall_de_exe, stall_exe_mem, stall_mem_wb;
-//stall a ppr when any ppr after it is valid but not ready
+// logic stall_if_de, stall_de_exe, stall_exe_mem, stall_mem_wb;
+// //stall a ppr when any ppr after it is valid but not ready
 
-assign stall_if_de = 
-    ((rdy[3] == 0) && (vald[3] == 1)) || 
-    ((rdy[2] == 0) && (vald[2] == 1)) || 
-    ((rdy[1] == 0) && (vald[1] == 1)) || 
-    ((rdy[0] == 0) && (vald[0] == 1));
+// assign stall_if_de = 
+//     ((rdy[3] == 0) && (vald[3] == 1)) || 
+//     ((rdy[2] == 0) && (vald[2] == 1)) || 
+//     ((rdy[1] == 0) && (vald[1] == 1)) || 
+//     ((rdy[0] == 0) && (vald[0] == 1));
 
-assign stall_de_exe = 
-    ((rdy[2] == 0) && (vald[2] == 1)) || 
-    ((rdy[1] == 0) && (vald[1] == 1)) || 
-    ((rdy[0] == 0) && (vald[0] == 1));
+// assign stall_de_exe = 
+//     ((rdy[2] == 0) && (vald[2] == 1)) || 
+//     ((rdy[1] == 0) && (vald[1] == 1)) || 
+//     ((rdy[0] == 0) && (vald[0] == 1));
 
-assign stall_exe_mem = 
-    ((rdy[1] == 0) && (vald[1] == 1)) || 
-    ((rdy[0] == 0) && (vald[0] == 1));
+// assign stall_exe_mem = 
+//     ((rdy[1] == 0) && (vald[1] == 1)) || 
+//     ((rdy[0] == 0) && (vald[0] == 1));
 
-assign stall_mem_wb = 
-    ((rdy[0] == 0) && (vald[0] == 1));
+// assign stall_mem_wb = 
+//     ((rdy[0] == 0) && (vald[0] == 1));
 
+assign instruct_in_if = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
 
-//how know when load pc? Gonna need testing to see for sure
+hazard_queue data_hzd_queue(
+    .clk(clk),//in
+    .rst(rst),
+    .flush_hzd_q(flush_data_hzd_q),
+    .load_hzd_q(load_hzd_q),
+    .enqueue(instruct_in_if),
+    .entry0(instruct_in_de),//out
+    .entry1(instruct_in_exe),
+    .entry2(instruct_in_mem),
+    .entry3(instruct_in_wb)
+);
+
+always_ff @(posedge clk, posedge rst) begin : fetch_delay_compensator
+    if(rst) begin
+        fetch_delay <= 1'b1;
+    end
+    else if(icache_resp == 0)
+        fetch_delay <= 1'b1;
+    else
+        fetch_delay <= 1'b0;
+end
 
 always_comb begin : pipeline_regs_logic
     if(rst) begin
         if_de_ld = 1'b0;
         imem_read = 1'b0;
+        load_hzd_q = 1'b0;
         load_pc = 1'b0;
         de_exe_ld = 1'b0;
         exe_mem_ld = 1'b0;
         mem_wb_ld = 1'b0;
-        
+
         //flush every ppr on reset
         if_de_rst = 1'b1;
         de_exe_rst = 1'b1;
@@ -149,31 +200,117 @@ always_comb begin : pipeline_regs_logic
              11   |   nop    |  nop   |  nop    |  end    |  i3    ||  111111   |           |  111111  |  choo,       r3 = 33       
              12   |   nop    |  nop   |  nop    |  nop    | end    ||  111111   |           |  111111  |  end         
         */
-        //imem and pc interactions
-        //only not try to fetch when waiting for resp from icache 
-        imem_read = (/*(if_valid & !icache_resp) || */stall_if_de) ? 1'b0 : 1'b1; 
-        //update pc when imem has responded (can proc)
-        load_pc = (icache_resp || stall_if_de) ? 1'b0 : 1'b1;
-        
-        //ppr resets
-        // if_de_rst = 1'b0;
-        // de_exe_rst = 1'b0;
-        // exe_mem_rst = 1'b0;
+
+        //default
+        if_de_ld = 1'b0;
+        imem_read = 1'b0;
+        load_hzd_q = 1'b0;
+        load_pc = 1'b0;
+        de_exe_ld = 1'b0;
+        exe_mem_ld = 1'b0;
+        mem_wb_ld = 1'b0;
+
+        if(fetch_delay == 0) begin
+            //stall
+            if(((rdy[0] == 0) && (vald[0] == 1))) begin //wb not ready
+                // if_de_ld = 1'b0;
+                imem_read = 1'b0;
+                load_hzd_q = 1'b0;
+                load_pc = 1'b0;
+                de_exe_ld = 1'b0;
+                exe_mem_ld = 1'b0;
+                mem_wb_ld = 1'b0;
+            end
+            else if((rdy[1] == 0) && (vald[1] == 1)) begin //mem not ready
+                if_de_ld = 1'b1; //need to load in current instruction before halting
+                imem_read = 1'b0;
+                load_hzd_q = 1'b0;
+                load_pc = 1'b0;
+                de_exe_ld = 1'b0;
+                exe_mem_ld = 1'b0;
+                mem_wb_ld = 1'b0;
+            end
+            else if((rdy[2] == 0) && (vald[2] == 1)) begin //exe not ready
+                if_de_ld = 1'b0;
+                imem_read = 1'b0;
+                load_hzd_q = 1'b0;
+                load_pc = 1'b0;
+                de_exe_ld = 1'b0;
+                exe_mem_ld = 1'b0;
+            end
+            else if((rdy[3] == 0) && (vald[3] == 1)) begin //de not ready
+                if_de_ld = 1'b0;
+                imem_read = 1'b0;
+                load_hzd_q = 1'b0;
+                load_pc = 1'b0;
+                de_exe_ld = 1'b0;
+            end
+            else begin
+                if_de_ld = 1'b1;
+                imem_read = 1'b1;
+                load_hzd_q = 1'b1;
+                load_pc = 1'b1;
+                de_exe_ld = 1'b1;
+                exe_mem_ld = 1'b1;
+                mem_wb_ld = 1'b1;
+            end
+
+            //cold start/flush
+            if(vald[4] == 0) begin
+                de_exe_ld = 1'b0;
+            end
+            else begin
+                //do nothing
+            end
+
+            if(vald[3] == 0) begin
+                exe_mem_ld = 1'b0;
+            end
+            else begin
+                //do nothing
+            end
+
+            if(vald[2] == 0) begin
+                mem_wb_ld = 1'b0;
+            end
+            else begin
+                //do nothing
+            end
+        end
+        else begin
+            imem_read = 1'b1;
+            if(icache_resp) begin
+                load_pc = 1'b1;
+            end
+        end
+
+        imem_read = 1'b1;
+
+        //     //imem and pc interactions
+        // //only not try to fetch when waiting for resp from icache 
+        // imem_read = (/*(if_valid & !icache_resp) || */stall_if_de) ? 1'b0 : 1'b1; 
+        // //update pc when imem has responded (can proc)
+        // load_pc = (icache_resp || stall_if_de) ? 1'b0 : 1'b1;
+
+        // //ppr resets
+        // // if_de_rst = 1'b0;
+        // // de_exe_rst = 1'b0;
+        // // exe_mem_rst = 1'b0;
+        // // mem_wb_rst = 1'b0;
+
+        // //ppr loads (stalling control)
+        // if_de_ld = (stall_if_de || !icache_resp) ? 1'b0 : 1'b1;
+        // de_exe_ld = (stall_de_exe || vald[4]==0) ? 1'b0: 1'b1;
+        // exe_mem_ld = (stall_exe_mem || vald[3]==0) ? 1'b0 : 1'b1;
+        // mem_wb_ld = (stall_mem_wb || vald[2]==0) ? 1'b0 : 1'b1;
+
+        // //ppr rst (flushing control)
+        // //
+        // if_de_rst = (branch_taken)? 1'b1 : 1'b0;
+        // de_exe_rst = (branch_taken) ? 1'b1 : 1'b0;
+        // exe_mem_rst = (mem_rdy && !exe_valid) ? 1'b1 : 1'b0; 
         // mem_wb_rst = 1'b0;
-
-        //ppr loads (stalling control)
-        if_de_ld = (stall_if_de || !icache_resp) ? 1'b0 : 1'b1;
-        de_exe_ld = (stall_de_exe || vald[4]==0) ? 1'b0: 1'b1;
-        exe_mem_ld = (stall_exe_mem || vald[3]==0) ? 1'b0 : 1'b1;
-        mem_wb_ld = (stall_mem_wb || vald[2]==0) ? 1'b0 : 1'b1;
-
-        //ppr rst (flushing control)
-        //
-        if_de_rst = (branch_taken)? 1'b1 : 1'b0;
-        de_exe_rst = (branch_taken) ? 1'b1 : 1'b0;
-        exe_mem_rst = (mem_rdy && !exe_valid) ? 1'b1 : 1'b0; 
-        mem_wb_rst = 1'b0;
-
+    
     end
 end
 
@@ -207,11 +344,13 @@ function void set_def();
     ctrl_word.exe.rs2_sel = rs2mux::rs2_data;
     ctrl_word.exe.cmpop = beq;
     ctrl_word.exe.aluop = alu_add;
+    ctrl_word.exe.exefwdmux_sel = exefwdmux::alu_out;
     ctrl_word.mem.mem_read_d = 1'b0;
     ctrl_word.mem.mem_write_d = 1'b0;
     ctrl_word.mem.store_funct3 = sb;
     ctrl_word.mem.load_funct3 = lb;
     ctrl_word.mem.mar_sel = marmux::pc_out;
+    ctrl_word.mem.memfwdmux_sel = memfwdmux::mem_fwd_data;
     ctrl_word.wb.ld_reg = 1'b0;
     ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
     ctrl_word.wb.rd_sel = 5'b00000;
@@ -237,6 +376,7 @@ always_comb begin : cpu_cw
         set_def();
     end
     else if(rdy[4]) begin
+        set_def();
         ctrl_word.rvfi.valid_commit = 1'b1;
         ctrl_word.rvfi.order_commit = cw_read.order_commit;
         ctrl_word.rvfi.instruction = cw_read.instruction;
@@ -245,20 +385,36 @@ always_comb begin : cpu_cw
 
         unique case(cw_read.opcode)
             op_lui: begin
-                //exe doesn't do anyting here
+                //exe
+                ctrl_word.exe.exefwdmux_sel = exefwdmux::u_imm;
 
-                //mem doesn't do anything here
+                //mem
+                ctrl_word.mem.memfwdmux_sel = memfwdmux::exe_fwd_data;
 
                 //writeback
                 ctrl_word.wb.ld_reg = 1'b1;
                 ctrl_word.wb.regfilemux_sel = regfilemux::u_imm;
                 ctrl_word.wb.rd_sel = cw_read.rd_addr;
 
-                //fetch
+                //fetch does nothing here
                
                 
                 //decode nothing here
                 
+
+                //data hzd detection
+                if((cw_read.rs1_addr == instruct_in_de[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::exe_fwd_data;
+                end
+                else if((cw_read.rs1_addr == instruct_in_exe[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::mem_fwd_data;
+                end
+                else if((cw_read.rs1_addr == instruct_in_mem[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::wb_fwd_data;
+                end
+                else begin
+                    ctrl_word.exe.rs1_sel = rs1mux::rs1_data;
+                end
             end
 
             op_auipc: begin
@@ -267,17 +423,21 @@ always_comb begin : cpu_cw
                 ctrl_word.exe.alumux1_sel = alumux::pc_out;
                 ctrl_word.exe.alumux2_sel = alumux::u_imm;
 
-                //mem doesn't do anything here
+                //mem
+                ctrl_word.mem.memfwdmux_sel = memfwdmux::exe_fwd_data;
 
                 //writeback
                 ctrl_word.wb.ld_reg = 1'b1;
                 ctrl_word.wb.rd_sel = cw_read.rd_addr;
                 ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
 
-                //fetch
+                //fetch does nothing here
                
 
-                //decode nothing        
+                //decode nothing
+
+
+                //data hzd detection... does nothing here        
             end
 
             op_jal: begin
@@ -286,17 +446,21 @@ always_comb begin : cpu_cw
                 ctrl_word.exe.alumux1_sel = alumux::pc_out;
                 ctrl_word.exe.alumux2_sel = alumux::j_imm;
 
-                //mem doesn't do anything here
+                //mem
+                ctrl_word.mem.memfwdmux_sel = memfwdmux::exe_fwd_data;
 
                 //writeback
                 ctrl_word.wb.ld_reg = 1'b1;
                 ctrl_word.wb.regfilemux_sel = regfilemux::pc_plus4;
                 ctrl_word.wb.rd_sel = cw_read.rd_addr;
 
-                //fetch
+                //fetch does nothing here
                
             
                 //decode nothing
+
+
+                //data hzd detection... does nothing here
             end
 
             op_jalr: begin
@@ -305,18 +469,33 @@ always_comb begin : cpu_cw
                 ctrl_word.exe.alumux1_sel = alumux::rs1_out;
                 ctrl_word.exe.alumux2_sel = alumux::i_imm;
 
-                //mem doesn't do anything here
+                //mem
+                ctrl_word.mem.memfwdmux_sel = memfwdmux::exe_fwd_data;
 
                 //writeback
                 ctrl_word.wb.ld_reg = 1'b1;
                 ctrl_word.wb.regfilemux_sel = regfilemux::pc_plus4;
                 ctrl_word.wb.rd_sel = cw_read.rd_addr;
 
-                //fetch
+                //fetch does nothing here
             
                 //decode
                 ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
                 ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
+
+                //data hzd detection
+                if((cw_read.rs1_addr == instruct_in_de[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::exe_fwd_data;
+                end
+                else if((cw_read.rs1_addr == instruct_in_exe[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::mem_fwd_data;
+                end
+                else if((cw_read.rs1_addr == instruct_in_mem[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::wb_fwd_data;
+                end
+                else begin
+                    ctrl_word.exe.rs1_sel = rs1mux::rs1_data;
+                end
             end
 
             op_br: begin
@@ -333,18 +512,48 @@ always_comb begin : cpu_cw
                     default: ;
                 endcase
 
+                //mem
+                ctrl_word.mem.memfwdmux_sel = memfwdmux::exe_fwd_data;
 
-                    ctrl_word.exe.aluop =  alu_add;
-                    ctrl_word.exe.alumux1_sel = alumux::pc_out;
-                    ctrl_word.exe.alumux2_sel = alumux::b_imm;
+                //fetch doesn't do anything here
 
-                   
+                //     ctrl_word.exe.aluop =  alu_add;
+                //     ctrl_word.exe.alumux1_sel = alumux::pc_out;
+                //     ctrl_word.exe.alumux2_sel = alumux::b_imm;
+
 
                 //decode
                 ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
                 ctrl_word.rvfi.rs2_addr = cw_read.rs2_addr;
                 ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
                 ctrl_word.rvfi.rs2_data = cw_read.rs2_data;
+
+                //data hzd detection
+                if((cw_read.rs1_addr == instruct_in_de[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::exe_fwd_data;
+                end
+                else if((cw_read.rs1_addr == instruct_in_exe[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::mem_fwd_data;
+                end
+                else if((cw_read.rs1_addr == instruct_in_mem[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::wb_fwd_data;
+                end
+                else begin
+                    ctrl_word.exe.rs1_sel = rs1mux::rs1_data;
+                end
+
+                if((cw_read.rs2_addr == instruct_in_de[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs2_sel = rs2mux::exe_fwd_data;
+                end
+                else if((cw_read.rs2_addr == instruct_in_exe[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs2_sel = rs2mux::mem_fwd_data;
+                end
+                else if((cw_read.rs2_addr == instruct_in_mem[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs2_sel = rs2mux::wb_fwd_data;
+                end
+                else begin
+                    ctrl_word.exe.rs2_sel = rs2mux::rs2_data;
+                end
             end
 
             op_load: begin
@@ -357,6 +566,7 @@ always_comb begin : cpu_cw
                 ctrl_word.mem.mem_read_d = 1'b1;
                 ctrl_word.mem.mar_sel = marmux::alu_out;
                 ctrl_word.mem.load_funct3 = load_funct3;
+                //leave mux sel default
 
                 //writeback/more mem
                 ctrl_word.wb.ld_reg = 1'b1;
@@ -380,12 +590,26 @@ always_comb begin : cpu_cw
                     default: ;
                 endcase
 
-                //fetch
+                //fetch does nothing here
                
             
                 //decode
                 ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
                 ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
+
+                //data hzd detection
+                if((cw_read.rs1_addr == instruct_in_de[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::exe_fwd_data;
+                end
+                else if((cw_read.rs1_addr == instruct_in_exe[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::mem_fwd_data;
+                end
+                else if((cw_read.rs1_addr == instruct_in_mem[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::wb_fwd_data;
+                end
+                else begin
+                    ctrl_word.exe.rs1_sel = rs1mux::rs1_data;
+                end
             end
 
             op_store: begin
@@ -398,10 +622,11 @@ always_comb begin : cpu_cw
                 ctrl_word.mem.mem_write_d = 1'b1;
                 ctrl_word.mem.mar_sel = marmux::alu_out;
                 ctrl_word.mem.store_funct3 = store_funct3;
+                //leave mux sel default
 
                 //writeback doesn't do anything here
 
-                //fetch
+                //fetch does nothing here
                
             
                 //decode
@@ -409,6 +634,33 @@ always_comb begin : cpu_cw
                 ctrl_word.rvfi.rs2_addr = cw_read.rs2_addr;
                 ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
                 ctrl_word.rvfi.rs2_data = cw_read.rs2_data;
+
+                //data hzd detection
+                if((cw_read.rs1_addr == instruct_in_de[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::exe_fwd_data;
+                end
+                else if((cw_read.rs1_addr == instruct_in_exe[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::mem_fwd_data;
+                end
+                else if((cw_read.rs1_addr == instruct_in_mem[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::wb_fwd_data;
+                end
+                else begin
+                    ctrl_word.exe.rs1_sel = rs1mux::rs1_data;
+                end
+
+                if((cw_read.rs2_addr == instruct_in_de[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs2_sel = rs2mux::exe_fwd_data;
+                end
+                else if((cw_read.rs2_addr == instruct_in_exe[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs2_sel = rs2mux::mem_fwd_data;
+                end
+                else if((cw_read.rs2_addr == instruct_in_mem[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs2_sel = rs2mux::wb_fwd_data;
+                end
+                else begin
+                    ctrl_word.exe.rs2_sel = rs2mux::rs2_data;
+                end
             end
 
             op_imm: begin
@@ -442,6 +694,7 @@ always_comb begin : cpu_cw
                         //exe
                         ctrl_word.exe.cmpop = blt;
                         ctrl_word.exe.cmp_sel = cmpmux::i_imm;
+                        ctrl_word.exe.exefwdmux_sel = exefwdmux::br_en_zext;
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::br_en;
@@ -453,6 +706,7 @@ always_comb begin : cpu_cw
                         //exe
                         ctrl_word.exe.cmpop = bltu;
                         ctrl_word.exe.cmp_sel = cmpmux::i_imm;
+                        ctrl_word.exe.exefwdmux_sel = exefwdmux::br_en_zext;
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::br_en;
@@ -491,7 +745,7 @@ always_comb begin : cpu_cw
 
                     3'b110: begin
                         //exe
-                        ctrl_word.exe.aluop =  alu_or;
+                        ctrl_word.exe.aluop = alu_or;
                         ctrl_word.exe.alumux1_sel = alumux::rs1_out;
                         ctrl_word.exe.alumux2_sel = alumux::i_imm;
 
@@ -514,14 +768,29 @@ always_comb begin : cpu_cw
                     end
                 endcase
 
-                //mem doesn't do anything here
+                //mem
+                ctrl_word.mem.memfwdmux_sel = memfwdmux::exe_fwd_data;
 
-                //fetch
+                //fetch does nothing here
                
             
                 //decode
                 ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
                 ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
+
+                //data hzd detection
+                if((cw_read.rs1_addr == instruct_in_de[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::exe_fwd_data;
+                end
+                else if((cw_read.rs1_addr == instruct_in_exe[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::mem_fwd_data;
+                end
+                else if((cw_read.rs1_addr == instruct_in_mem[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::wb_fwd_data;
+                end
+                else begin
+                    ctrl_word.exe.rs1_sel = rs1mux::rs1_data;
+                end
             end
 
             op_reg: begin
@@ -560,6 +829,7 @@ always_comb begin : cpu_cw
                         //exe
                         ctrl_word.exe.cmpop = blt;
                         ctrl_word.exe.cmp_sel = cmpmux::rs2_out;
+                        ctrl_word.exe.exefwdmux_sel = exefwdmux::br_en_zext;
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::br_en;
@@ -571,6 +841,7 @@ always_comb begin : cpu_cw
                         //exe
                         ctrl_word.exe.cmpop = bltu;
                         ctrl_word.exe.cmp_sel = cmpmux::rs2_out;
+                        ctrl_word.exe.exefwdmux_sel = exefwdmux::br_en_zext;
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::br_en;
@@ -632,9 +903,10 @@ always_comb begin : cpu_cw
                     end
                 endcase
 
-                //mem doesn't do anything here
+                //mem
+                ctrl_word.mem.memfwdmux_sel = memfwdmux::exe_fwd_data;
 
-                //fetch
+                //fetch does nothing here
                
             
                 //decode
@@ -642,6 +914,33 @@ always_comb begin : cpu_cw
                 ctrl_word.rvfi.rs2_addr = cw_read.rs2_addr;
                 ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
                 ctrl_word.rvfi.rs2_data = cw_read.rs2_data;
+
+                //data hzd detection
+                if((cw_read.rs1_addr == instruct_in_de[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::exe_fwd_data;
+                end
+                else if((cw_read.rs1_addr == instruct_in_exe[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::mem_fwd_data;
+                end
+                else if((cw_read.rs1_addr == instruct_in_mem[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs1_sel = rs1mux::wb_fwd_data;
+                end
+                else begin
+                    ctrl_word.exe.rs1_sel = rs1mux::rs1_data;
+                end
+
+                if((cw_read.rs2_addr == instruct_in_de[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs2_sel = rs2mux::exe_fwd_data;
+                end
+                else if((cw_read.rs2_addr == instruct_in_exe[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs2_sel = rs2mux::mem_fwd_data;
+                end
+                else if((cw_read.rs2_addr == instruct_in_mem[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                    ctrl_word.exe.rs2_sel = rs2mux::wb_fwd_data;
+                end
+                else begin
+                    ctrl_word.exe.rs2_sel = rs2mux::rs2_data;
+                end
             end
 
             default: ;
