@@ -55,6 +55,7 @@ typedef enum bit[1:0] {
     rs1_data = 2'b00
     ,exe_fwd_data = 2'b01
     ,mem_fwd_data = 2'b10
+    ,wb_fwd_data = 2'b11
 } rs1_sel_t;
 endpackage
 
@@ -63,5 +64,21 @@ typedef enum bit[1:0] {
     rs2_data = 2'b00
     ,exe_fwd_data = 2'b01
     ,mem_fwd_data = 2'b10
+    ,wb_fwd_data = 2'b11
 } rs2_sel_t;
+endpackage
+
+package exefwdmux;
+typedef enum bit [1:0] { 
+    alu_out = 2'b00
+    ,br_en_zext = 2'b01
+    ,u_imm = 2'b10
+} exefwdmux_sel_t;
+endpackage
+
+package memfwdmux;
+typedef enum bit { 
+    mem_fwd_data = 1'b0
+    ,exe_fwd_data = 1'b1
+} memfwdmux_sel_t;
 endpackage
