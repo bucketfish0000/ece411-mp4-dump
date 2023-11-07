@@ -18,7 +18,7 @@ module mp4datapath
     input logic fet_dec_rst,
     input logic dec_exe_rst,
     input logic exe_mem_rst,
-    input mem_wb_rst,
+    input logic mem_wb_rst,
 
     input logic fet_dec_load,
     input logic dec_exe_load,
@@ -28,6 +28,7 @@ module mp4datapath
     input control_word cw_dec,
 
     output control_read cr,
+
     output rv32i_opcode opcode_exec,
     output rv32i_word pc_rdata,
 
@@ -76,7 +77,7 @@ control_word cw_exec, cw_mem, cw_wb;
 // logic f_d_ready,d_e_ready,e_m_ready,_m_w_ready;
 // logic f_d_valid,d_e_valid,e_m_valid,m_w_valid;
 
-logic [31:0] mem_fwd_data, exe_fwd_data, alu_out_exe, alu_out_mem_wb, rs2_out, rs1_data_decode, rs2_data_decode;
+logic [31:0] mem_fwd_data, exe_fwd_data, wb_fwd_data, alu_out_exe, alu_out_mem_wb, rs1_out, rs2_out, rs1_data_decode, rs2_data_decode, mem_rdata;
 
 //yes this looks messed up because the naming conventions don't actually work for my(the correct :) ) implementation
 //it's on purpose don't touch without asking
@@ -89,7 +90,7 @@ assign if_valid = decode_valid_i;
 
 
 
-rv32i_word instr_fetch;
+rv32i_word instr_fetch, pc_prev;
 //logic load_pc;
 
 assign if_rdy = fetch_ready_o;
@@ -103,6 +104,7 @@ fetch_stage fetch(
     .exec_fwd_data(exe_fwd_data),                                                                       
     .instr_in(icache_out),
     .pc_out(pc_fetch),
+    .pc_prev(pc_prev),
     .pc_next(pc_wdata),
     .instr_out(instr_fetch),
     .ready(fetch_ready_o)
@@ -121,8 +123,8 @@ fet_dec_reg fet_dec_reg(
     .valid_o(decode_valid_i),
 
     .instr_fetch(instr_fetch),
-    .pc_fetch(pc_fetch),
-    .pc_wdata(pc_wdata),
+    .pc_fetch(pc_prev),
+    .pc_wdata(pc_fetch),
     .instr_decode(instr_decode),
     .pc_decode(pc_decode),
     .pc_wdata_decode(pc_wdata_decode),
@@ -154,6 +156,7 @@ decode_stage decode(
 assign de_rdy = decode_ready_o;
 
 rv32i_word rs1_data_exec,rs2_data_exec;
+rv32i_opcode opcode_exec;
 imm imm_exec;
 rv32i_word func3_exec, func7_exec;
 dec_exe_reg dec_exe_reg(
@@ -171,7 +174,7 @@ dec_exe_reg dec_exe_reg(
     .valid_o(exec_valid_i),
 
     .opcode_dec(cr.opcode),
-    .opcode_dec_exe(opcode_exec), 
+    .opcode_dec_exe(opcode_exec),
     .cw_in(cw_dec),
     .cw_out(cw_exec)
 );
@@ -186,8 +189,10 @@ exe_stage execute(
     .pc_x(cw_exec.rvfi.pc_rdata),
     .mem_fwd_data(mem_fwd_data),
     .exe_fwd_data(exe_fwd_data),
+    .wb_fwd_data(wb_fwd_data),
     .imm_in(imm_exec),
-    .rs2_out(rs2_out), //outs
+    .rs1_out(rs1_out), //outs
+    .rs2_out(rs2_out),
     .alu_out(alu_out_exe),
     .br_en(br_en_exe_o),
 
@@ -209,6 +214,7 @@ exe_mem_reg exe_mem_register(
     .exe_rdy(exec_ready_o),
     .de_exe_valid(exec_valid_i),
     .alu_out_i(alu_out_exe), //from exe_stage
+    .rs1_out_i(rs1_out), //from exe_stage
     .rs2_out_i(rs2_out), //from exe_stage
     .u_imm_i(imm_exec.u_imm), //from DE_EXE pipeline reg
 
@@ -254,7 +260,8 @@ mem_wb_reg mem_wb_register(
     .mem_rdata_D_i(dcache_out),
     .exe_mem_valid(mem_valid_i),
     .u_imm_o(u_imm_wb),
-    .mem_rdata_D_o(mem_fwd_data), //aka mem_fwd_data
+    .mem_rdata_D_o(mem_rdata),
+    .mem_fwd_data(mem_fwd_data),
     .mem_wb_rdy(wb_ready_i),
     .mem_wb_valid(wb_valid_i),
     .alu_out_o(alu_out_mem_wb),
@@ -271,7 +278,7 @@ wb_stage writeback(
     .alu_out(alu_out_mem_wb),
     .br_en(br_en_mem_wb_o), 
     .ir_u_imm(u_imm_wb),
-    .mem_data_out(mem_fwd_data),
+    .mem_data_out(mem_rdata),
     .mem_wb_rdy(wb_ready_i),
     .mem_wb_valid(wb_valid_i),
 
@@ -285,5 +292,14 @@ wb_stage writeback(
 
 assign wb_valid = wb_valid_i;
 assign wb_rdy = 1'b1;
+
+wb_fwd_reg wb_fwding_reg(
+    .clk(clk),
+    .rst(rst),
+    .load_wb_fwd_reg(mem_wb_load),
+    .wb_fwd_data_i(regfilemux_out),
+
+    .wb_fwd_data_o(wb_fwd_data)
+);
 
 endmodule : mp4datapath
