@@ -183,6 +183,7 @@ always_comb begin : pc_branch_logics
     else if (opcode_exec == op_jal) pcmux_sel = pcmux::alu_out; //jal
     else if (opcode_exec == op_jalr) pcmux_sel = pcmux::alu_mod2; //jalr
 end
+
 // /***************** USED BY RVFIMON --- ONLY MODIFY WHEN TOLD *****************/
 // logic trap;
 // logic [3:0] rmask, wmask;
