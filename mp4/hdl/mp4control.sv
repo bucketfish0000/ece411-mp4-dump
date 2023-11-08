@@ -210,6 +210,11 @@ always_comb begin : pipeline_regs_logic
         exe_mem_ld = 1'b0;
         mem_wb_ld = 1'b0;
 
+        // if_de_rst = 1'b0;
+        // de_exe_rst = 1'b0;
+        // exe_mem_rst = 1'b0;
+        // mem_wb_rst = 1'b0;
+
         if(fetch_delay == 0) begin
             //stall
             if(((rdy[0] == 0) && (vald[0] == 1))) begin //wb not ready
@@ -222,7 +227,7 @@ always_comb begin : pipeline_regs_logic
                 mem_wb_ld = 1'b0;
             end
             else if((rdy[1] == 0) && (vald[1] == 1)) begin //mem not ready
-                if_de_ld = 1'b1; //need to load in current instruction before halting
+                if_de_ld = 1'b10 //need to load in current instruction before halting
                 imem_read = 1'b0;
                 load_hzd_q = 1'b0;
                 load_pc = 1'b0;
@@ -304,12 +309,12 @@ always_comb begin : pipeline_regs_logic
         // exe_mem_ld = (stall_exe_mem || vald[3]==0) ? 1'b0 : 1'b1;
         // mem_wb_ld = (stall_mem_wb || vald[2]==0) ? 1'b0 : 1'b1;
 
-        // //ppr rst (flushing control)
-        // //
-        // if_de_rst = (branch_taken)? 1'b1 : 1'b0;
-        // de_exe_rst = (branch_taken) ? 1'b1 : 1'b0;
-        // exe_mem_rst = (mem_rdy && !exe_valid) ? 1'b1 : 1'b0; 
-        // mem_wb_rst = 1'b0;
+        //ppr rst (flushing control)
+        //
+        if_de_rst = (branch_taken)? 1'b1 : 1'b0;
+        de_exe_rst = (branch_taken) ? 1'b1 : 1'b0;
+        exe_mem_rst = (mem_rdy && !exe_valid) ? 1'b1 : 1'b0; 
+        mem_wb_rst = 1'b0;
     
     end
 end
