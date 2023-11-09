@@ -106,26 +106,26 @@ logic flush_data_hzd_q, load_hzd_q, fetch_delay;
 assign rdy = {if_rdy, de_rdy, exe_rdy, mem_rdy, wb_rdy};
 assign vald = {if_valid, de_valid, exe_valid, mem_valid, wb_valid};
 
-// logic stall_if_de, stall_de_exe, stall_exe_mem, stall_mem_wb;
-// //stall a ppr when any ppr after it is valid but not ready
+logic stall_if_de, stall_de_exe, stall_exe_mem, stall_mem_wb;
+//stall a ppr when any ppr after it is valid but not ready
 
-// assign stall_if_de = 
-//     ((rdy[3] == 0) && (vald[3] == 1)) || 
-//     ((rdy[2] == 0) && (vald[2] == 1)) || 
-//     ((rdy[1] == 0) && (vald[1] == 1)) || 
-//     ((rdy[0] == 0) && (vald[0] == 1));
+assign stall_if_de = 
+    ((rdy[3] == 0) && (vald[3] == 1)) || 
+    ((rdy[2] == 0) && (vald[2] == 1)) || 
+    ((rdy[1] == 0) && (vald[1] == 1)) || 
+    ((rdy[0] == 0) && (vald[0] == 1));
 
-// assign stall_de_exe = 
-//     ((rdy[2] == 0) && (vald[2] == 1)) || 
-//     ((rdy[1] == 0) && (vald[1] == 1)) || 
-//     ((rdy[0] == 0) && (vald[0] == 1));
+assign stall_de_exe = 
+    ((rdy[2] == 0) && (vald[2] == 1)) || 
+    ((rdy[1] == 0) && (vald[1] == 1)) || 
+    ((rdy[0] == 0) && (vald[0] == 1));
 
-// assign stall_exe_mem = 
-//     ((rdy[1] == 0) && (vald[1] == 1)) || 
-//     ((rdy[0] == 0) && (vald[0] == 1));
+assign stall_exe_mem = 
+    ((rdy[1] == 0) && (vald[1] == 1)) || 
+    ((rdy[0] == 0) && (vald[0] == 1));
 
-// assign stall_mem_wb = 
-//     ((rdy[0] == 0) && (vald[0] == 1));
+assign stall_mem_wb = 
+    ((rdy[0] == 0) && (vald[0] == 1));
 
 assign instruct_in_if = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
 
@@ -168,147 +168,31 @@ always_comb begin : pipeline_regs_logic
         mem_wb_rst = 1'b1;
     end
     else begin
-        /*
-            start:
-            i1:  addi r1, r0, 17     #r1 = 17 = r0 + 17 = 0 + 17
-            i2:  ld r2, val_x        #r2 = 16 = mem[val_x]
-                 nop
-                 nop
-            i3:  add r3, r1, r2      #r3 = 33 = r1 + r2 = 17 + 16
-            end
-                 nop
-                 nop
-                 nop
-                 nop
-                 nop
+            //imem and pc interactions
+        //only not try to fetch when waiting for resp from icache 
+        imem_read = ((icache_resp) || stall_if_de) ? 1'b0 : 1'b1; 
+        //update pc when imem has responded (can proc)
+        load_pc = (!icache_resp || stall_if_de) ? 1'b0 : 1'b1;
 
-            val_x: .word 0x0000010 #0x010 = 16 
-
-            ------------------------------------------------------------------------------------
-            cyc   |   ld   |   de   |   exe   |   mem   |   wb   ||    rdy    |   valid   |    ld    |    event
-             0    |     x    |    x   |    x    |    x    |   x    ||  000000   |   000000  |  100000  |  start
-             1    |    i1    |    x   |    x    |    x    |   x    ||  100000   |   100000  |  110000  |  I_read_hit,
-             2    |    i2    |   i1   |    x    |    x    |   x    ||  110000   |   110000  |  111000  |  I_read_hit, I_resp
-             3    |   nop    |   i2   |   i1    |    x    |   x    ||  111000   |   111000  |  111100  |  I_read_hit, I_resp
-             4    |   nop    |  nop   |   i2    |   i1    |   x    ||  111100   |           |  111110  |  I_read_hit, I_resp
-             5    |    i3    |  nop   |  nop    |   i2    |  i1    ||  111110   |           |  111111  |  I_read_hit, I_resp
-             6    |   end    |  nop   |  nop    |   i2    |  i1    ||  111101   |           |  000010  |  I_read_hit, I_resp, r1 = 17
-             7    |   end    |  nop   |  nop    |   i2    |   x    ||  111110   |           |  111111  |  D_resp
-             8    |   nop    |   i3   |  nop    |  nop    |  i2    ||  111111   |           |  111111  |  chugga,     r2 = 16
-             9    |   nop    |  end   |   i3    |  nop    | nop    ||  111111   |           |  111111  |  chugga     
-             10   |   nop    |  nop   |  end    |   i3    | nop    ||  111111   |           |  111111  |  choo  
-             11   |   nop    |  nop   |  nop    |  end    |  i3    ||  111111   |           |  111111  |  choo,       r3 = 33       
-             12   |   nop    |  nop   |  nop    |  nop    | end    ||  111111   |           |  111111  |  end         
-        */
-
-        //default
-        if_de_ld = 1'b0;
-        imem_read = 1'b0;
-        load_hzd_q = 1'b0;
-        load_pc = 1'b0;
-        de_exe_ld = 1'b0;
-        exe_mem_ld = 1'b0;
-        mem_wb_ld = 1'b0;
-
-        // if_de_rst = 1'b0;
-        // de_exe_rst = 1'b0;
-        // exe_mem_rst = 1'b0;
-        // mem_wb_rst = 1'b0;
-
-        if(fetch_delay == 0) begin
-            //stall
-            if(((rdy[0] == 0) && (vald[0] == 1))) begin //wb not ready
-                // if_de_ld = 1'b0;
-                imem_read = 1'b0;
-                load_hzd_q = 1'b0;
-                load_pc = 1'b0;
-                de_exe_ld = 1'b0;
-                exe_mem_ld = 1'b0;
-                mem_wb_ld = 1'b0;
-            end
-            else if((rdy[1] == 0) && (vald[1] == 1)) begin //mem not ready
-                if_de_ld = 1'b10 //need to load in current instruction before halting
-                imem_read = 1'b0;
-                load_hzd_q = 1'b0;
-                load_pc = 1'b0;
-                de_exe_ld = 1'b0;
-                exe_mem_ld = 1'b0;
-                mem_wb_ld = 1'b0;
-            end
-            else if((rdy[2] == 0) && (vald[2] == 1)) begin //exe not ready
-                if_de_ld = 1'b0;
-                imem_read = 1'b0;
-                load_hzd_q = 1'b0;
-                load_pc = 1'b0;
-                de_exe_ld = 1'b0;
-                exe_mem_ld = 1'b0;
-            end
-            else if((rdy[3] == 0) && (vald[3] == 1)) begin //de not ready
-                if_de_ld = 1'b0;
-                imem_read = 1'b0;
-                load_hzd_q = 1'b0;
-                load_pc = 1'b0;
-                de_exe_ld = 1'b0;
-            end
-            else begin
-                if_de_ld = 1'b1;
-                imem_read = 1'b1;
-                load_hzd_q = 1'b1;
-                load_pc = 1'b1;
-                de_exe_ld = 1'b1;
-                exe_mem_ld = 1'b1;
-                mem_wb_ld = 1'b1;
-            end
-
-            //cold start/flush
-            if(vald[4] == 0) begin
-                de_exe_ld = 1'b0;
-            end
-            else begin
-                //do nothing
-            end
-
-            if(vald[3] == 0) begin
-                exe_mem_ld = 1'b0;
-            end
-            else begin
-                //do nothing
-            end
-
-            if(vald[2] == 0) begin
-                mem_wb_ld = 1'b0;
-            end
-            else begin
-                //do nothing
-            end
-        end
-        else begin
-            imem_read = 1'b1;
-            if(icache_resp) begin
-                load_pc = 1'b1;
-            end
-        end
-
-        imem_read = 1'b1;
-
-        //     //imem and pc interactions
-        // //only not try to fetch when waiting for resp from icache 
-        // imem_read = (/*(if_valid & !icache_resp) || */stall_if_de) ? 1'b0 : 1'b1; 
-        // //update pc when imem has responded (can proc)
-        // load_pc = (icache_resp || stall_if_de) ? 1'b0 : 1'b1;
-
-        // //ppr resets
-        // // if_de_rst = 1'b0;
-        // // de_exe_rst = 1'b0;
-        // // exe_mem_rst = 1'b0;
-        // // mem_wb_rst = 1'b0;
+        //ppr resets
+        if_de_rst = 1'b0;
+        de_exe_rst = 1'b0;
+        exe_mem_rst = 1'b0;
+        mem_wb_rst = 1'b0;
 
         // //ppr loads (stalling control)
-        // if_de_ld = (stall_if_de || !icache_resp) ? 1'b0 : 1'b1;
-        // de_exe_ld = (stall_de_exe || vald[4]==0) ? 1'b0: 1'b1;
-        // exe_mem_ld = (stall_exe_mem || vald[3]==0) ? 1'b0 : 1'b1;
-        // mem_wb_ld = (stall_mem_wb || vald[2]==0) ? 1'b0 : 1'b1;
+        if_de_ld = (stall_if_de || !icache_resp) ? 1'b0 : 1'b1;
+        load_hzd_q = (stall_if_de || !icache_resp) ? 1'b0 : 1'b1;
+        de_exe_ld = (!icache_resp|| stall_de_exe || vald[4]==0) ? 1'b0: 1'b1;
+        exe_mem_ld = (!icache_resp || stall_exe_mem || vald[3]==0) ? 1'b0 : 1'b1;
+        mem_wb_ld = (!icache_resp || stall_mem_wb || vald[2]==0) ? 1'b0 : 1'b1;
 
+        //ppr rst (flushing control)
+        //
+        if_de_rst = (branch_taken)? 1'b1 : 1'b0;
+        de_exe_rst = (branch_taken) ? 1'b1 : 1'b0;
+        exe_mem_rst = (mem_rdy && !exe_valid) ? 1'b1 : 1'b0; 
+        mem_wb_rst = 1'b0;
         //ppr rst (flushing control)
         //
         if_de_rst = (branch_taken)? 1'b1 : 1'b0;
