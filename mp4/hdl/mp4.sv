@@ -1,5 +1,7 @@
 module mp4
 import rv32i_types::*;
+import rv32i_cache_types::*; 
+
 import cpuIO::*;
 (
     input   logic           clk,
@@ -38,7 +40,7 @@ import cpuIO::*;
             logic   [31:0]  cacheline_imem_address; //cacheline aligned to cache
             logic           imem_read;
             logic   [31:0]  imem_rdata;
-            rv32i_cacheline imem_cacheline_rdata;
+            rv32i_cache_types::rv32i_cacheline imem_cacheline_rdata;
             logic           imem_resp;
             logic   [31:0]  dmem_address;           //word aligned 
             logic   [31:0]  cacheline_dmem_address; //cacheline aligned 
@@ -46,13 +48,13 @@ import cpuIO::*;
             logic           dmem_write;
             logic   [3:0]   dmem_wmask;
             logic   [31:0]  dmem_rdata;
-            rv32i_cacheline dmem_cacheline_rdata; 
+            rv32i_cache_types::rv32i_cacheline dmem_cacheline_rdata; 
             logic   [31:0]  dmem_wdata;
-            rv32i_cacheline dmem_cacheline_wdata; 
+            rv32i_cache_types::rv32i_cacheline dmem_cacheline_wdata; 
             logic           dmem_resp;
 
-            rv32i_cacheline cacheline_wdata_mem;
-            rv32i_cacheline cacheline_rdata_mem;
+            rv32i_cache_types::rv32i_cacheline cacheline_wdata_mem;
+            rv32i_cache_types::rv32i_cacheline cacheline_rdata_mem;
             logic cacheline_resp, cacheline_read, cacheline_write; 
 
             logic           monitor_valid;
@@ -148,8 +150,30 @@ import cpuIO::*;
         .mem_wdata(dmem_cacheline_wdata), 
         .mem_resp(dmem_resp), 
 
-        .pmem_address(cacheline_dmem_address)
+        .pmem_address(cacheline_dmem_address), 
+        .pmem_read(cacheline_dmem_read), 
+        .pmem_write(cacheline_dmem_write), 
+        .pmem_rdata(), 
+        .pmem_wdata(), 
+        .pmem_resp()
+    );
 
+    cache icache0(
+        .clk(clk), .reset(reset),
+        .mem_address(imem_address), 
+        .mem_read(imem_read), 
+        .mem_write(1'b0), 
+        .mem_byte_enable(),
+        .mem_rdata(imem_cacheline_rdata), 
+        .mem_wdata(), 
+        .mem_resp(imem_resp), 
+
+        .pmem_address(cacheline_imem_address), 
+        .pmem_read(), 
+        .pmem_write(), 
+        .pmem_rdata(), 
+        .pmem_wdata(), 
+        .pmem_resp()
     );
     cacheline_adaptor cacheline_adaptor(
         .clk(clk), .reset(reset),
@@ -168,7 +192,7 @@ import cpuIO::*;
         .resp_i(bmem_resp)
     );
 
-    arbiter cache_arbiter(
+    cache_arbiter cache_arbiter(
         .clk(clk), .reset(reset),
         .icache_addr(cacheline_imem_address),            //interface with icache
         .icache_read(imem_read),
@@ -176,8 +200,8 @@ import cpuIO::*;
         .icache_resp(imem_resp), 
 
         .dcache_addr(cacheline_dmem_address),  //interface with dcache 
-        .dcache_read(dmem_read),
-        .dcache_write(dmem_write),
+        .dcache_read(cacheline_dmem_read),
+        .dcache_write(cacheline_dmem_write),
         .dcache_data_r(dmem_cacheline_rdata), 
         .dcache_data_w(dmem_cacheline_wdata), 
         .dcache_resp(dmem_resp), 
