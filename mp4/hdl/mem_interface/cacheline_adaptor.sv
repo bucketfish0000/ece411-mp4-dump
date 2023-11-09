@@ -1,12 +1,15 @@
 module cacheline_adaptor
+    import rv32i_types::*;
+    import rv32i_cache_types::*; 
+    //import cpuIO::*;
 (
     input clk,
     input reset_n,
 
     // Port to LLC (Lowest Level Cache)
-    input logic [255:0] line_i,
-    output logic [255:0] line_o,
-    input logic [31:0] address_i,
+    input rv32i_cache_types::rv32i_cacheline line_i,
+    output rv32i_cache_types::rv32i_cacheline line_o,
+    input rv32i_word address_i,
     input read_i,
     input write_i,
     output logic resp_o,
@@ -14,7 +17,7 @@ module cacheline_adaptor
     // Port to memory
     input logic [63:0] burst_i,
     output logic [63:0] burst_o,
-    output logic [31:0] address_o,
+    output rv32i_word address_o,
     output logic read_o,
     output logic write_o,
     input resp_i
