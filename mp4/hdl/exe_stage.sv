@@ -1,26 +1,28 @@
 module exe_stage
+import cpuIO::*;
 import rv32i_types::*;
 // Mux types are in their own packages to prevent identiier collisions
 // e.g. pcmux::pc_plus4 and regfilemux::pc_plus4 are seperate identifiers
 // for seperate enumerated types, you cannot //import rv32i_mux_types::*;
-import pcmux::*;
-import marmux::*;
-import cmpmux::*;
-import alumux::*;
-import regfilemux::*;
-import rs1mux::*;
-import rs2mux::*;
+// import pcmux::*;
+// import marmux::*;
+// import cmpmux::*;
+// import alumux::*;
+// import regfilemux::*;
+// import rs1mux::*;
+// import rs2mux::*;
 import immediates::*;
 (
-    input clk, rst,
-    input cpuIO::cw_execute ctrl_w_EXE,
+    input clk, 
+    input logic rst,
+    input cw_execute ctrl_w_EXE,
     input logic [31:0] rs1_data,
     input logic [31:0] rs2_data,
     input logic [31:0] pc_x,
     input logic [31:0] mem_fwd_data,
     input logic [31:0] exe_fwd_data,
     input logic [31:0] wb_fwd_data,
-    input immediates::imm imm_in,
+    input imm imm_in,
     
     output logic [31:0] rs1_out,
     output logic [31:0] rs2_out,
@@ -32,11 +34,11 @@ import immediates::*;
     output logic exe_rdy
 );
     logic [31:0] rs1_o, rs2_o, alumux1_o, alumux2_o, cmpmux_o;
-    cmpmux_sel_t cmp_sel;
-    alumux1_sel_t alumux1_sel;
-    alumux2_sel_t alumux2_sel;
-    rs1_sel_t rs1_sel;
-    rs2_sel_t rs2_sel;
+    cmpmux::cmpmux_sel_t cmp_sel;
+    alumux::alumux1_sel_t alumux1_sel;
+    alumux::alumux2_sel_t alumux2_sel;
+    rs1mux::rs1_sel_t rs1_sel;
+    rs2mux::rs2_sel_t rs2_sel;
     rv32i_word i_imm;
     rv32i_word s_imm;
     rv32i_word b_imm;

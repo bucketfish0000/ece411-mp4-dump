@@ -55,8 +55,11 @@ always_comb begin : regfile_ctrl_signals
         cw_out_rvfi.exe.rs2_sel = rs2mux::rs2_data;
         cw_out_rvfi.exe.cmpop = beq;
         cw_out_rvfi.exe.aluop = alu_add;
+        cw_out_rvfi.exe.exefwdmux_sel = exefwdmux::alu_out;
         cw_out_rvfi.mem.mem_read_d = 1'b0;
         cw_out_rvfi.mem.mem_write_d = 1'b0;
+        cw_out_rvfi.mem.store_funct3 = sb;
+        cw_out_rvfi.mem.load_funct3 = lb;
         cw_out_rvfi.mem.mar_sel = marmux::pc_out;
         cw_out_rvfi.mem.memfwdmux_sel = memfwdmux::mem_fwd_data;
         cw_out_rvfi.wb.ld_reg = 1'b0;
