@@ -141,7 +141,7 @@ import cpuIO::*;
     );
 
     cache dcache0(
-        .clk(clk), .reset(reset),
+        .clk(clk), .rst(reset),
         .mem_address(dmem_address), 
         .mem_read(dmem_read), 
         .mem_write(dmem_write), 
@@ -159,7 +159,7 @@ import cpuIO::*;
     );
 
     cache icache0(
-        .clk(clk), .reset(reset),
+        .clk(clk), .rst(reset),
         .mem_address(imem_address), 
         .mem_read(imem_read), 
         .mem_write(1'b0), 
