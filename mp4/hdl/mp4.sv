@@ -6,26 +6,54 @@ import cpuIO::*;
     input   logic           rst,
 
     // Use these for CP1 (magic memory)
-    output  logic   [31:0]  imem_address,
-    output  logic           imem_read,
-    input   logic   [31:0]  imem_rdata,
-    input   logic           imem_resp,
-    output  logic   [31:0]  dmem_address,
-    output  logic           dmem_read,
-    output  logic           dmem_write,
-    output  logic   [3:0]   dmem_wmask,
-    input   logic   [31:0]  dmem_rdata,
-    output  logic   [31:0]  dmem_wdata,
-    input   logic           dmem_resp
+    // output  logic   [31:0]  imem_address,
+    // output  logic           imem_read,
+    // input   logic   [31:0]  imem_rdata,
+    // input   logic           imem_resp,
+    // output  logic   [31:0]  dmem_address,
+    // output  logic           dmem_read,
+    // output  logic           dmem_write,
+    // output  logic   [3:0]   dmem_wmask,
+    // input   logic   [31:0]  dmem_rdata,
+    // output  logic   [31:0]  dmem_wdata,
+    // input   logic           dmem_resp
 
     // Use these for CP2+ (with caches and burst memory)
-    // output  logic   [31:0]  bmem_address,
-    // output  logic           bmem_read,
-    // output  logic           bmem_write,
-    // input   logic   [63:0]  bmem_rdata,
-    // output  logic   [63:0]  bmem_wdata,
-    // input   logic           bmem_resp
+    output  logic   [31:0]  bmem_address,
+    output  logic           bmem_read,
+    output  logic           bmem_write,
+    input   logic   [63:0]  bmem_rdata,
+    output  logic   [63:0]  bmem_wdata,
+    input   logic           bmem_resp
 );
+/*                             256bit                        32bit word
+          64bit              cacheline        -> word adapter    -> cpu datapath fetch
+    memory <-> cacheline adapter <-> arbiter  
+                                             <-> word adapter   <-> cpu datapath memory 
+*/
+
+
+            // imem and dmem signals to cpu datapath 
+            logic   [31:0]  imem_address;           //word aligned to cpu 
+            logic   [31:0]  cacheline_imem_address; //cacheline aligned to cache
+            logic           imem_read;
+            logic   [31:0]  imem_rdata;
+            rv32i_cacheline imem_cacheline_rdata;
+            logic           imem_resp;
+            logic   [31:0]  dmem_address;           //word aligned 
+            logic   [31:0]  cacheline_dmem_address; //cacheline aligned 
+            logic           dmem_read;
+            logic           dmem_write;
+            logic   [3:0]   dmem_wmask;
+            logic   [31:0]  dmem_rdata;
+            rv32i_cacheline dmem_cacheline_rdata; 
+            logic   [31:0]  dmem_wdata;
+            rv32i_cacheline dmem_cacheline_wdata; 
+            logic           dmem_resp;
+
+            rv32i_cacheline cacheline_wdata_mem;
+            rv32i_cacheline cacheline_rdata_mem;
+            logic cacheline_resp, cacheline_read, cacheline_write; 
 
             logic           monitor_valid;
             logic   [63:0]  monitor_order;
@@ -51,6 +79,7 @@ import cpuIO::*;
             logic mem_r_d, mem_w_d;
             logic br_en;
             logic [3:0] mem_byte_enable; 
+            logic [31:0] cacheline_mem_byte_enable;
             control_read ctrl_rd;
             logic load_pc;
             control_word cw_control, ctrl_rvfi;
@@ -109,6 +138,82 @@ import cpuIO::*;
         .pcmux_sel(pcmux_sel)      
     );
 
+    cache dcache0(
+        .clk(clk), .reset(reset),
+        .mem_address(dmem_address), 
+        .mem_read(dmem_read), 
+        .mem_write(dmem_write), 
+        .mem_byte_enable(cacheline_mem_byte_enable),
+        .mem_rdata(dmem_cacheline_rdata), 
+        .mem_wdata(dmem_cacheline_wdata), 
+        .mem_resp(dmem_resp), 
+
+        .pmem_address(cacheline_dmem_address)
+
+    );
+    cacheline_adaptor cacheline_adaptor(
+        .clk(clk), .reset(reset),
+        .line_i(cacheline_wdata_mem),          //cache
+        .line_o(cacheline_rdata_mem),
+        .address_i(cacheline_mem_address),
+        .read_i(cacheline_read),
+        .write_i(cacheline_write),
+        .resp_o(cacheline_resp),
+
+        .burst_i(bmem_rdata),         //memory
+        .burst_o(bmem_wdata), 
+        .address_o(bmem_address), 
+        .read_o(bmem_read), 
+        .write_o(bmem_read), 
+        .resp_i(bmem_resp)
+    );
+
+    arbiter cache_arbiter(
+        .clk(clk), .reset(reset),
+        .icache_addr(cacheline_imem_address),            //interface with icache
+        .icache_read(imem_read),
+        .icache_data(imem_cacheline_rdata), 
+        .icache_resp(imem_resp), 
+
+        .dcache_addr(cacheline_dmem_address),  //interface with dcache 
+        .dcache_read(dmem_read),
+        .dcache_write(dmem_write),
+        .dcache_data_r(dmem_cacheline_rdata), 
+        .dcache_data_w(dmem_cacheline_wdata), 
+        .dcache_resp(dmem_resp), 
+        
+        .mem_data_r(cacheline_rdata_mem),               // interface with cacheline adapter 
+        .mem_resp(cacheline_resp), 
+        .mem_addr(cacheline_mem_address),    
+        .mem_data_w(cacheline_wdata_mem), 
+        .mem_read(cacheline_read), 
+        .mem_write(cacheline_write)
+    );
+
+    mem_word_adapter imem_word_adapter(
+        .clk(clk), .rst(rst),
+        .mem_address(imem_address), 
+        .cacheline_mem_address(cacheline_imem_address), 
+        .cacheline_rdata(imem_cacheline_rdata), 
+        .cacheline_wdata(), 
+        .mem_wdata(), 
+        .mem_rdata(imem_rdata), 
+        .mem_byte_enable(), 
+        .cacheline_mem_byte_enable()
+    );
+
+    mem_word_adapter dmem_word_adapter(
+        .clk(clk), .rst(rst),
+        .mem_address(dmem_address), 
+        .cacheline_mem_address(cacheline_dmem_address), 
+        .cacheline_rdata(dmem_cacheline_rdata), 
+        .cacheline_wdata(dmem_cacheline_wdata), 
+        .mem_wdata(dmem_wdata), 
+        .mem_rdata(dmem_rdata), 
+        .mem_byte_enable(mem_byte_enable), 
+        .cacheline_mem_byte_enable(cacheline_mem_byte_enable)
+    );
+
     mp4datapath datapath(
         .clk(clk),
         .rst(rst),
@@ -165,7 +270,6 @@ import cpuIO::*;
         .rd_addr_o(rd_addr)
     );
 
-    
     assign imem_address = pc_rdata;
     //assign imem_read = imem_read;
     assign dmem_address = mem_addr_d;
