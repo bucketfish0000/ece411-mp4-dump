@@ -67,7 +67,7 @@ begin: next_state_assignment
 end
 
 always_ff @(posedge clk) begin : next_state_logic
-    if(rst) state <= icache; 
+    if(reset) next_states = icache; 
     else begin 
         case(state)
             icache: begin 
