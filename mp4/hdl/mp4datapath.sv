@@ -101,7 +101,7 @@ fetch_stage fetch(
     .icache_resp(icache_resp),
     .load_pc(load_pc), 
     .pcmux_sel(pcmux_sel),
-    .exec_fwd_data(exe_fwd_data),                                                                       
+    .exec_fwd_data(alu_out_exe),                                                                       
     .instr_in(icache_out),
     .pc_out(pc_fetch),
     .pc_prev(pc_prev),
@@ -124,7 +124,7 @@ fet_dec_reg fet_dec_reg(
 
     .instr_fetch(instr_fetch),
     .pc_fetch(pc_prev),
-    .pc_wdata(pc_fetch),
+    .pc_wdata(pc_wdata),
     .instr_decode(instr_decode),
     .pc_decode(pc_decode),
     .pc_wdata_decode(pc_wdata_decode),
