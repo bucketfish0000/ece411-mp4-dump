@@ -172,7 +172,7 @@ always_comb begin : pipeline_regs_logic
         //only not try to fetch when waiting for resp from icache 
         imem_read = ((icache_resp) || stall_if_de) ? 1'b0 : 1'b1; 
         //update pc when imem has responded (can proc)
-        load_pc = (!icache_resp || stall_if_de) ? 1'b0 : 1'b1;
+        load_pc = (branch_taken||(icache_resp && !stall_if_de)) ? 1'b1 : 1'b0;
 
         //ppr resets
         // if_de_rst = 1'b0;
@@ -197,7 +197,7 @@ always_comb begin : pipeline_regs_logic
         //
         if_de_rst = (branch_taken)? 1'b1 : 1'b0;
         de_exe_rst = (branch_taken) ? 1'b1 : 1'b0;
-        exe_mem_rst = (mem_rdy && !exe_valid) ? 1'b1 : 1'b0; 
+        exe_mem_rst = 1'b0; 
         mem_wb_rst = 1'b0;
     
     end
@@ -400,15 +400,16 @@ always_comb begin : cpu_cw
 
                     default: ;
                 endcase
-
+                //ctrl_word.exe.alumux1_sel = alumux::pc_out;
+                //ctrl_word.exe.alumux2_sel = alumux::b_imm;
                 //mem
                 ctrl_word.mem.memfwdmux_sel = memfwdmux::exe_fwd_data;
 
                 //fetch doesn't do anything here
 
-                //     ctrl_word.exe.aluop =  alu_add;
-                //     ctrl_word.exe.alumux1_sel = alumux::pc_out;
-                //     ctrl_word.exe.alumux2_sel = alumux::b_imm;
+                    ctrl_word.exe.aluop =  alu_add;
+                    ctrl_word.exe.alumux1_sel = alumux::pc_out;
+                    ctrl_word.exe.alumux2_sel = alumux::b_imm;
 
 
                 //decode
