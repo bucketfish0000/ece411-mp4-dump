@@ -186,7 +186,7 @@ import cpuIO::*;
         .pmem_resp(arbiter_imem_resp)
     );
     cacheline_adaptor cacheline_adaptor(
-        .clk(clk), .reset(reset),
+        .clk(clk), .reset_n(~reset),
         .line_i(cacheline_wdata_mem),          //cache
         .line_o(cacheline_rdata_mem),
         .address_i(cacheline_mem_address),
