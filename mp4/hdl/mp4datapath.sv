@@ -104,7 +104,7 @@ fetch_stage fetch(
     .exec_fwd_data(alu_out_exe),                                                                       
     .instr_in(icache_out),
     .pc_out(pc_fetch),
-    .pc_prev(pc_prev),
+    //.pc_prev(pc_prev),
     .pc_next(pc_wdata),
     .instr_out(instr_fetch),
     .ready(fetch_ready_o)
@@ -123,7 +123,7 @@ fet_dec_reg fet_dec_reg(
     .valid_o(decode_valid_i),
 
     .instr_fetch(instr_fetch),
-    .pc_fetch(pc_prev),
+    .pc_fetch(pc_fetch),
     .pc_wdata(pc_wdata),
     .instr_decode(instr_decode),
     .pc_decode(pc_decode),
