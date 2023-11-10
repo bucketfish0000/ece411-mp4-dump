@@ -15,14 +15,14 @@ module top_tb;
 
     int timeout = 10000000; // in cycles, change according to your needs
 
-    // CP1
-    mem_itf magic_itf_i(.*);
-    mem_itf magic_itf_d(.*);
-    magic_dual_port magic_dual_port(.itf_i(magic_itf_i), .itf_d(magic_itf_d));
+    // // CP1
+    // mem_itf magic_itf_i(.*);
+    // mem_itf magic_itf_d(.*);
+    // magic_dual_port magic_dual_port(.itf_i(magic_itf_i), .itf_d(magic_itf_d));
 
     // CP2
-    // bmem_itf bmem_itf(.*);
-    // burst_memory burst_memory(.itf(bmem_itf));
+    bmem_itf bmem_itf(.*);
+    burst_memory burst_memory(.itf(bmem_itf));
 
     mon_itf mon_itf(.*);    
     monitor monitor(.itf(mon_itf));
@@ -93,15 +93,15 @@ module top_tb;
             $finish;
         end
         // Comment this for CP2+
-        if (magic_itf_i.error != 0 || magic_itf_d.error != 0) begin
-            repeat (5) @(posedge clk);
-            $finish;
-        end
-        // Uncomment this for CP2+
-        // if (bmem_itf.error != 0) begin
+        // if (magic_itf_i.error != 0 || magic_itf_d.error != 0) begin
         //     repeat (5) @(posedge clk);
         //     $finish;
         // end
+        //Uncomment this for CP2+
+        if (bmem_itf.error != 0) begin
+            repeat (5) @(posedge clk);
+            $finish;
+        end
         timeout <= timeout - 1;
     end
 
