@@ -161,7 +161,7 @@ always_comb begin : pipeline_regs_logic
         exe_mem_ld = 1'b0;
         mem_wb_ld = 1'b0;
 
-        //flush every ppr on reset
+        // //flush every ppr on reset
         if_de_rst = 1'b1;
         de_exe_rst = 1'b1;
         exe_mem_rst = 1'b1;
@@ -175,10 +175,10 @@ always_comb begin : pipeline_regs_logic
         load_pc = (!icache_resp || stall_if_de) ? 1'b0 : 1'b1;
 
         //ppr resets
-        if_de_rst = 1'b0;
-        de_exe_rst = 1'b0;
-        exe_mem_rst = 1'b0;
-        mem_wb_rst = 1'b0;
+        // if_de_rst = 1'b0;
+        // de_exe_rst = 1'b0;
+        // exe_mem_rst = 1'b0;
+        // mem_wb_rst = 1'b0;
 
         // //ppr loads (stalling control)
         if_de_ld = (stall_if_de || !icache_resp) ? 1'b0 : 1'b1;
@@ -187,12 +187,12 @@ always_comb begin : pipeline_regs_logic
         exe_mem_ld = (!icache_resp || stall_exe_mem || vald[3]==0) ? 1'b0 : 1'b1;
         mem_wb_ld = (!icache_resp || stall_mem_wb || vald[2]==0) ? 1'b0 : 1'b1;
 
-        //ppr rst (flushing control)
-        //
-        if_de_rst = (branch_taken)? 1'b1 : 1'b0;
-        de_exe_rst = (branch_taken) ? 1'b1 : 1'b0;
-        exe_mem_rst = (mem_rdy && !exe_valid) ? 1'b1 : 1'b0; 
-        mem_wb_rst = 1'b0;
+        // //ppr rst (flushing control)
+        // //
+        // if_de_rst = (branch_taken)? 1'b1 : 1'b0;
+        // de_exe_rst = (branch_taken) ? 1'b1 : 1'b0;
+        // exe_mem_rst = (mem_rdy && !exe_valid) ? 1'b1 : 1'b0; 
+        // mem_wb_rst = 1'b0;
         //ppr rst (flushing control)
         //
         if_de_rst = (branch_taken)? 1'b1 : 1'b0;
