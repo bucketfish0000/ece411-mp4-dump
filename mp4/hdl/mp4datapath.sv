@@ -156,7 +156,6 @@ decode_stage decode(
 assign de_rdy = decode_ready_o;
 
 rv32i_word rs1_data_exec,rs2_data_exec;
-rv32i_opcode opcode_exec;
 imm imm_exec;
 rv32i_word func3_exec, func7_exec;
 dec_exe_reg dec_exe_reg(

@@ -45,7 +45,6 @@ module PLRU_4_way#(
         //spec output
         update_arr = (16'h0001 << (set_sel)) & ((~hit_index[2]&update)<<(set_sel)); //make sure if hit_index falls into 1xx nothing should update
         //out mapping
-        //$display("??");
         plru_num_out = plru_index_arr[set_sel];
         plru_map_out = 4'b0001 << plru_index_arr[set_sel]; 
         //mask everything with valid 
