@@ -90,6 +90,28 @@ typedef enum bit {
 } memfwdmux_sel_t;
 endpackage
 
+package rs1signunsignmux;
+typedef enum bit { 
+    sign = 1'b0
+    ,unsign = 1'b1
+} rs1signunsignmux_sel_t;
+endpackage
+
+package rs2signunsignmux;
+typedef enum bit { 
+    sign = 1'b0
+    ,unsign = 1'b1
+} rs2signunsignmux_sel_t;
+endpackage
+
+package multihighlowmux;
+typedef enum bit { 
+    low = 1'b0
+    ,high = 1'b1
+} multihighlowmux_sel_t;
+endpackage
+
+
 package rv32i_types;
 // Mux types are in their own packages to prevent identiier collisions
 // e.g. pcmux::pc_plus4 and regfilemux::pc_plus4 are seperate identifiers
