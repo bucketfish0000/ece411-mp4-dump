@@ -185,6 +185,8 @@ import cpuIO::*;
     input logic clk, //from datapath
     input logic rst, //from datapath
 
+    input rv32i_opcode opcode_in,
+    output rv32i_opcode opcode_out,
     input logic br_en_i, 
     input logic exe_mem_ld, 
     input logic exe_rdy,
@@ -213,9 +215,10 @@ import cpuIO::*;
     logic [31:0] fwd_r_EX, u_imm_r, fwd_temp;
     logic [3:0] mem_byte_enable_r;
     control_word cw_data;
+    rv32i_opcode opcode_data;
     logic br_en_r, valid_r, ready_r;
 
-     logic [31:0] marmux_o, mem_addr;
+    logic [31:0] marmux_o, mem_addr;
     logic trap;
     logic [3:0] rmask, wmask_temp;
 
@@ -235,7 +238,7 @@ import cpuIO::*;
         end
         else if((exe_mem_ld == 1)) begin
             exe_fwd_data <= fwd_temp;
-            fwd_r_EX <= fwd_temp ;
+            fwd_r_EX <= fwd_temp;
         end
         else begin
             exe_fwd_data <= fwd_r_EX;
@@ -355,6 +358,17 @@ import cpuIO::*;
         end
     end
 
+    always_ff @ (posedge clk, posedge rst) begin : opcode_register
+        if(rst)begin
+            opcode_out <= 32'b0;
+        end
+        else if((exe_mem_ld == 1)) begin
+            opcode_out <= opcode_in;
+        end
+        else begin
+            opcode_out <= opcode_out;
+        end
+    end
     //br_en register
     always_ff @ (posedge clk, posedge rst) begin : br_en_register
         if(rst)begin

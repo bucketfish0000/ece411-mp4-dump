@@ -6,11 +6,9 @@ auipc.s:
     # the instructions in this test program.
 _start:
 
-    #la x1, mem_data    #                                                    5
-    #sw x3, 0(x1)    #M[mem_data] <= 8192                                    6
-    #lw x5, mem_data     #x5 <= 8192                                         7/8
+
     beq x1, x1, target
-    addi x6, x0, 42 # should never get here
+    lw x5, mem_data  # should never get here
 target:
     addi x6, x0, 69 
 
