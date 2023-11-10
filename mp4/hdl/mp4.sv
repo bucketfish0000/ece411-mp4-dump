@@ -198,7 +198,7 @@ import cpuIO::*;
         .burst_o(bmem_wdata), 
         .address_o(bmem_address), 
         .read_o(bmem_read), 
-        .write_o(bmem_read), 
+        .write_o(bmem_write),
         .resp_i(bmem_resp)
     );
 
