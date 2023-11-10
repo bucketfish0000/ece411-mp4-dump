@@ -40,7 +40,7 @@ module cache #(
     logic cache_dirty;
     logic pmem_address_mux;
     logic data_wmask_mux;
-    assign plru_rf= plru_update;
+    //assign plru_rf= plru_update;
 cache_control control
 (   .clk(clk),.rst(rst), 
     .cpu_read(mem_read),.cpu_write(mem_write),
