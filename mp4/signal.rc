@@ -1,0 +1,72 @@
+Magic 271485
+Revision Verdi_R-2020.12-SP1-1
+
+; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
+viewPort 0 25 1707 354 185 95
+
+; File list:
+; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
+openDirFile -d / "" "/home/bak7/fa23_ece411_fish-main/mp4/sim/dump.fsdb"
+
+; file time scale:
+; fileTimeScale ### s|ms|us|ns|ps
+
+; signal spacing:
+signalSpacing 5
+
+; windowTimeUnit is used for zoom, cursor & marker
+; waveform viewport range
+zoom 36239.202658 278639.202658
+cursor 120000.000000
+marker 0.000000
+
+; user define markers
+; userMarker time_pos marker_name color linestyle
+; visible top row signal index
+top 2
+; marker line index
+markerPos 8
+
+; event list
+; addEvent event_name event_expression
+; curEvent event_name
+
+
+
+COMPLEX_EVENT_BEGIN
+
+
+COMPLEX_EVENT_END
+
+
+
+; toolbar current search type
+; curSTATUS search_type
+curSTATUS ByChange
+
+
+addGroup "G1"
+activeDirFile "" "/home/bak7/fa23_ece411_fish-main/mp4/sim/dump.fsdb"
+addSignal -h 15 /top_tb/dut/clk
+addSignal -h 15 -holdScope rst
+addSignal -h 15 /top_tb/dut/control/ctrl_word.rvfi.order_commit[63:0]
+addSignal -h 15 -holdScope ctrl_word.rvfi.instruction[31:0]
+addSignal -h 15 -UNSIGNED -holdScope cw_read.opcode[6:0]
+addSignal -h 15 -UNSIGNED -holdScope ctrl_word.exe.aluop[2:0]
+addSignal -h 15 -holdScope cw_read.rs1_addr[4:0]
+addSignal -h 15 -holdScope cw_read.rs2_addr[4:0]
+addSignal -h 15 -UNSIGNED -holdScope ctrl_word.exe.rs1_sel[1:0]
+addSignal -h 15 -UNSIGNED -holdScope ctrl_word.exe.rs2_sel[1:0]
+addSignal -h 15 -UNSIGNED -BIN -holdScope instruct_in_exe[85:81]
+addSignal -h 15 -holdScope instruct_in_de[85:81]
+addGroup "G2"
+addSignal -h 15 -UNSIGNED /top_tb/dut/datapath/execute/ctrl_w_EXE.aluop[2:0]
+addSignal -h 15 -holdScope alumux1_o[31:0]
+addSignal -h 15 -holdScope alumux2_o[31:0]
+addSignal -h 15 -UNSIGNED -holdScope ctrl_w_EXE.rs1_sel[1:0]
+addSignal -h 15 -UNSIGNED -holdScope ctrl_w_EXE.rs2_sel[1:0]
+addGroup "G3"
+
+; getSignalForm Scope Hierarchy Status
+; active file of getSignalForm
+

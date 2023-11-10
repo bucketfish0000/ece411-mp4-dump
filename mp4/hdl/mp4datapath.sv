@@ -104,7 +104,7 @@ fetch_stage fetch(
     .exec_fwd_data(exe_fwd_data),                                                                       
     .instr_in(icache_out),
     .pc_out(pc_fetch),
-    //.pc_prev(pc_prev),
+    // .pc_prev(pc_prev),
     .pc_next(pc_wdata),
     .instr_out(instr_fetch),
     .ready(fetch_ready_o)
