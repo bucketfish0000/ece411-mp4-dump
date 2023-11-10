@@ -33,7 +33,7 @@ import immediates::*;
     input logic de_exe_rdy,
     output logic exe_rdy
 );
-    logic [31:0] rs1_o, rs2_o, alumux1_o, alumux2_o, cmpmux_o;/*, multi_low, multi_high;*/
+    logic [31:0] rs1_o, rs2_o, alumux1_o, alumux2_o, cmpmux_o;
     cmpmux::cmpmux_sel_t cmp_sel;
     alumux::alumux1_sel_t alumux1_sel;
     alumux::alumux2_sel_t alumux2_sel;
@@ -76,13 +76,6 @@ import immediates::*;
         .b(alumux2_o),
         .f(alu_out) 
     );
-
-    /*multiplier mutli(
-        .rs1(alumux1_o),
-        .rs2(alumux2_o),
-        .rd_low(multi_low),
-        .rd_high(multi_high)
-    );*/
 
     always_comb begin : exe_mux
         unique case (ctrl_w_EXE.rs1_sel)
