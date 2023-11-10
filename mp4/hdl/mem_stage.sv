@@ -35,8 +35,8 @@ import cpuIO::*;
 
     //essentialy clocked by dram resp signal
     always_comb begin : rdy_ctrl
-        if(((mem_resp_d == 1) && ((ctrl_w_MEM.mem_read_d == 1) || (ctrl_w_MEM.mem_write_d == 1))) 
-        || ((ctrl_w_MEM.mem_read_d == 0) && (ctrl_w_MEM.mem_write_d == 0)))
+        if((((mem_resp_d == 1) && ((ctrl_w_MEM.mem_read_d == 1) || (ctrl_w_MEM.mem_write_d == 1))) 
+        || ((ctrl_w_MEM.mem_read_d == 0) && (ctrl_w_MEM.mem_write_d == 0))) && (exe_mem_valid == 1))
             mem_ready = 1'b1;
         else
             mem_ready = 1'b0;
