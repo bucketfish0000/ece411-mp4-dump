@@ -185,8 +185,6 @@ import cpuIO::*;
     input logic clk, //from datapath
     input logic rst, //from datapath
 
-    input rv32i_opcode opcode_in,
-    output rv32i_opcode opcode_out,
     input logic br_en_i, 
     input logic exe_mem_ld, 
     input logic exe_rdy,
@@ -358,29 +356,13 @@ import cpuIO::*;
         end
     end
 
-    always_ff @ (posedge clk, posedge rst) begin : opcode_register
-        if(rst)begin
-            opcode_out <= 32'b0;
-        end
-        else if((exe_mem_ld == 1)) begin
-            opcode_out <= opcode_in;
-        end
-        else begin
-            opcode_out <= opcode_out;
-        end
-    end
     //br_en register
     always_ff @ (posedge clk, posedge rst) begin : br_en_register
         if(rst)begin
             br_en_o <= 1'b0;
-            br_en_r <= 1'b0;
         end
         else if((exe_mem_ld == 1)) begin
             br_en_o <= br_en_i;
-            br_en_r <= br_en_i;
-        end
-        else begin
-            br_en_o <= br_en_r;
         end
     end
 
