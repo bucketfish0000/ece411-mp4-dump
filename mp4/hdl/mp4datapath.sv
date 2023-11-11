@@ -64,14 +64,14 @@ rv32i_reg rd_sel;
 assign rd_addr_o = rd_sel;
 
 logic  br_en_exe_o, br_en_exe_mem_o, br_en_mem_wb_o;
-assign br_en = br_en_exe_mem_o;
+assign br_en = br_en_exe_o;
 logic decode_ready_i,exec_ready_i,mem_ready_i,wb_ready_i;
 logic decode_valid_i,exec_valid_i,mem_valid_i,wb_valid_i;
 logic fetch_ready_o, decode_ready_o, exec_ready_o, mem_ready_o, wb_ready_o;
 logic fetch_valid_o, decode_valid_o;
 logic load_reg_wb;
 logic [63:0] commit_order_decode_i;
-
+rv32i_opcode opcode_dec_exe;
 control_word cw_exec, cw_mem, cw_wb;
 
 // logic f_d_ready,d_e_ready,e_m_ready,_m_w_ready;
@@ -87,7 +87,7 @@ assign mem_rdy = mem_ready_o;
 assign mem_valid = wb_valid_i;
 assign de_valid = exec_valid_i;
 assign if_valid = decode_valid_i;
-
+assign opcode_exec = opcode_dec_exe;
 
 
 rv32i_word instr_fetch, pc_prev;
@@ -101,7 +101,7 @@ fetch_stage fetch(
     .icache_resp(icache_resp),
     .load_pc(load_pc), 
     .pcmux_sel(pcmux_sel),
-    .exec_fwd_data(exe_fwd_data),                                                                       
+    .exec_fwd_data(alu_out_exe),                                                                       
     .instr_in(icache_out),
     .pc_out(pc_fetch),
     //.pc_prev(pc_prev),
@@ -158,7 +158,7 @@ assign de_rdy = decode_ready_o;
 rv32i_word rs1_data_exec,rs2_data_exec;
 imm imm_exec;
 rv32i_word func3_exec, func7_exec;
-rv32i_opcode opcode_dec_exe;
+
 dec_exe_reg dec_exe_reg(
     .clk(clk),
     .rst(dec_exe_rst),
@@ -209,8 +209,6 @@ exe_mem_reg exe_mem_register(
     .clk(clk), //from datapath
     .rst(exe_mem_rst), //from datapath
 
-    .opcode_in(opcode_dec_exe),
-    .opcode_out(opcode_exec),
     .br_en_i(br_en_exe_o), //from exe_stage
     .exe_mem_ld(exe_mem_load), //from cpu_ctrl
     .exe_rdy(exec_ready_o),
