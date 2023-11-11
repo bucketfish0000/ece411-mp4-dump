@@ -95,8 +95,6 @@ import cpuIO::*;
 
     output pcmux::pcmux_sel_t pcmux_sel 
 );
-logic branch_taken;
-assign branch_taken = br_en && (opcode_exec == op_br);
 
 logic [4:0] rdy;
 logic [4:0] vald;
@@ -141,6 +139,16 @@ hazard_queue data_hzd_queue(
     .entry3(instruct_in_wb)
 );
 
+logic br, branch_taken;
+assign br = br_en && (opcode_exec == op_br);
+
+always_ff @(posedge clk, posedge rst) begin: br_delay
+    if (rst) begin
+        branch_taken<=1'b0;
+    end
+    else branch_taken<= br;
+end
+
 always_ff @(posedge clk, posedge rst) begin : fetch_delay_compensator
     if(rst) begin
         fetch_delay <= 1'b1;
@@ -172,7 +180,7 @@ always_comb begin : pipeline_regs_logic
         //only not try to fetch when waiting for resp from icache 
         imem_read = ((icache_resp) || stall_if_de) ? 1'b0 : 1'b1; 
         //update pc when imem has responded (can proc)
-        load_pc = (branch_taken||(icache_resp && !stall_if_de)) ? 1'b1 : 1'b0;
+        load_pc = ((branch_taken&&icache_resp)||(icache_resp && !stall_if_de)) ? 1'b1 : 1'b0;
 
         //ppr resets
         // if_de_rst = 1'b0;
@@ -205,7 +213,7 @@ end
 
 always_comb begin : pc_branch_logics
     pcmux_sel = pcmux::pc_plus4;//default
-    if (branch_taken) pcmux_sel = pcmux::alu_out; //branch taken
+    if (br) pcmux_sel = pcmux::alu_out; //branch taken
     else if (opcode_exec == op_jal) pcmux_sel = pcmux::alu_out; //jal
     else if (opcode_exec == op_jalr) pcmux_sel = pcmux::alu_mod2; //jalr
 end
