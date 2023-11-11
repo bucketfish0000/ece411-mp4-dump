@@ -274,7 +274,13 @@ always_comb begin : cpu_cw
     end
     else if(rdy[4]) begin
         set_def();
-        ctrl_word.rvfi.valid_commit = 1'b1;
+        if(cw_read.pc_rdata == 32'b0) begin
+            ctrl_word.rvfi.valid_commit = 1'b0;
+        end
+        else begin
+            ctrl_word.rvfi.valid_commit = 1'b1;
+        end
+        // ctrl_word.rvfi.valid_commit = 1'b1;
         ctrl_word.rvfi.order_commit = cw_read.order_commit;
         ctrl_word.rvfi.instruction = cw_read.instruction;
         ctrl_word.rvfi.pc_rdata = cw_read.pc_rdata;
