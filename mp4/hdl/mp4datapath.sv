@@ -116,7 +116,9 @@ assign pc_rdata = pc_fetch;
 
 rv32i_word instr_decode, pc_wdata_decode;
 fet_dec_reg fet_dec_reg(
-    .clk(clk),.rst(fet_dec_rst),
+    .clk(clk),
+    .rst(rst),
+    .if_de_rst(fet_dec_rst),
     .load(fet_dec_load),
 
     .ready_i(fetch_ready_o),

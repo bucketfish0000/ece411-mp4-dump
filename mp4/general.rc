@@ -2,11 +2,11 @@ Magic 271485
 Revision Verdi_R-2020.12-SP1-1
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 25 960 332 153 65
+viewPort 0 25 1707 346 153 65
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
-openDirFile -d / "" "/home/bak7/fa23_ece411_fish-main/working_fwding/mp4/sim/dump.fsdb"
+openDirFile -d / "" "/home/bak7/mp4_git/fa23_ece411_fish/mp4/sim/dump.fsdb"
 
 ; file time scale:
 ; fileTimeScale ### s|ms|us|ns|ps
@@ -16,16 +16,16 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 761389.636521 1097462.605042
-cursor 920000.000000
+zoom 501276.741743 653758.913914
+cursor 190000.000000
 marker 0.000000
 
 ; user define markers
 ; userMarker time_pos marker_name color linestyle
 ; visible top row signal index
-top 0
+top 41
 ; marker line index
-markerPos 9
+markerPos 137
 
 ; event list
 ; addEvent event_name event_expression
@@ -46,17 +46,26 @@ curSTATUS ByChange
 
 
 addGroup "G1"
-activeDirFile "" "/home/bak7/fa23_ece411_fish-main/working_fwding/mp4/sim/dump.fsdb"
+activeDirFile "" "/home/bak7/mp4_git/fa23_ece411_fish/mp4/sim/dump.fsdb"
 addSignal -h 15 /top_tb/dut/datapath/writeback/rst
 addSignal -h 15 -holdScope clk
-addGroup "Dmem"
+addSignal -h 15 -holdScope rst
+addSignal -h 15 -holdScope clk
+addGroup "Dmem" -e FALSE
 addSignal -h 15 /top_tb/dut/dmem_address[31:0]
 addSignal -h 15 -holdScope dmem_read
 addSignal -h 15 -holdScope dmem_write
 addSignal -h 15 -holdScope dmem_resp
 addSignal -h 15 -holdScope dmem_rdata[31:0]
-addSignal -h 15 -holdScope dmem_wdata[31:0]
+addSignal -expanded -h 15 -holdScope dmem_wdata[31:0]
+addSignal -h 15 -holdScope dmem_address[31:0]
+addSignal -h 15 -holdScope dmem_read
+addSignal -h 15 -holdScope dmem_write
+addSignal -h 15 -holdScope dmem_resp
+addSignal -h 15 -holdScope dmem_rdata[31:0]
+addSignal -expanded -h 15 -holdScope dmem_wdata[31:0]
 addGroup "Writeback" -e FALSE
+addSignal -h 15 /top_tb/clk
 addSignal -h 15 /top_tb/dut/datapath/writeback/cw_out_rvfi.rvfi.instruction[31:0]
 addSignal -h 15 -holdScope cw_out_rvfi.rvfi.order_commit[63:0]
 addSignal -h 15 -holdScope prev_order[63:0]
@@ -66,6 +75,18 @@ addSignal -h 15 -holdScope cw_out_rvfi.rvfi.rs2_addr[4:0]
 addSignal -h 15 -holdScope regfilemux_out[31:0]
 addSignal -h 15 -holdScope rd_sel[4:0]
 addSignal -h 15 -holdScope mem_wb_valid
+addSignal -h 15 /top_tb/clk
+addSignal -h 15 /top_tb/dut/datapath/writeback/cw_out_rvfi.rvfi.instruction[31:0]
+addSignal -h 15 -holdScope cw_out_rvfi.rvfi.order_commit[63:0]
+addSignal -h 15 -holdScope prev_order[63:0]
+addSignal -h 15 -holdScope cw_out_rvfi.rvfi.valid_commit
+addSignal -h 15 -holdScope cw_out_rvfi.rvfi.rs1_addr[4:0]
+addSignal -h 15 -holdScope cw_out_rvfi.rvfi.rs2_addr[4:0]
+addSignal -h 15 -holdScope regfilemux_out[31:0]
+addSignal -h 15 -holdScope rd_sel[4:0]
+addSignal -h 15 -holdScope mem_wb_valid
+addSignal -h 15 -holdScope cw_out_rvfi.rvfi.pc_rdata[31:0]
+addSignal -h 15 -holdScope cw_out_rvfi.rvfi.pc_wdata[31:0]
 addGroup "CTRL" -e FALSE
 addSignal -h 15 /top_tb/dut/control/clk
 addSignal -h 15 -holdScope rst
@@ -81,7 +102,29 @@ addSignal -h 15 -holdScope if_de_ld
 addSignal -h 15 -holdScope de_exe_ld
 addSignal -h 15 -holdScope exe_mem_ld
 addSignal -h 15 -holdScope mem_wb_ld
+addSignal -h 15 -holdScope clk
+addSignal -h 15 -holdScope rst
+addSignal -h 15 -UNSIGNED -holdScope cw_read.opcode[6:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope cw_read.order_commit[63:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope cw_read.instruction[31:0]
+addSignal -h 15 -holdScope cw_read.pc_rdata[31:0]
+addSignal -h 15 -holdScope imem_read
+addSignal -h 15 -UNSIGNED -BIN -holdScope rdy[4:0]
+addSignal -h 15 -UNSIGNED -BIN -holdScope vald[4:0]
+addSignal -h 15 -holdScope if_de_ld
+addSignal -h 15 -holdScope de_exe_ld
+addSignal -h 15 -holdScope exe_mem_ld
+addSignal -h 15 -holdScope mem_wb_ld
+addSignal -h 15 -holdScope if_de_rst
+addSignal -h 15 -holdScope de_exe_rst
+addSignal -h 15 -holdScope exe_mem_rst
+addSignal -h 15 -holdScope mem_wb_rst
 addGroup "Imem" -e FALSE
+addSignal -h 15 /top_tb/dut/imem_address[31:0]
+addSignal -h 15 -holdScope imem_read
+addSignal -h 15 -holdScope imem_rdata[31:0]
+addSignal -h 15 -holdScope imem_resp
+addSignal -h 15 /top_tb/dut/datapath/fet_dec_load
 addSignal -h 15 /top_tb/dut/imem_address[31:0]
 addSignal -h 15 -holdScope imem_read
 addSignal -h 15 -holdScope imem_rdata[31:0]
@@ -92,14 +135,23 @@ addSignal -h 15 /top_tb/dut/datapath/memory/ctrl_w_MEM.mem_write_d
 addSignal -h 15 -holdScope ctrl_w_MEM.mem_read_d
 addSignal -h 15 /top_tb/dut/datapath/mem_wb_register/cw_data.mem.mem_write_d
 addSignal -h 15 -holdScope cw_in.mem
+addSignal -h 15 /top_tb/dut/datapath/memory/ctrl_w_MEM.mem_write_d
+addSignal -h 15 -holdScope ctrl_w_MEM.mem_read_d
+addSignal -h 15 /top_tb/dut/datapath/mem_wb_register/cw_data.mem.mem_write_d
+addSignal -h 15 -holdScope cw_in.mem
 addGroup "dec_exe" -e FALSE
 addSignal -h 15 /top_tb/dut/datapath/dec_exe_reg/cw_data.rvfi.instruction[31:0]
 addSignal -h 15 -UNSIGNED -HEX /top_tb/dut/control/cw_read.instruction[31:0]
 addSignal -h 15 /top_tb/dut/datapath/dec_exe_reg/load
+addSignal -h 15 -holdScope cw_data.rvfi.instruction[31:0]
+addSignal -h 15 -UNSIGNED -HEX /top_tb/dut/control/cw_read.instruction[31:0]
+addSignal -h 15 /top_tb/dut/datapath/dec_exe_reg/load
 addGroup "G9"
-addGroup "G8" -e FALSE
-addSignal -h 15 /top_tb/dut/datapath/fet_dec_reg/instr_fetch[31:0]
-addSignal -h 15 -holdScope instr_decode[31:0]
+addGroup "Decode Stage" -e FALSE
+addSignal -h 15 /top_tb/dut/datapath/decode/commit_order[63:0]
+addSignal -h 15 -UNSIGNED -holdScope opcode[6:0]
+addSignal -h 15 -holdScope commit_order[63:0]
+addSignal -h 15 -UNSIGNED -holdScope opcode[6:0]
 addGroup "G10" -e FALSE
 addSignal -h 15 /top_tb/dut/datapath/exe_mem_register/exe_mem_ld
 addSignal -h 15 /top_tb/dut/datapath/execute/alumux1_o[31:0]
@@ -111,7 +163,27 @@ addSignal -h 15 -holdScope mem_fwd_data[31:0]
 addSignal -h 15 -holdScope exe_fwd_data[31:0]
 addSignal -h 15 /top_tb/dut/datapath/exe_mem_register/cw_in.rvfi.pc_rdata[31:0]
 addSignal -h 15 -holdScope exe_mem_ld
-addGroup "G11"
+addSignal -h 15 -holdScope exe_mem_ld
+addSignal -h 15 /top_tb/dut/datapath/execute/alumux1_o[31:0]
+addSignal -h 15 -holdScope alumux2_o[31:0]
+addSignal -h 15 -holdScope alu_out[31:0]
+addSignal -h 15 -UNSIGNED -holdScope ctrl_w_EXE.rs1_sel[1:0]
+addSignal -h 15 -UNSIGNED -holdScope ctrl_w_EXE.rs2_sel[1:0]
+addSignal -h 15 -holdScope mem_fwd_data[31:0]
+addSignal -h 15 -holdScope exe_fwd_data[31:0]
+addSignal -h 15 /top_tb/dut/datapath/exe_mem_register/cw_in.rvfi.pc_rdata[31:0]
+addSignal -h 15 -holdScope exe_mem_ld
+addSignal -h 15 -UNSIGNED /top_tb/dut/datapath/dec_exe_reg/opcode_dec_exe[6:0]
+addSignal -h 15 /top_tb/dut/datapath/execute/br_en
+addGroup "mem_wb" -e FALSE
+addSignal -h 15 /top_tb/dut/datapath/mem_wb_register/cw_in.rvfi.pc_rdata[31:0]
+addSignal -h 15 -holdScope cw_in.rvfi.pc_wdata[31:0]
+addGroup "G13"
+addGroup "exe_mem" -e FALSE
+addSignal -h 15 /top_tb/dut/datapath/exe_mem_register/exe_mem_ld
+addSignal -h 15 -holdScope br_en_i
+addSignal -h 15 -holdScope rst
+addGroup "G15"
 
 ; getSignalForm Scope Hierarchy Status
 ; active file of getSignalForm
