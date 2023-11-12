@@ -190,6 +190,7 @@ import cpuIO::*;
 (
     input logic clk, //from datapath
     input logic rst, //from datapath
+    input logic exe_mem_rst,
 
     input logic br_en_i, 
     input logic exe_mem_ld, 
@@ -375,6 +376,10 @@ import cpuIO::*;
     //valid register
     always_ff @(posedge clk, posedge rst) begin : valid_reg
         if(rst) begin
+            valid_r <= 1'b0;
+            exe_mem_valid <= 1'b0;
+        end
+        else if(exe_mem_rst) begin
             valid_r <= 1'b0;
             exe_mem_valid <= 1'b0;
         end
