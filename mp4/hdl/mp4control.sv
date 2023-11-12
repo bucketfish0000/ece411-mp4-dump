@@ -125,7 +125,14 @@ assign stall_exe_mem =
 assign stall_mem_wb = 
     ((rdy[0] == 0) && (vald[0] == 1));
 
-assign instruct_in_if = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
+always_comb begin : blockName
+    if(cw_read.opcode != op_br) begin
+        instruct_in_if = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
+    end
+    else begin
+        instruct_in_if = {5'b0, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
+    end
+end
 
 hazard_queue data_hzd_queue(
     .clk(clk),//in
@@ -194,7 +201,6 @@ always_comb begin : pipeline_regs_logic
         de_exe_ld = (!icache_resp|| stall_de_exe || vald[4]==0) ? 1'b0: 1'b1;
         exe_mem_ld = (!icache_resp || stall_exe_mem || vald[3]==0) ? 1'b0 : 1'b1;
         mem_wb_ld = (!icache_resp || stall_mem_wb || vald[2]==0) ? 1'b0 : 1'b1;
-
         // //ppr rst (flushing control)
         // //
         // if_de_rst = (branch_taken)? 1'b1 : 1'b0;
