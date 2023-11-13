@@ -60,6 +60,8 @@ module mp4datapath
 rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb, pc_wdata;
 rv32i_word regfilemux_out;
 rv32i_reg rd_sel;
+control_word rvfi_ctrl_temp;
+assign control_rvfi = rvfi_ctrl_temp;
 
 assign rd_addr_o = rd_sel;
 
@@ -71,7 +73,7 @@ logic fetch_ready_o, decode_ready_o, exec_ready_o, mem_ready_o, wb_ready_o;
 logic fetch_valid_o, decode_valid_o;
 logic load_reg_wb;
 logic [63:0] commit_order_decode_i;
-
+rv32i_opcode opcode_dec_exe;
 control_word cw_exec, cw_mem, cw_wb;
 
 // logic f_d_ready,d_e_ready,e_m_ready,_m_w_ready;
@@ -87,7 +89,7 @@ assign mem_rdy = mem_ready_o;
 assign mem_valid = wb_valid_i;
 assign de_valid = exec_valid_i;
 assign if_valid = decode_valid_i;
-
+assign opcode_exec = opcode_dec_exe;
 
 
 rv32i_word instr_fetch, pc_prev;
@@ -101,10 +103,11 @@ fetch_stage fetch(
     .icache_resp(icache_resp),
     .load_pc(load_pc), 
     .pcmux_sel(pcmux_sel),
-    .exec_fwd_data(exe_fwd_data),                                                                       
+    .exec_fwd_data(alu_out_exe),                                                                       
     .instr_in(icache_out),
     .pc_out(pc_fetch),
     // .pc_prev(pc_prev),
+    //.pc_prev(pc_prev),
     .pc_next(pc_wdata),
     .instr_out(instr_fetch),
     .ready(fetch_ready_o)
@@ -115,7 +118,9 @@ assign pc_rdata = pc_fetch;
 
 rv32i_word instr_decode, pc_wdata_decode;
 fet_dec_reg fet_dec_reg(
-    .clk(clk),.rst(fet_dec_rst),
+    .clk(clk),
+    .rst(rst),
+    .if_de_rst(fet_dec_rst),
     .load(fet_dec_load),
 
     .ready_i(fetch_ready_o),
@@ -158,6 +163,7 @@ assign de_rdy = decode_ready_o;
 rv32i_word rs1_data_exec,rs2_data_exec;
 imm imm_exec;
 rv32i_word func3_exec, func7_exec;
+
 dec_exe_reg dec_exe_reg(
     .clk(clk),
     .rst(dec_exe_rst),
@@ -173,7 +179,7 @@ dec_exe_reg dec_exe_reg(
     .valid_o(exec_valid_i),
 
     .opcode_dec(cr.opcode),
-    .opcode_dec_exe(opcode_exec),
+    .opcode_dec_exe(opcode_dec_exe),
     .cw_in(cw_dec),
     .cw_out(cw_exec)
 );
@@ -206,7 +212,8 @@ rv32i_word pc_exe_mem_reg;
 //exe_mem_reg
 exe_mem_reg exe_mem_register(
     .clk(clk), //from datapath
-    .rst(exe_mem_rst), //from datapath
+    .rst(rst), //from datapath
+    .exe_mem_rst(exe_mem_rst),
 
     .br_en_i(br_en_exe_o), //from exe_stage
     .exe_mem_ld(exe_mem_load), //from cpu_ctrl
@@ -286,7 +293,7 @@ wb_stage writeback(
     .rd_sel(rd_sel),
 
     .cw_in(cw_wb),
-    .cw_out_rvfi(control_rvfi)
+    .cw_out_rvfi(rvfi_ctrl_temp)
 );
 
 assign wb_valid = wb_valid_i;
@@ -295,7 +302,7 @@ assign wb_rdy = 1'b1;
 wb_fwd_reg wb_fwding_reg(
     .clk(clk),
     .rst(rst),
-    .load_wb_fwd_reg(mem_wb_load),
+    .load_wb_fwd_reg((mem_wb_load && !dec_exe_rst) /*|| rvfi_ctrl_temp.rvfi.valid_commit*/),
     .wb_fwd_data_i(regfilemux_out),
 
     .wb_fwd_data_o(wb_fwd_data)
