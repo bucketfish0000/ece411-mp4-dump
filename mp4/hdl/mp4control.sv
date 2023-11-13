@@ -95,8 +95,6 @@ import cpuIO::*;
 
     output pcmux::pcmux_sel_t pcmux_sel 
 );
-logic branch_taken;
-assign branch_taken = br_en && (opcode_exec == op_br);
 
 logic [4:0] rdy;
 logic [4:0] vald;
@@ -127,7 +125,14 @@ assign stall_exe_mem =
 assign stall_mem_wb = 
     ((rdy[0] == 0) && (vald[0] == 1));
 
-assign instruct_in_if = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
+always_comb begin : blockName
+    if(cw_read.opcode != op_br) begin
+        instruct_in_if = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
+    end
+    else begin
+        instruct_in_if = {5'b0, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
+    end
+end
 
 hazard_queue data_hzd_queue(
     .clk(clk),//in
@@ -140,6 +145,16 @@ hazard_queue data_hzd_queue(
     .entry2(instruct_in_mem),
     .entry3(instruct_in_wb)
 );
+
+logic br, branch_taken;
+assign br = br_en && (opcode_exec == op_br);
+
+always_ff @(posedge clk, posedge rst) begin: br_delay
+    if (rst) begin
+        branch_taken<=1'b0;
+    end
+    else branch_taken<= br;
+end
 
 always_ff @(posedge clk, posedge rst) begin : fetch_delay_compensator
     if(rst) begin
@@ -172,7 +187,7 @@ always_comb begin : pipeline_regs_logic
         //only not try to fetch when waiting for resp from icache 
         imem_read = ((icache_resp) || stall_if_de) ? 1'b0 : 1'b1; 
         //update pc when imem has responded (can proc)
-        load_pc = (!icache_resp || stall_if_de) ? 1'b0 : 1'b1;
+        load_pc = ((branch_taken&&icache_resp)||(icache_resp && !stall_if_de)) ? 1'b1 : 1'b0;
 
         //ppr resets
         // if_de_rst = 1'b0;
@@ -186,7 +201,6 @@ always_comb begin : pipeline_regs_logic
         de_exe_ld = (!icache_resp|| stall_de_exe || vald[4]==0) ? 1'b0: 1'b1;
         exe_mem_ld = (!icache_resp || stall_exe_mem || vald[3]==0) ? 1'b0 : 1'b1;
         mem_wb_ld = (!icache_resp || stall_mem_wb || vald[2]==0) ? 1'b0 : 1'b1;
-
         // //ppr rst (flushing control)
         // //
         // if_de_rst = (branch_taken)? 1'b1 : 1'b0;
@@ -195,9 +209,9 @@ always_comb begin : pipeline_regs_logic
         // mem_wb_rst = 1'b0;
         //ppr rst (flushing control)
         //
-        if_de_rst = (branch_taken)? 1'b1 : 1'b0;
+        if_de_rst = (branch_taken) ? 1'b1 : 1'b0;
         de_exe_rst = (branch_taken) ? 1'b1 : 1'b0;
-        exe_mem_rst = (mem_rdy && !exe_valid) ? 1'b1 : 1'b0; 
+        exe_mem_rst = (branch_taken) ? 1'b1: 1'b0; 
         mem_wb_rst = 1'b0;
     
     end
@@ -205,7 +219,7 @@ end
 
 always_comb begin : pc_branch_logics
     pcmux_sel = pcmux::pc_plus4;//default
-    if (branch_taken) pcmux_sel = pcmux::alu_out; //branch taken
+    if (br) pcmux_sel = pcmux::alu_out; //branch taken
     else if (opcode_exec == op_jal) pcmux_sel = pcmux::alu_out; //jal
     else if (opcode_exec == op_jalr) pcmux_sel = pcmux::alu_mod2; //jalr
 end
@@ -266,7 +280,13 @@ always_comb begin : cpu_cw
     end
     else if(rdy[4]) begin
         set_def();
-        ctrl_word.rvfi.valid_commit = 1'b1;
+        if(cw_read.pc_rdata == 32'b0) begin
+            ctrl_word.rvfi.valid_commit = 1'b0;
+        end
+        else begin
+            ctrl_word.rvfi.valid_commit = 1'b1;
+        end
+        // ctrl_word.rvfi.valid_commit = 1'b1;
         ctrl_word.rvfi.order_commit = cw_read.order_commit;
         ctrl_word.rvfi.instruction = cw_read.instruction;
         ctrl_word.rvfi.pc_rdata = cw_read.pc_rdata;
@@ -400,15 +420,16 @@ always_comb begin : cpu_cw
 
                     default: ;
                 endcase
-
+                //ctrl_word.exe.alumux1_sel = alumux::pc_out;
+                //ctrl_word.exe.alumux2_sel = alumux::b_imm;
                 //mem
                 ctrl_word.mem.memfwdmux_sel = memfwdmux::exe_fwd_data;
 
                 //fetch doesn't do anything here
 
-                //     ctrl_word.exe.aluop =  alu_add;
-                //     ctrl_word.exe.alumux1_sel = alumux::pc_out;
-                //     ctrl_word.exe.alumux2_sel = alumux::b_imm;
+                    ctrl_word.exe.aluop =  alu_add;
+                    ctrl_word.exe.alumux1_sel = alumux::pc_out;
+                    ctrl_word.exe.alumux2_sel = alumux::b_imm;
 
 
                 //decode
