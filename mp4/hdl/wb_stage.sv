@@ -62,6 +62,7 @@ always_comb begin : regfile_ctrl_signals
         cw_out_rvfi.mem.memfwdmux_sel = memfwdmux::mem_fwd_data;
         cw_out_rvfi.wb.ld_reg = 1'b0;
         cw_out_rvfi.wb.regfilemux_sel = regfilemux::alu_out;
+        cw_out_rvfi.wb.rd_sel = 5'b00000;
         cw_out_rvfi.rvfi.valid_commit = 1'b0;//done
         cw_out_rvfi.rvfi.order_commit = 64'b0;//done
         cw_out_rvfi.rvfi.instruction = 32'b0;//done
