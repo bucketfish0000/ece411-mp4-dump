@@ -125,7 +125,14 @@ assign stall_exe_mem =
 assign stall_mem_wb = 
     ((rdy[0] == 0) && (vald[0] == 1));
 
-assign instruct_in_if = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
+always_comb begin : blockName
+    if(cw_read.opcode != op_br) begin
+        instruct_in_if = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
+    end
+    else begin
+        instruct_in_if = {5'b0, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
+    end
+end
 
 hazard_queue data_hzd_queue(
     .clk(clk),//in
@@ -200,7 +207,6 @@ always_comb begin : pipeline_regs_logic
         de_exe_ld = (!icache_resp|| stall_de_exe || vald[4]==0) ? 1'b0: 1'b1;
         exe_mem_ld = (!icache_resp || stall_exe_mem || vald[3]==0) ? 1'b0 : 1'b1;
         mem_wb_ld = (!icache_resp || stall_mem_wb || vald[2]==0) ? 1'b0 : 1'b1;
-
         // //ppr rst (flushing control)
         // //
         // if_de_rst = (branch_taken)? 1'b1 : 1'b0;
@@ -280,7 +286,13 @@ always_comb begin : cpu_cw
     end
     else if(rdy[4]) begin
         set_def();
-        ctrl_word.rvfi.valid_commit = 1'b1;
+        if(cw_read.pc_rdata == 32'b0) begin
+            ctrl_word.rvfi.valid_commit = 1'b0;
+        end
+        else begin
+            ctrl_word.rvfi.valid_commit = 1'b1;
+        end
+        // ctrl_word.rvfi.valid_commit = 1'b1;
         ctrl_word.rvfi.order_commit = cw_read.order_commit;
         ctrl_word.rvfi.instruction = cw_read.instruction;
         ctrl_word.rvfi.pc_rdata = cw_read.pc_rdata;
