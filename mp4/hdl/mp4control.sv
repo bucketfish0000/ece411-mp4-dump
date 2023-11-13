@@ -147,7 +147,7 @@ hazard_queue data_hzd_queue(
 );
 
 logic br, branch_taken;
-logic jump,jump_taken
+logic jump,jump_taken;
 assign br = br_en && (opcode_exec == op_br);
 assign jump = (opcode_exec == op_jal || opcode_exec == op_jalr);
 
@@ -193,7 +193,8 @@ always_comb begin : pipeline_regs_logic
         //only not try to fetch when waiting for resp from icache 
         imem_read = ((icache_resp) || stall_if_de) ? 1'b0 : 1'b1; 
         //update pc when imem has responded (can proc)
-        load_pc = (icache_resp && (branch_taken)||(jump_taken)||(!stall_if_de)) ? 1'b1 : 1'b0;
+        load_pc = ((branch_taken&&icache_resp)||(icache_resp && !stall_if_de)) ? 1'b1 : 1'b0;
+        // load_pc = (icache_resp && (branch_taken)||(jump_taken)||(!stall_if_de)) ? 1'b1 : 1'b0;
 
         //ppr resets
         // if_de_rst = 1'b0;

@@ -161,8 +161,7 @@ import cpuIO::*;
 
         .wmask(wmask),
 
-        .control_rvfi(ctrl_rvfi),
-        .rd_addr_o(rd_addr)
+        .control_rvfi(ctrl_rvfi)
     );
 
     
@@ -184,7 +183,7 @@ import cpuIO::*;
     assign monitor_rs2_addr  = ctrl_rvfi.rvfi.rs2_addr;
     assign monitor_rs1_rdata = ctrl_rvfi.rvfi.rs1_data;
     assign monitor_rs2_rdata = ctrl_rvfi.rvfi.rs2_data;
-    assign monitor_rd_addr   = rd_addr;
+    assign monitor_rd_addr   = ctrl_rvfi.wb.rd_sel;
     assign monitor_rd_wdata  = ctrl_rvfi.rvfi.rd_wdata;
     assign monitor_pc_rdata  = ctrl_rvfi.rvfi.pc_rdata;
     assign monitor_pc_wdata  = ctrl_rvfi.rvfi.pc_wdata;
