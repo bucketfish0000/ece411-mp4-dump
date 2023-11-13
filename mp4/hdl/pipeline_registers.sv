@@ -4,6 +4,7 @@ module fet_dec_reg
 (
     input logic clk,
     input logic rst,
+    input logic if_de_rst,
     input logic load,
 
     input logic ready_i,
@@ -27,13 +28,12 @@ module fet_dec_reg
 
     always_ff @(posedge clk)
     begin
-        if (rst)
+        if (rst || if_de_rst)
         begin
             ready<='0;
             instr<=0;
             pc_r<=0;
             pc_w<=0;
-            order_counter <= 64'b0;
         end
         else if (load)
         begin
@@ -41,8 +41,14 @@ module fet_dec_reg
             instr<=instr_fetch;
             pc_r<=pc_fetch;
             pc_w<=pc_wdata;
-            order_counter <= order_counter + 64'b01;
         end
+    end
+    
+    always_ff @( posedge clk, posedge rst ) begin : counter_reg
+        if(rst)
+            order_counter <= 64'b0;
+        else if(load && !if_de_rst)
+            order_counter <= order_counter + 64'b01;
     end
 
     always_comb
@@ -184,6 +190,7 @@ import cpuIO::*;
 (
     input logic clk, //from datapath
     input logic rst, //from datapath
+    input logic exe_mem_rst,
 
     input logic br_en_i, 
     input logic exe_mem_ld, 
@@ -369,6 +376,10 @@ import cpuIO::*;
     //valid register
     always_ff @(posedge clk, posedge rst) begin : valid_reg
         if(rst) begin
+            valid_r <= 1'b0;
+            exe_mem_valid <= 1'b0;
+        end
+        else if(exe_mem_rst) begin
             valid_r <= 1'b0;
             exe_mem_valid <= 1'b0;
         end
