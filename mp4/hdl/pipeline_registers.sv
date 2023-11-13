@@ -4,6 +4,7 @@ module fet_dec_reg
 (
     input logic clk,
     input logic rst,
+    input logic if_de_rst,
     input logic load,
 
     input logic ready_i,
@@ -27,13 +28,12 @@ module fet_dec_reg
 
     always_ff @(posedge clk)
     begin
-        if (rst)
+        if (rst || if_de_rst)
         begin
             ready<='0;
             instr<=0;
             pc_r<=0;
             pc_w<=0;
-            order_counter <= 64'b0;
         end
         else if (load)
         begin
@@ -41,8 +41,14 @@ module fet_dec_reg
             instr<=instr_fetch;
             pc_r<=pc_fetch;
             pc_w<=pc_wdata;
-            order_counter <= order_counter + 64'b01;
         end
+    end
+    
+    always_ff @( posedge clk, posedge rst ) begin : counter_reg
+        if(rst)
+            order_counter <= 64'b0;
+        else if(load && !if_de_rst)
+            order_counter <= order_counter + 64'b01;
     end
 
     always_comb
@@ -95,7 +101,7 @@ module dec_exe_reg
     immediates::imm imm_data;
     logic ready,valid_r;
     control_word cw_data;
-
+    rv32i_opcode opcode_data;
     always_ff @(posedge clk)
     begin
         if (rst) begin
@@ -104,7 +110,7 @@ module dec_exe_reg
             imm_data.b_imm <= 32'b0;
             imm_data.s_imm <= 32'b0;
             imm_data.j_imm <= 32'b0;
-
+            opcode_data<=0;
             ready<= 1'b0;
 
             cw_data.exe.cmp_sel <= cmpmux::rs2_out;
@@ -143,7 +149,7 @@ module dec_exe_reg
         else if (load) begin
             imm_data<=imm_in;
             ready<=ready_i;
-
+            opcode_data <= opcode_dec;
             cw_data<=cw_in;
         end
     end 
@@ -153,6 +159,7 @@ module dec_exe_reg
         imm_out=imm_data;
         ready_o = ready;
         cw_out=cw_data;
+        opcode_dec_exe=opcode_data;
     end
 
     //valid register
@@ -183,6 +190,7 @@ import cpuIO::*;
 (
     input logic clk, //from datapath
     input logic rst, //from datapath
+    input logic exe_mem_rst,
 
     input logic br_en_i, 
     input logic exe_mem_ld, 
@@ -212,9 +220,10 @@ import cpuIO::*;
     logic [31:0] fwd_r_EX, u_imm_r, fwd_temp;
     logic [3:0] mem_byte_enable_r;
     control_word cw_data;
+    rv32i_opcode opcode_data;
     logic br_en_r, valid_r, ready_r;
 
-     logic [31:0] marmux_o, mem_addr;
+    logic [31:0] marmux_o, mem_addr;
     logic trap;
     logic [3:0] rmask, wmask_temp;
 
@@ -234,7 +243,7 @@ import cpuIO::*;
         end
         else if((exe_mem_ld == 1)) begin
             exe_fwd_data <= fwd_temp;
-            fwd_r_EX <= fwd_temp ;
+            fwd_r_EX <= fwd_temp;
         end
         else begin
             exe_fwd_data <= fwd_r_EX;
@@ -358,20 +367,19 @@ import cpuIO::*;
     always_ff @ (posedge clk, posedge rst) begin : br_en_register
         if(rst)begin
             br_en_o <= 1'b0;
-            br_en_r <= 1'b0;
         end
         else if((exe_mem_ld == 1)) begin
             br_en_o <= br_en_i;
-            br_en_r <= br_en_i;
-        end
-        else begin
-            br_en_o <= br_en_r;
         end
     end
 
     //valid register
     always_ff @(posedge clk, posedge rst) begin : valid_reg
         if(rst) begin
+            valid_r <= 1'b0;
+            exe_mem_valid <= 1'b0;
+        end
+        else if(exe_mem_rst) begin
             valid_r <= 1'b0;
             exe_mem_valid <= 1'b0;
         end
