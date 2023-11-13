@@ -110,7 +110,7 @@ module dec_exe_reg
             imm_data.b_imm <= 32'b0;
             imm_data.s_imm <= 32'b0;
             imm_data.j_imm <= 32'b0;
-            opcode_data<=0;
+            opcode_data<=7'b0;
             ready<= 1'b0;
 
             cw_data.exe.cmp_sel <= cmpmux::rs2_out;

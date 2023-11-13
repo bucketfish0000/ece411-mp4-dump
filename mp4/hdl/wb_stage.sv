@@ -23,7 +23,6 @@ import cpuIO::*;
 
     output rv32i_word regfilemux_out,
     output logic load_reg,
-    output rv32i_reg rd_sel,
 
     input control_word cw_in,
     output control_word cw_out_rvfi
@@ -46,7 +45,6 @@ always_comb begin : regfile_ctrl_signals
 
     if(rst || !((mem_wb_rdy == 1) && (mem_wb_valid == 1))) begin
         load_reg = 1'b0;
-        rd_sel =  5'b00000;
 
         cw_out_rvfi.exe.cmp_sel = cmpmux::rs2_out;
         cw_out_rvfi.exe.alumux1_sel = alumux::rs1_out;
@@ -64,7 +62,6 @@ always_comb begin : regfile_ctrl_signals
         cw_out_rvfi.mem.memfwdmux_sel = memfwdmux::mem_fwd_data;
         cw_out_rvfi.wb.ld_reg = 1'b0;
         cw_out_rvfi.wb.regfilemux_sel = regfilemux::alu_out;
-        cw_out_rvfi.wb.rd_sel = 5'b00000;
         cw_out_rvfi.rvfi.valid_commit = 1'b0;//done
         cw_out_rvfi.rvfi.order_commit = 64'b0;//done
         cw_out_rvfi.rvfi.instruction = 32'b0;//done
@@ -83,7 +80,6 @@ always_comb begin : regfile_ctrl_signals
     end
     else begin
         load_reg = cw_in.wb.ld_reg;
-        rd_sel =  cw_in.wb.rd_sel;
 
         if(cw_in.rvfi.order_commit != prev_order)
             cw_out_rvfi.rvfi.valid_commit = cw_in.rvfi.valid_commit;//done
