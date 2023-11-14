@@ -53,17 +53,13 @@ module mp4datapath
     output logic [3:0] mem_byte_enable,
     output logic [3:0] wmask,
 
-    output control_word control_rvfi,
-    output logic [4:0] rd_addr_o
+    output control_word control_rvfi //for all commits minus jump/branch
 );
 
 rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb, pc_wdata;
 rv32i_word regfilemux_out;
-rv32i_reg rd_sel;
-control_word rvfi_ctrl_temp;
+control_word rvfi_ctrl_temp, rvfi_exe;
 assign control_rvfi = rvfi_ctrl_temp;
-
-assign rd_addr_o = rd_sel;
 
 logic  br_en_exe_o, br_en_exe_mem_o, br_en_mem_wb_o;
 assign br_en = br_en_exe_o;
@@ -143,7 +139,7 @@ decode_stage decode(
     .clk(clk),.rst(rst),
     .reg_load(load_reg_wb),
     .rd_data(regfilemux_out),
-    .rd_sel(rd_sel),
+    .rd_sel(rvfi_ctrl_temp.wb.rd_sel),
 
     .instruction(instr_decode),
     .pc_rdata(pc_decode),
@@ -188,10 +184,8 @@ dec_exe_reg dec_exe_reg(
 exe_stage execute(
     .clk(clk), //ins
     .rst(rst),
-    .ctrl_w_EXE(cw_exec.exe),
-    .rs1_data(cw_exec.rvfi.rs1_data),
-    .rs2_data(cw_exec.rvfi.rs2_data),
-    .pc_x(cw_exec.rvfi.pc_rdata),
+    .ctrl_w(cw_exec),
+    .opcode_exe(opcode_dec_exe),
     .mem_fwd_data(mem_fwd_data),
     .exe_fwd_data(exe_fwd_data),
     .wb_fwd_data(wb_fwd_data),
@@ -204,7 +198,9 @@ exe_stage execute(
 
     .de_exe_valid(exec_valid_i),
     .de_exe_rdy(exec_ready_i),
-    .exe_rdy(exec_ready_o)
+    .exe_rdy(exec_ready_o),
+
+    .rvfi_exe(rvfi_exe)
 );
 
 rv32i_word u_imm_exec;
@@ -235,7 +231,7 @@ exe_mem_reg exe_mem_register(
     .mem_wdata_d(mem_wdata_d), //to data cache
     .mem_byte_enable(mem_byte_enable), //to data cache
 
-    .cw_in(cw_exec),
+    .cw_in(rvfi_exe),
     .cw_out(cw_mem),
 
     .wmask(wmask)
@@ -290,7 +286,6 @@ wb_stage writeback(
 
     .regfilemux_out(regfilemux_out),
     .load_reg(load_reg_wb),
-    .rd_sel(rd_sel),
 
     .cw_in(cw_wb),
     .cw_out_rvfi(rvfi_ctrl_temp)
@@ -302,7 +297,7 @@ assign wb_rdy = 1'b1;
 wb_fwd_reg wb_fwding_reg(
     .clk(clk),
     .rst(rst),
-    .load_wb_fwd_reg((mem_wb_load && !dec_exe_rst) /*|| rvfi_ctrl_temp.rvfi.valid_commit*/),
+    .load_wb_fwd_reg((mem_wb_load && !fet_dec_rst) /*|| rvfi_ctrl_temp.rvfi.valid_commit*/),
     .wb_fwd_data_i(regfilemux_out),
 
     .wb_fwd_data_o(wb_fwd_data)
