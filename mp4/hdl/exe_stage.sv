@@ -161,7 +161,7 @@ always_comb begin : regfile_ctrl_signals
         rvfi_exe.rvfi.mem_wdata = 32'b0;//done
     end
     else begin
-        if(br_en_temp && (opcode_exe == op_br)) begin
+        if(br_en_temp && ((opcode_exe == op_br) || (opcode_exe == op_jal) || (opcode_exe == op_jal))) begin
             rvfi_exe.rvfi.valid_commit = ctrl_w.rvfi.valid_commit;//done
             rvfi_exe.exe = ctrl_w.exe;
             rvfi_exe.mem = ctrl_w.mem;
