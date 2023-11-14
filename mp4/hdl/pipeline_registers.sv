@@ -66,6 +66,10 @@ module fet_dec_reg
             valid_r <= 1'b0;
             valid_o <= 1'b0;
         end
+        else if(if_de_rst) begin
+            valid_r <= 1'b0;
+            valid_o <= 1'b0;
+        end
         else if((load == 1)) begin
             valid_r <= 1'b1;
             valid_o <= 1'b1;
@@ -163,7 +167,7 @@ module dec_exe_reg
     end
 
     //valid register
-    always_ff @(posedge clk, posedge rst) begin : valid_reg
+    always_ff @(posedge clk) begin : valid_reg
         if(rst) begin
             valid_r <= 1'b0;
             valid_o <= 1'b0;
