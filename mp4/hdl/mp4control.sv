@@ -193,7 +193,7 @@ always_comb begin : pipeline_regs_logic
         //only not try to fetch when waiting for resp from icache 
         imem_read = ((icache_resp) || stall_if_de) ? 1'b0 : 1'b1; 
         //update pc when imem has responded (can proc)
-        load_pc = ((branch_taken&&icache_resp)||(icache_resp && !stall_if_de)) ? 1'b1 : 1'b0;
+        load_pc = ((branch_taken&&icache_resp)||(icache_resp&&jump_taken)||(icache_resp && !stall_if_de)) ? 1'b1 : 1'b0;
         // load_pc = (icache_resp && (branch_taken)||(jump_taken)||(!stall_if_de)) ? 1'b1 : 1'b0;
 
         //ppr resets
@@ -217,8 +217,8 @@ always_comb begin : pipeline_regs_logic
         // mem_wb_rst = 1'b0;
         //ppr rst (flushing control)
         //
-        if_de_rst = (branch_taken) ? 1'b1 : 1'b0;
-        de_exe_rst = (branch_taken) ? 1'b1 : 1'b0;
+        if_de_rst = (branch_taken||jump_taken) ? 1'b1 : 1'b0;
+        de_exe_rst = (branch_taken||jump_taken)? 1'b1 : 1'b0;
         exe_mem_rst = 1'b0; 
         mem_wb_rst = 1'b0;
     
