@@ -164,6 +164,7 @@ dec_exe_reg dec_exe_reg(
     .clk(clk),
     .rst(dec_exe_rst),
     .load(dec_exe_load),
+
     .imm_in(imm_decode),
 
     .imm_out(imm_exec),
@@ -179,7 +180,7 @@ dec_exe_reg dec_exe_reg(
     .cw_in(cw_dec),
     .cw_out(cw_exec)
 );
-
+assign pc_exec = rvfi_exe.rvfi.pc_rdata;
 //exexute stage
 exe_stage execute(
     .clk(clk), //ins
