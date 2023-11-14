@@ -297,7 +297,7 @@ assign wb_rdy = 1'b1;
 wb_fwd_reg wb_fwding_reg(
     .clk(clk),
     .rst(rst),
-    .load_wb_fwd_reg((mem_wb_load && !dec_exe_rst) /*|| rvfi_ctrl_temp.rvfi.valid_commit*/),
+    .load_wb_fwd_reg((mem_wb_load && !fet_dec_rst) /*|| rvfi_ctrl_temp.rvfi.valid_commit*/),
     .wb_fwd_data_i(regfilemux_out),
 
     .wb_fwd_data_o(wb_fwd_data)
