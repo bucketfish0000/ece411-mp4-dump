@@ -1,4 +1,4 @@
-auipc.s:
+test_mp4cp1V2.s:
 .align 4
 .section .text
 .globl _start
