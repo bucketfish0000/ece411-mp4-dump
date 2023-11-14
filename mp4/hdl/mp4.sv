@@ -29,7 +29,7 @@ import cpuIO::*;
     input   logic           bmem_resp
 );
 /*                             256bit                        32bit word
-          64bit              cacheline        -> word adapter    -> cpu datapath fetch
+          64bit              cacheline       -> word adapter    -> cpu datapath fetch
     memory <-> cacheline adapter <-> arbiter  
                                              <-> word adapter   <-> cpu datapath memory 
 */
@@ -137,7 +137,7 @@ import cpuIO::*;
         .cw_read(ctrl_rd), 
         .ctrl_word(cw_control),
 
-        .pcmux_sel(pcmux_sel)      
+        .pcmux_sel(pcmux_sel)
     );
 
     cache dcache0(
@@ -152,10 +152,10 @@ import cpuIO::*;
 
         .pmem_address(cacheline_dmem_address), 
         .pmem_read(cacheline_dmem_read), 
-        .pmem_write(cacheline_dmem_write), 
-        .pmem_rdata(), 
-        .pmem_wdata(), 
-        .pmem_resp()
+        .pmem_write(cacheline_dmdm_write), 
+        .pmem_rdata(dmem_cacheline_rdata), 
+        .pmem_wdata(dmem_cacheline_wdata), 
+        .pmem_resp(dmem_resp)
     );
 
     cache icache0(
