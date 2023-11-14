@@ -58,14 +58,15 @@ import immediates::*;
     assign rs1_out = rs1_o;
 
     //always_ff or always_comb??
-    always_ff @(posedge clk, posedge rst) begin : exe_rdy_ctrl
-        if(rst)
-            exe_rdy <= 1'b0;
-        else if((de_exe_valid == 1) && (de_exe_rdy == 1)) //when sees these signals by the time rdy goes high operation will be done(1 cycle)
-            exe_rdy <= 1'b1;
-        else
-            exe_rdy <= 1'b0;
-    end
+    // always_ff @(posedge clk, posedge rst) begin : exe_rdy_ctrl
+    //     if(rst)
+    //         exe_rdy <= 1'b0;
+    //     else if((de_exe_valid == 1) && (de_exe_rdy == 1)) //when sees these signals by the time rdy goes high operation will be done(1 cycle)
+    //         exe_rdy <= 1'b1;
+    //     else
+    //         exe_rdy <= 1'b0;
+    // end
+    assign exe_rdy = 1'b1;
 
     cmp cmp_logic(
         .cmpop(ctrl_w.exe.cmpop),
@@ -161,11 +162,7 @@ always_comb begin : regfile_ctrl_signals
     end
     else begin
         if(br_en_temp && (opcode_exe == op_br)) begin
-            if(ctrl_w.rvfi.order_commit != prev_order)
-                rvfi_exe.rvfi.valid_commit = ctrl_w.rvfi.valid_commit;//done
-            else
-                rvfi_exe.rvfi.valid_commit = 1'b0;
-
+            rvfi_exe.rvfi.valid_commit = ctrl_w.rvfi.valid_commit;//done
             rvfi_exe.exe = ctrl_w.exe;
             rvfi_exe.mem = ctrl_w.mem;
             rvfi_exe.wb = ctrl_w.wb;
