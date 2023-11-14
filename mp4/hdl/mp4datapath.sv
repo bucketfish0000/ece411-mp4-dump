@@ -24,6 +24,7 @@ module mp4datapath
     input logic dec_exe_load,
     input logic exe_mem_load,
     input logic mem_wb_load,
+    input logic sp_ld_commit,
 
     input control_word cw_dec,
 
@@ -118,6 +119,7 @@ fet_dec_reg fet_dec_reg(
     .rst(rst),
     .if_de_rst(fet_dec_rst),
     .load(fet_dec_load),
+    .sp_ld_commit(sp_ld_commit),
 
     .ready_i(fetch_ready_o),
     .ready_o(decode_ready_i),
