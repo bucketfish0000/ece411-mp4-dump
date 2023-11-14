@@ -147,13 +147,19 @@ hazard_queue data_hzd_queue(
 );
 
 logic br, branch_taken;
+logic jump,jump_taken;
 assign br = br_en && (opcode_exec == op_br);
+assign jump = (opcode_exec == op_jal || opcode_exec == op_jalr);
 
-always_ff @(posedge clk, posedge rst) begin: br_delay
+always_ff @(posedge clk, posedge rst) begin: br_jump_delay
     if (rst) begin
         branch_taken<=1'b0;
+        jump_taken<=1'b0;
     end
-    else branch_taken<= br;
+    else begin
+        branch_taken<= br;
+        jump_taken<=jump;
+    end
 end
 
 always_ff @(posedge clk, posedge rst) begin : fetch_delay_compensator
@@ -188,6 +194,7 @@ always_comb begin : pipeline_regs_logic
         imem_read = ((icache_resp) || stall_if_de) ? 1'b0 : 1'b1; 
         //update pc when imem has responded (can proc)
         load_pc = ((branch_taken&&icache_resp)||(icache_resp && !stall_if_de)) ? 1'b1 : 1'b0;
+        // load_pc = (icache_resp && (branch_taken)||(jump_taken)||(!stall_if_de)) ? 1'b1 : 1'b0;
 
         //ppr resets
         // if_de_rst = 1'b0;
@@ -201,6 +208,7 @@ always_comb begin : pipeline_regs_logic
         de_exe_ld = (!icache_resp|| stall_de_exe || vald[4]==0) ? 1'b0: 1'b1;
         exe_mem_ld = (!icache_resp || stall_exe_mem || vald[3]==0) ? 1'b0 : 1'b1;
         mem_wb_ld = (!icache_resp || stall_mem_wb || vald[2]==0) ? 1'b0 : 1'b1;
+        
         // //ppr rst (flushing control)
         // //
         // if_de_rst = (branch_taken)? 1'b1 : 1'b0;
@@ -211,7 +219,7 @@ always_comb begin : pipeline_regs_logic
         //
         if_de_rst = (branch_taken) ? 1'b1 : 1'b0;
         de_exe_rst = (branch_taken) ? 1'b1 : 1'b0;
-        exe_mem_rst = (branch_taken) ? 1'b1: 1'b0; 
+        exe_mem_rst = 1'b0; 
         mem_wb_rst = 1'b0;
     
     end
