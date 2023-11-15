@@ -3,7 +3,7 @@ module cache_arbiter
     import rv32i_cache_types::*; 
     import cpuIO::*;
 (
-    input clk, rst,
+    input clk, reset,
 
     input rv32i_word icache_addr, // cannot write to icache
     input logic icache_read, 
@@ -67,7 +67,7 @@ begin: next_state_assignment
 end
 
 always_ff @(posedge clk) begin : next_state_logic
-    if(rst) state <= icache; 
+    if(reset) next_states = icache; 
     else begin 
         case(state)
             icache: begin 

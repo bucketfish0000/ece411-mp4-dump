@@ -15,7 +15,11 @@ module top_tb;
 
     int timeout = 1000; // in cycles, change according to your needs
 
+<<<<<<< HEAD
     // CP1
+=======
+    // // CP1
+>>>>>>> no-magicmem
     // mem_itf magic_itf_i(.*);
     // mem_itf magic_itf_d(.*);
     // magic_dual_port magic_dual_port(.itf_i(magic_itf_i), .itf_d(magic_itf_d));
@@ -31,7 +35,11 @@ module top_tb;
         .clk          (clk),
         .rst          (rst),
 
+<<<<<<< HEAD
         // Use these for CP1
+=======
+        // // Use these for CP1
+>>>>>>> no-magicmem
         // .imem_address  (magic_itf_i.addr),
         // .imem_read     (magic_itf_i.read),
         // .imem_rdata    (magic_itf_i.rdata),
@@ -97,7 +105,11 @@ module top_tb;
         //     repeat (5) @(posedge clk);
         //     $finish;
         // end
+<<<<<<< HEAD
         // Uncomment this for CP2+
+=======
+        //Uncomment this for CP2+
+>>>>>>> no-magicmem
         if (bmem_itf.error != 0) begin
             repeat (5) @(posedge clk);
             $finish;

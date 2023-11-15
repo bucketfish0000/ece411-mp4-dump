@@ -29,9 +29,9 @@ import cpuIO::*;
     input   logic           bmem_resp
 );
 /*                             256bit                        32bit word
-          64bit              cacheline       -> word adapter    -> cpu datapath fetch
+          64bit              cacheline        -> icache    -> word adapter -> cpu datapath fetch
     memory <-> cacheline adapter <-> arbiter  
-                                             <-> word adapter   <-> cpu datapath memory 
+                                             <->  dcache  <-> word adapter <-> cpu datapath memory 
 */
 
 
@@ -55,7 +55,18 @@ import cpuIO::*;
 
             rv32i_cache_types::rv32i_cacheline cacheline_wdata_mem;
             rv32i_cache_types::rv32i_cacheline cacheline_rdata_mem;
+            rv32i_word cacheline_mem_address;
             logic cacheline_resp, cacheline_read, cacheline_write; 
+
+            //imem and dmem signals to arbiter mem 
+            rv32i_word arbiter_cacheline_dmem_address;
+            rv32i_cache_types::rv32i_cacheline arbiter_dmem_cacheline_rdata; 
+            rv32i_cache_types::rv32i_cacheline arbiter_dmem_cacheline_wdata; 
+            logic arbiter_dmem_resp, arbiter_cacheline_dmem_write, arbiter_cacheline_dmem_read; 
+
+            rv32i_word arbiter_cacheline_imem_address;
+            rv32i_cache_types::rv32i_cacheline arbiter_imem_cacheline_rdata; 
+            logic arbiter_imem_resp, arbiter_cacheline_imem_read; 
 
             logic           monitor_valid;
             logic   [63:0]  monitor_order;
@@ -143,7 +154,7 @@ import cpuIO::*;
 
     cache dcache0(
         .clk(clk), .rst(rst),
-        .mem_address(dmem_address), 
+        .mem_address(dmem_address), //cpu datapath 
         .mem_read(dmem_read), 
         .mem_write(dmem_write), 
         .mem_byte_enable(cacheline_mem_byte_enable),
@@ -151,17 +162,17 @@ import cpuIO::*;
         .mem_wdata(dmem_cacheline_wdata), 
         .mem_resp(dmem_resp), 
 
-        .pmem_address(cacheline_dmem_address), 
-        .pmem_read(cacheline_dmem_read), 
-        .pmem_write(cacheline_dmem_write), 
-        .pmem_rdata(dmem_cacheline_rdata), 
-        .pmem_wdata(dmem_cacheline_wdata), 
-        .pmem_resp(dmem_resp)
+        .pmem_address(arbiter_cacheline_dmem_address), //arbiter
+        .pmem_read(arbiter_cacheline_dmem_read), 
+        .pmem_write(arbiter_cacheline_dmem_write), 
+        .pmem_rdata(arbiter_dmem_cacheline_wdata), 
+        .pmem_wdata(arbiter_dmem_cacheline_wdata), 
+        .pmem_resp(arbiter_dmem_resp)
     );
 
     cache icache0(
         .clk(clk), .rst(rst),
-        .mem_address(imem_address), 
+        .mem_address(imem_address),  // cpu datapath 
         .mem_read(imem_read), 
         .mem_write(1'b0), 
         .mem_byte_enable(),
@@ -169,16 +180,16 @@ import cpuIO::*;
         .mem_wdata(), 
         .mem_resp(imem_resp), 
 
-        .pmem_address(cacheline_imem_address), 
-        .pmem_read(), 
+        .pmem_address(arbiter_cacheline_imem_address), //arbiter 
+        .pmem_read(arbiter_cacheline_imem_read), 
         .pmem_write(), 
-        .pmem_rdata(), 
+        .pmem_rdata(arbiter_imem_cacheline_rdata), 
         .pmem_wdata(), 
-        .pmem_resp()
+        .pmem_resp(arbiter_imem_resp)
     );
 
     cacheline_adaptor cacheline_adaptor(
-        .clk(clk), .reset_n(rst),
+        .clk(clk), .reset_n(~rst),
         .line_i(cacheline_wdata_mem),          //cache
         .line_o(cacheline_rdata_mem),
         .address_i(cacheline_mem_address),
@@ -190,23 +201,23 @@ import cpuIO::*;
         .burst_o(bmem_wdata), 
         .address_o(bmem_address), 
         .read_o(bmem_read), 
-        .write_o(bmem_read), 
+        .write_o(bmem_write),
         .resp_i(bmem_resp)
     );
 
     cache_arbiter cache_arbiter(
-        .clk(clk), .rst(rst),
-        .icache_addr(cacheline_imem_address),//in            //interface with icache
-        .icache_read(imem_read),
-        .icache_data(imem_cacheline_rdata), //out
-        .icache_resp(imem_resp), 
+        .clk(clk), .reset(rst),
+        .icache_addr(arbiter_cacheline_imem_address),            //interface with icache
+        .icache_read(arbiter_cacheline_imem_read),
+        .icache_data(arbiter_imem_cacheline_rdata), 
+        .icache_resp(arbiter_imem_resp), 
 
-        .dcache_addr(cacheline_dmem_address),  //in //interface with dcache 
-        .dcache_read(cacheline_dmem_read),
-        .dcache_write(cacheline_dmem_write),
-        .dcache_data_r(dmem_cacheline_rdata), //out
-        .dcache_data_w(dmem_cacheline_wdata), //in
-        .dcache_resp(dmem_resp), //out
+        .dcache_addr(arbiter_cacheline_dmem_address),  //interface with dcache 
+        .dcache_read(arbiter_cacheline_dmem_read),
+        .dcache_write(arbiter_cacheline_dmem_write),
+        .dcache_data_r(arbiter_dmem_cacheline_rdata), 
+        .dcache_data_w(arbiter_dmem_cacheline_wdata), 
+        .dcache_resp(arbiter_dmem_resp), 
         
         .mem_data_r(cacheline_rdata_mem),    //in           // interface with cacheline adapter 
         .mem_resp(cacheline_resp), 
