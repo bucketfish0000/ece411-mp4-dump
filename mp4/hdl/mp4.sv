@@ -29,7 +29,11 @@ import cpuIO::*;
     input   logic           bmem_resp
 );
 /*                             256bit                        32bit word
+<<<<<<< HEAD
+          64bit              cacheline       -> word adapter    -> cpu datapath fetch
+=======
           64bit              cacheline        -> icache    -> word adapter -> cpu datapath fetch
+>>>>>>> no-magicmem
     memory <-> cacheline adapter <-> arbiter  
                                              <->  dcache  <-> word adapter <-> cpu datapath memory 
 */
@@ -170,6 +174,7 @@ import cpuIO::*;
         .pmem_resp(arbiter_dmem_resp)
     );
 
+    //icache arbiter_imem_resp goes high, but imem_resp never goes high
     cache icache0(
         .clk(clk), .rst(rst),
         .mem_address(imem_address),  // cpu datapath 
