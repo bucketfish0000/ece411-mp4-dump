@@ -175,8 +175,9 @@ import cpuIO::*;
         .pmem_wdata(), 
         .pmem_resp()
     );
+
     cacheline_adaptor cacheline_adaptor(
-        .clk(clk), .reset(reset),
+        .clk(clk), .reset_n(reset),
         .line_i(cacheline_wdata_mem),          //cache
         .line_o(cacheline_rdata_mem),
         .address_i(cacheline_mem_address),
@@ -193,42 +194,43 @@ import cpuIO::*;
     );
 
     cache_arbiter cache_arbiter(
-        .clk(clk), .reset(reset),
-        .icache_addr(cacheline_imem_address),            //interface with icache
+        .clk(clk), .rst(reset),
+        .icache_addr(cacheline_imem_address),//in            //interface with icache
         .icache_read(imem_read),
-        .icache_data(imem_cacheline_rdata), 
+        .icache_data(imem_cacheline_rdata), //out
         .icache_resp(imem_resp), 
 
-        .dcache_addr(cacheline_dmem_address),  //interface with dcache 
+        .dcache_addr(cacheline_dmem_address),  //in //interface with dcache 
         .dcache_read(cacheline_dmem_read),
         .dcache_write(cacheline_dmem_write),
-        .dcache_data_r(dmem_cacheline_rdata), 
-        .dcache_data_w(dmem_cacheline_wdata), 
-        .dcache_resp(dmem_resp), 
+        .dcache_data_r(dmem_cacheline_rdata), //out
+        .dcache_data_w(dmem_cacheline_wdata), //in
+        .dcache_resp(dmem_resp), //out
         
-        .mem_data_r(cacheline_rdata_mem),               // interface with cacheline adapter 
+        .mem_data_r(cacheline_rdata_mem),    //in           // interface with cacheline adapter 
         .mem_resp(cacheline_resp), 
-        .mem_addr(cacheline_mem_address),    
+        .mem_addr(cacheline_mem_address),    //out
         .mem_data_w(cacheline_wdata_mem), 
         .mem_read(cacheline_read), 
         .mem_write(cacheline_write)
     );
 
+    //good
     mem_word_adapter imem_word_adapter(
         .clk(clk), .rst(rst),
-        .mem_address(imem_address), 
-        .cacheline_mem_address(cacheline_imem_address), 
-        .cacheline_rdata(imem_cacheline_rdata), 
-        .cacheline_wdata(), 
-        .mem_wdata(), 
-        .mem_rdata(imem_rdata), 
-        .mem_byte_enable(), 
-        .cacheline_mem_byte_enable()
+        .mem_address(imem_address), //in
+        .cacheline_mem_address(cacheline_imem_address), //out
+        .cacheline_rdata(imem_cacheline_rdata), //in
+        .cacheline_wdata(), //out
+        .mem_wdata(), //in
+        .mem_rdata(imem_rdata), //out
+        .mem_byte_enable(), //in
+        .cacheline_mem_byte_enable() //out
     );
 
     mem_word_adapter dmem_word_adapter(
         .clk(clk), .rst(rst),
-        .mem_address(dmem_address), 
+        .mem_address(dmem_address), //in
         .cacheline_mem_address(cacheline_dmem_address), 
         .cacheline_rdata(dmem_cacheline_rdata), 
         .cacheline_wdata(dmem_cacheline_wdata), 
