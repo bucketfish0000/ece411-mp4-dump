@@ -19,7 +19,7 @@ logic [num_ways-1:0] out;
 
 genvar i;
 generate
-    for (i=0;i<num_ways;i++) begin
+    for (i=0;i<num_ways;i++) begin : make_compile_happy_0
         ff_array #(.s_index(s_index),.width(1)) 
         dirty_arr
             (.clk0(clk),

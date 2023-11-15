@@ -20,7 +20,7 @@ assign valid_out = out;
 
 genvar i;
 generate
-    for (i=0;i<num_ways;i++) begin
+    for (i=0;i<num_ways;i++) begin : make_compile_happy_1
         ff_array #(.s_index(s_index),.width(1)) 
         valid_arr
             (.clk0(clk),
