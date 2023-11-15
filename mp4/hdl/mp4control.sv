@@ -27,13 +27,13 @@
 
         Prioritize hazard closest:
 
-            if((cw_read.rs1_addr == instruct_in_de[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+            if((true_cw_read.rs1_addr == instruct_in_de[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                 ctrl_word.exe.rs1_sel = rs1mux::exe_fwd_data;
             end
-            else if((cw_read.rs1_addr == instruct_in_exe[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+            else if((true_cw_read.rs1_addr == instruct_in_exe[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                 ctrl_word.exe.rs1_sel = rs1mux::mem_fwd_data;
             end
-            else if((cw_read.rs1_addr == instruct_in_mem[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+            else if((true_cw_read.rs1_addr == instruct_in_mem[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                 ctrl_word.exe.rs1_sel = rs1mux::wb_fwd_data;
             end
             else begin
@@ -88,6 +88,7 @@ import cpuIO::*;
     output logic de_exe_ld,
     output logic exe_mem_ld,
     output logic mem_wb_ld,
+    output logic sp_ld_commit,
 
     /*---cpu_cw---*/
     input control_read cw_read, 
@@ -99,19 +100,70 @@ import cpuIO::*;
 logic [4:0] rdy;
 logic [4:0] vald;
 logic [85:0] instruct_in_if, instruct_in_de, instruct_in_exe, instruct_in_mem, instruct_in_wb;
-logic flush_data_hzd_q, load_hzd_q, fetch_delay;
+logic flush_data_hzd_q, load_hzd_q;
 
 assign rdy = {if_rdy, de_rdy, exe_rdy, mem_rdy, wb_rdy};
 assign vald = {if_valid, de_valid, exe_valid, mem_valid, wb_valid};
 
 logic stall_if_de, stall_de_exe, stall_exe_mem, stall_mem_wb;
+
+logic load_instuct_inserted;
+control_read true_cw_read;
+
+always_ff @(posedge clk, posedge rst) begin
+    if(rst) begin
+        load_instuct_inserted <= 1'b0;
+    end
+    else if((cw_read.opcode == op_load) && (load_instuct_inserted == 0) && (icache_resp)) begin
+        load_instuct_inserted <= 1'b1;
+    end
+    else if((load_instuct_inserted == 1) && (icache_resp)) begin
+        load_instuct_inserted <= 1'b0;
+    end
+end
+
+always_comb begin
+    if(rst) begin
+        true_cw_read = cw_read;
+        sp_ld_commit = 1'b0;
+        instruct_in_if = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
+    end
+    else if((load_instuct_inserted == 1) && (icache_resp)) begin
+        true_cw_read.order_commit = cw_read.order_commit;
+        true_cw_read.opcode = op_imm;
+        true_cw_read.func3 = 3'b0;
+        true_cw_read.func7 = 7'b0;
+        true_cw_read.instruction = 32'h00000013;
+        true_cw_read.pc_rdata = 32'b0;
+        true_cw_read.pc_wdata = 32'b0;
+        true_cw_read.rs1_addr = 5'b0;
+        true_cw_read.rs2_addr = 5'b0;
+        true_cw_read.rs1_data = 32'b0;
+        true_cw_read.rs2_data = 32'b0;
+        true_cw_read.rd_addr = 5'b0;
+        instruct_in_if = {5'b0, 5'b0, 5'b0, op_imm, cw_read.order_commit};
+        sp_ld_commit = 1'b1; //need to load new commit order bc otherwise wb will see the same commit order twice in a row and not commit it the 
+                            //second time, but we want it to commit the instrutction after load
+    end
+    else begin
+        true_cw_read = cw_read;
+        sp_ld_commit = 1'b0;
+        if(cw_read.opcode != op_br) begin
+            instruct_in_if = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
+        end
+        else begin
+            instruct_in_if = {5'b0, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
+        end
+    end
+end
+
 //stall a ppr when any ppr after it is valid but not ready
 
 assign stall_if_de = 
     ((rdy[3] == 0) && (vald[3] == 1)) || 
     ((rdy[2] == 0) && (vald[2] == 1)) || 
     ((rdy[1] == 0) && (vald[1] == 1)) || 
-    ((rdy[0] == 0) && (vald[0] == 1));
+    ((rdy[0] == 0) && (vald[0] == 1)) || ((load_instuct_inserted == 1));
 
 assign stall_de_exe = 
     ((rdy[2] == 0) && (vald[2] == 1)) || 
@@ -125,14 +177,6 @@ assign stall_exe_mem =
 assign stall_mem_wb = 
     ((rdy[0] == 0) && (vald[0] == 1));
 
-always_comb begin : blockName
-    if(cw_read.opcode != op_br) begin
-        instruct_in_if = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
-    end
-    else begin
-        instruct_in_if = {5'b0, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
-    end
-end
 
 hazard_queue data_hzd_queue(
     .clk(clk),//in
@@ -162,16 +206,6 @@ always_ff @(posedge clk, posedge rst) begin: br_jump_delay
     end
 end
 
-always_ff @(posedge clk, posedge rst) begin : fetch_delay_compensator
-    if(rst) begin
-        fetch_delay <= 1'b1;
-    end
-    else if(icache_resp == 0)
-        fetch_delay <= 1'b1;
-    else
-        fetch_delay <= 1'b0;
-end
-
 always_comb begin : pipeline_regs_logic
     if(rst) begin
         if_de_ld = 1'b0;
@@ -191,7 +225,7 @@ always_comb begin : pipeline_regs_logic
     else begin
             //imem and pc interactions
         //only not try to fetch when waiting for resp from icache 
-        imem_read = ((icache_resp) || stall_if_de) ? 1'b0 : 1'b1; 
+        imem_read = ((icache_resp) || (stall_if_de && !load_instuct_inserted)) ? 1'b0 : 1'b1; 
         //update pc when imem has responded (can proc)
         load_pc = ((branch_taken&&icache_resp)||(icache_resp&&jump_taken)||(icache_resp && !stall_if_de)) ? 1'b1 : 1'b0;
         // load_pc = (icache_resp && (branch_taken)||(jump_taken)||(!stall_if_de)) ? 1'b1 : 1'b0;
@@ -204,7 +238,7 @@ always_comb begin : pipeline_regs_logic
 
         // //ppr loads (stalling control)
         if_de_ld = (stall_if_de || !icache_resp) ? 1'b0 : 1'b1;
-        load_hzd_q = (stall_if_de || !icache_resp) ? 1'b0 : 1'b1;
+        load_hzd_q = ((stall_if_de && !load_instuct_inserted) || !icache_resp) ? 1'b0 : 1'b1; //issue for nop after load !!!
         de_exe_ld = (!icache_resp|| stall_de_exe || vald[4]==0) ? 1'b0: 1'b1;
         exe_mem_ld = (!icache_resp || stall_exe_mem || vald[3]==0) ? 1'b0 : 1'b1;
         mem_wb_ld = (!icache_resp || stall_mem_wb || vald[2]==0) ? 1'b0 : 1'b1;
@@ -242,10 +276,10 @@ store_funct3_t store_funct3;
 load_funct3_t load_funct3;
 arith_funct3_t arith_funct3;
 
-assign arith_funct3 = arith_funct3_t'(cw_read.func3);
-assign branch_funct3 = branch_funct3_t'(cw_read.func3);
-assign load_funct3 = load_funct3_t'(cw_read.func3);
-assign store_funct3 = store_funct3_t'(cw_read.func3);
+assign arith_funct3 = arith_funct3_t'(true_cw_read.func3);
+assign branch_funct3 = branch_funct3_t'(true_cw_read.func3);
+assign load_funct3 = load_funct3_t'(true_cw_read.func3);
+assign store_funct3 = store_funct3_t'(true_cw_read.func3);
 
 function void set_def();
     ctrl_word.exe.cmp_sel = cmpmux::rs2_out;
@@ -288,19 +322,19 @@ always_comb begin : cpu_cw
     end
     else if(rdy[4]) begin
         set_def();
-        if(cw_read.pc_rdata == 32'b0) begin
+        if(true_cw_read.pc_rdata == 32'b0) begin
             ctrl_word.rvfi.valid_commit = 1'b0;
         end
         else begin
             ctrl_word.rvfi.valid_commit = 1'b1;
         end
         // ctrl_word.rvfi.valid_commit = 1'b1;
-        ctrl_word.rvfi.order_commit = cw_read.order_commit;
-        ctrl_word.rvfi.instruction = cw_read.instruction;
-        ctrl_word.rvfi.pc_rdata = cw_read.pc_rdata;
-        ctrl_word.rvfi.pc_wdata = cw_read.pc_wdata;
+        ctrl_word.rvfi.order_commit = true_cw_read.order_commit;
+        ctrl_word.rvfi.instruction = true_cw_read.instruction;
+        ctrl_word.rvfi.pc_rdata = true_cw_read.pc_rdata;
+        ctrl_word.rvfi.pc_wdata = true_cw_read.pc_wdata;
 
-        unique case(cw_read.opcode)
+        unique case(true_cw_read.opcode)
             op_lui: begin
                 //exe
                 ctrl_word.exe.exefwdmux_sel = exefwdmux::u_imm;
@@ -311,7 +345,7 @@ always_comb begin : cpu_cw
                 //writeback
                 ctrl_word.wb.ld_reg = 1'b1;
                 ctrl_word.wb.regfilemux_sel = regfilemux::u_imm;
-                ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
 
                 //fetch does nothing here
                
@@ -320,13 +354,13 @@ always_comb begin : cpu_cw
                 
 
                 //data hzd detection
-                if((cw_read.rs1_addr == instruct_in_de[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                if((true_cw_read.rs1_addr == instruct_in_de[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::exe_fwd_data;
                 end
-                else if((cw_read.rs1_addr == instruct_in_exe[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                else if((true_cw_read.rs1_addr == instruct_in_exe[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::mem_fwd_data;
                 end
-                else if((cw_read.rs1_addr == instruct_in_mem[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                else if((true_cw_read.rs1_addr == instruct_in_mem[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::wb_fwd_data;
                 end
                 else begin
@@ -345,7 +379,7 @@ always_comb begin : cpu_cw
 
                 //writeback
                 ctrl_word.wb.ld_reg = 1'b1;
-                ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                 ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
 
                 //fetch does nothing here
@@ -369,7 +403,7 @@ always_comb begin : cpu_cw
                 //writeback
                 ctrl_word.wb.ld_reg = 1'b1;
                 ctrl_word.wb.regfilemux_sel = regfilemux::pc_plus4;
-                ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
 
                 //fetch does nothing here
                
@@ -392,22 +426,22 @@ always_comb begin : cpu_cw
                 //writeback
                 ctrl_word.wb.ld_reg = 1'b1;
                 ctrl_word.wb.regfilemux_sel = regfilemux::pc_plus4;
-                ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
 
                 //fetch does nothing here
             
                 //decode
-                ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
-                ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
+                ctrl_word.rvfi.rs1_addr = true_cw_read.rs1_addr;
+                ctrl_word.rvfi.rs1_data = true_cw_read.rs1_data;
 
                 //data hzd detection
-                if((cw_read.rs1_addr == instruct_in_de[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                if((true_cw_read.rs1_addr == instruct_in_de[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::exe_fwd_data;
                 end
-                else if((cw_read.rs1_addr == instruct_in_exe[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                else if((true_cw_read.rs1_addr == instruct_in_exe[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::mem_fwd_data;
                 end
-                else if((cw_read.rs1_addr == instruct_in_mem[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                else if((true_cw_read.rs1_addr == instruct_in_mem[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::wb_fwd_data;
                 end
                 else begin
@@ -418,7 +452,7 @@ always_comb begin : cpu_cw
             op_br: begin
                 //exe
                 ctrl_word.exe.cmp_sel = cmpmux::rs2_out;
-                unique case(cw_read.func3)
+                unique case(true_cw_read.func3)
                     3'b000: ctrl_word.exe.cmpop = beq;
                     3'b001: ctrl_word.exe.cmpop = bne;
                     3'b100: ctrl_word.exe.cmpop = blt;
@@ -441,32 +475,32 @@ always_comb begin : cpu_cw
 
 
                 //decode
-                ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
-                ctrl_word.rvfi.rs2_addr = cw_read.rs2_addr;
-                ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
-                ctrl_word.rvfi.rs2_data = cw_read.rs2_data;
+                ctrl_word.rvfi.rs1_addr = true_cw_read.rs1_addr;
+                ctrl_word.rvfi.rs2_addr = true_cw_read.rs2_addr;
+                ctrl_word.rvfi.rs1_data = true_cw_read.rs1_data;
+                ctrl_word.rvfi.rs2_data = true_cw_read.rs2_data;
 
                 //data hzd detection
-                if((cw_read.rs1_addr == instruct_in_de[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                if((true_cw_read.rs1_addr == instruct_in_de[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::exe_fwd_data;
                 end
-                else if((cw_read.rs1_addr == instruct_in_exe[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                else if((true_cw_read.rs1_addr == instruct_in_exe[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::mem_fwd_data;
                 end
-                else if((cw_read.rs1_addr == instruct_in_mem[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                else if((true_cw_read.rs1_addr == instruct_in_mem[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::wb_fwd_data;
                 end
                 else begin
                     ctrl_word.exe.rs1_sel = rs1mux::rs1_data;
                 end
 
-                if((cw_read.rs2_addr == instruct_in_de[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                if((true_cw_read.rs2_addr == instruct_in_de[85:81]) && (true_cw_read.rs2_addr != 5'b00000)) begin
                     ctrl_word.exe.rs2_sel = rs2mux::exe_fwd_data;
                 end
-                else if((cw_read.rs2_addr == instruct_in_exe[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                else if((true_cw_read.rs2_addr == instruct_in_exe[85:81]) && (true_cw_read.rs2_addr != 5'b00000)) begin
                     ctrl_word.exe.rs2_sel = rs2mux::mem_fwd_data;
                 end
-                else if((cw_read.rs2_addr == instruct_in_mem[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                else if((true_cw_read.rs2_addr == instruct_in_mem[85:81]) && (true_cw_read.rs2_addr != 5'b00000)) begin
                     ctrl_word.exe.rs2_sel = rs2mux::wb_fwd_data;
                 end
                 else begin
@@ -488,8 +522,8 @@ always_comb begin : cpu_cw
 
                 //writeback/more mem
                 ctrl_word.wb.ld_reg = 1'b1;
-                ctrl_word.wb.rd_sel = cw_read.rd_addr;    
-                case (cw_read.func3)
+                ctrl_word.wb.rd_sel = true_cw_read.rd_addr;    
+                case (true_cw_read.func3)
                     3'b000: begin   //lb
                         ctrl_word.wb.regfilemux_sel = regfilemux::lb; //lb 
                     end
@@ -512,17 +546,17 @@ always_comb begin : cpu_cw
                
             
                 //decode
-                ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
-                ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
+                ctrl_word.rvfi.rs1_addr = true_cw_read.rs1_addr;
+                ctrl_word.rvfi.rs1_data = true_cw_read.rs1_data;
 
                 //data hzd detection
-                if((cw_read.rs1_addr == instruct_in_de[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                if((true_cw_read.rs1_addr == instruct_in_de[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::exe_fwd_data;
                 end
-                else if((cw_read.rs1_addr == instruct_in_exe[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                else if((true_cw_read.rs1_addr == instruct_in_exe[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::mem_fwd_data;
                 end
-                else if((cw_read.rs1_addr == instruct_in_mem[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                else if((true_cw_read.rs1_addr == instruct_in_mem[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::wb_fwd_data;
                 end
                 else begin
@@ -548,32 +582,32 @@ always_comb begin : cpu_cw
                
             
                 //decode
-                ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
-                ctrl_word.rvfi.rs2_addr = cw_read.rs2_addr;
-                ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
-                ctrl_word.rvfi.rs2_data = cw_read.rs2_data;
+                ctrl_word.rvfi.rs1_addr = true_cw_read.rs1_addr;
+                ctrl_word.rvfi.rs2_addr = true_cw_read.rs2_addr;
+                ctrl_word.rvfi.rs1_data = true_cw_read.rs1_data;
+                ctrl_word.rvfi.rs2_data = true_cw_read.rs2_data;
 
                 //data hzd detection
-                if((cw_read.rs1_addr == instruct_in_de[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                if((true_cw_read.rs1_addr == instruct_in_de[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::exe_fwd_data;
                 end
-                else if((cw_read.rs1_addr == instruct_in_exe[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                else if((true_cw_read.rs1_addr == instruct_in_exe[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::mem_fwd_data;
                 end
-                else if((cw_read.rs1_addr == instruct_in_mem[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                else if((true_cw_read.rs1_addr == instruct_in_mem[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::wb_fwd_data;
                 end
                 else begin
                     ctrl_word.exe.rs1_sel = rs1mux::rs1_data;
                 end
 
-                if((cw_read.rs2_addr == instruct_in_de[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                if((true_cw_read.rs2_addr == instruct_in_de[85:81]) && (true_cw_read.rs2_addr != 5'b00000)) begin
                     ctrl_word.exe.rs2_sel = rs2mux::exe_fwd_data;
                 end
-                else if((cw_read.rs2_addr == instruct_in_exe[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                else if((true_cw_read.rs2_addr == instruct_in_exe[85:81]) && (true_cw_read.rs2_addr != 5'b00000)) begin
                     ctrl_word.exe.rs2_sel = rs2mux::mem_fwd_data;
                 end
-                else if((cw_read.rs2_addr == instruct_in_mem[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                else if((true_cw_read.rs2_addr == instruct_in_mem[85:81]) && (true_cw_read.rs2_addr != 5'b00000)) begin
                     ctrl_word.exe.rs2_sel = rs2mux::wb_fwd_data;
                 end
                 else begin
@@ -583,7 +617,7 @@ always_comb begin : cpu_cw
 
             op_imm: begin
                 ctrl_word.wb.ld_reg = 1'b1;
-                case(cw_read.func3)
+                case(true_cw_read.func3)
                     3'b000: begin
                         //exe
                         ctrl_word.exe.aluop =  alu_add;
@@ -592,7 +626,7 @@ always_comb begin : cpu_cw
                    
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
-                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
                      
@@ -604,7 +638,7 @@ always_comb begin : cpu_cw
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
-                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
 
@@ -616,7 +650,7 @@ always_comb begin : cpu_cw
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::br_en;
-                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
 
@@ -628,7 +662,7 @@ always_comb begin : cpu_cw
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::br_en;
-                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
 
@@ -640,13 +674,13 @@ always_comb begin : cpu_cw
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
-                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
 
                     3'b101: begin
                         //exe
-                        if(cw_read.func7[5]) begin
+                        if(true_cw_read.func7[5]) begin
                             ctrl_word.exe.aluop =  alu_sra;
                         end
                         else begin
@@ -657,7 +691,7 @@ always_comb begin : cpu_cw
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
-                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
 
@@ -669,7 +703,7 @@ always_comb begin : cpu_cw
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
-                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
                     
@@ -681,7 +715,7 @@ always_comb begin : cpu_cw
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
-                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
                 endcase
@@ -693,17 +727,17 @@ always_comb begin : cpu_cw
                
             
                 //decode
-                ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
-                ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
+                ctrl_word.rvfi.rs1_addr = true_cw_read.rs1_addr;
+                ctrl_word.rvfi.rs1_data = true_cw_read.rs1_data;
 
                 //data hzd detection
-                if((cw_read.rs1_addr == instruct_in_de[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                if((true_cw_read.rs1_addr == instruct_in_de[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::exe_fwd_data;
                 end
-                else if((cw_read.rs1_addr == instruct_in_exe[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                else if((true_cw_read.rs1_addr == instruct_in_exe[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::mem_fwd_data;
                 end
-                else if((cw_read.rs1_addr == instruct_in_mem[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                else if((true_cw_read.rs1_addr == instruct_in_mem[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::wb_fwd_data;
                 end
                 else begin
@@ -713,10 +747,10 @@ always_comb begin : cpu_cw
 
             op_reg: begin
                 ctrl_word.wb.ld_reg = 1'b1;
-                case(cw_read.func3)
+                case(true_cw_read.func3)
                     3'b000: begin
                         //exe
-                        if(cw_read.func7[5]) begin
+                        if(true_cw_read.func7[5]) begin
                             ctrl_word.exe.aluop =  alu_sub;
                         end
                         else begin
@@ -727,7 +761,7 @@ always_comb begin : cpu_cw
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
-                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
                     
@@ -739,7 +773,7 @@ always_comb begin : cpu_cw
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
-                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
 
@@ -751,7 +785,7 @@ always_comb begin : cpu_cw
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::br_en;
-                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
 
@@ -763,7 +797,7 @@ always_comb begin : cpu_cw
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::br_en;
-                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
 
@@ -775,13 +809,13 @@ always_comb begin : cpu_cw
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
-                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
 
                     3'b101: begin
                         //exe
-                        if(cw_read.func7[5]) begin
+                        if(true_cw_read.func7[5]) begin
                             ctrl_word.exe.aluop =  alu_sra;
                         end
                         else begin
@@ -792,7 +826,7 @@ always_comb begin : cpu_cw
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
-                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
 
@@ -804,7 +838,7 @@ always_comb begin : cpu_cw
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
-                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
 
@@ -816,7 +850,7 @@ always_comb begin : cpu_cw
 
                         //writeback
                         ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
-                        ctrl_word.wb.rd_sel = cw_read.rd_addr;
+                        ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
                 endcase
@@ -828,32 +862,32 @@ always_comb begin : cpu_cw
                
             
                 //decode
-                ctrl_word.rvfi.rs1_addr = cw_read.rs1_addr;
-                ctrl_word.rvfi.rs2_addr = cw_read.rs2_addr;
-                ctrl_word.rvfi.rs1_data = cw_read.rs1_data;
-                ctrl_word.rvfi.rs2_data = cw_read.rs2_data;
+                ctrl_word.rvfi.rs1_addr = true_cw_read.rs1_addr;
+                ctrl_word.rvfi.rs2_addr = true_cw_read.rs2_addr;
+                ctrl_word.rvfi.rs1_data = true_cw_read.rs1_data;
+                ctrl_word.rvfi.rs2_data = true_cw_read.rs2_data;
 
                 //data hzd detection
-                if((cw_read.rs1_addr == instruct_in_de[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                if((true_cw_read.rs1_addr == instruct_in_de[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::exe_fwd_data;
                 end
-                else if((cw_read.rs1_addr == instruct_in_exe[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                else if((true_cw_read.rs1_addr == instruct_in_exe[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::mem_fwd_data;
                 end
-                else if((cw_read.rs1_addr == instruct_in_mem[85:81]) && (cw_read.rs1_addr != 5'b00000)) begin
+                else if((true_cw_read.rs1_addr == instruct_in_mem[85:81]) && (true_cw_read.rs1_addr != 5'b00000)) begin
                     ctrl_word.exe.rs1_sel = rs1mux::wb_fwd_data;
                 end
                 else begin
                     ctrl_word.exe.rs1_sel = rs1mux::rs1_data;
                 end
 
-                if((cw_read.rs2_addr == instruct_in_de[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                if((true_cw_read.rs2_addr == instruct_in_de[85:81]) && (true_cw_read.rs2_addr != 5'b00000)) begin
                     ctrl_word.exe.rs2_sel = rs2mux::exe_fwd_data;
                 end
-                else if((cw_read.rs2_addr == instruct_in_exe[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                else if((true_cw_read.rs2_addr == instruct_in_exe[85:81]) && (true_cw_read.rs2_addr != 5'b00000)) begin
                     ctrl_word.exe.rs2_sel = rs2mux::mem_fwd_data;
                 end
-                else if((cw_read.rs2_addr == instruct_in_mem[85:81]) && (cw_read.rs2_addr != 5'b00000)) begin
+                else if((true_cw_read.rs2_addr == instruct_in_mem[85:81]) && (true_cw_read.rs2_addr != 5'b00000)) begin
                     ctrl_word.exe.rs2_sel = rs2mux::wb_fwd_data;
                 end
                 else begin

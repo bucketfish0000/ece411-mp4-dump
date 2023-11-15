@@ -76,7 +76,7 @@ import cpuIO::*;
             pcmux::pcmux_sel_t pcmux_sel;
             logic if_rdy, de_rdy, exe_rdy, mem_rdy, wb_rdy;
             logic if_valid, de_valid, exe_valid, mem_valid, wb_valid;
-            logic if_de_ld, de_exe_ld, exe_mem_ld, mem_wb_ld;
+            logic if_de_ld, de_exe_ld, exe_mem_ld, mem_wb_ld, sp_ld_commit;
             logic if_de_rst, de_exe_rst, exe_mem_rst, mem_wb_rst;
             logic mem_r_d, mem_w_d;
             logic br_en;
@@ -132,6 +132,7 @@ import cpuIO::*;
         .de_exe_ld(de_exe_ld),
         .exe_mem_ld(exe_mem_ld),
         .mem_wb_ld(mem_wb_ld),
+        .sp_ld_commit(sp_ld_commit),
 
         /*---cpu_cw---*/
         .cw_read(ctrl_rd), 
@@ -256,6 +257,7 @@ import cpuIO::*;
         .dec_exe_load(de_exe_ld),
         .exe_mem_load(exe_mem_ld),
         .mem_wb_load(mem_wb_ld),
+        .sp_ld_commit(sp_ld_commit),
 
         .fet_dec_rst(if_de_rst),
         .dec_exe_rst(de_exe_rst),
