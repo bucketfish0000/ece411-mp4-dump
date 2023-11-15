@@ -81,7 +81,7 @@ import cpuIO::*;
             logic mem_r_d, mem_w_d;
             logic br_en;
             logic [3:0] mem_byte_enable; 
-            logic [31:0] cacheline_mem_byte_enable;
+            logic [31:0] cacheline_mem_byte_enable, cacheline_mem_address;
             control_read ctrl_rd;
             logic load_pc;
             control_word cw_control, ctrl_rvfi;
@@ -142,7 +142,7 @@ import cpuIO::*;
     );
 
     cache dcache0(
-        .clk(clk), .rst(reset),
+        .clk(clk), .rst(rst),
         .mem_address(dmem_address), 
         .mem_read(dmem_read), 
         .mem_write(dmem_write), 
@@ -153,14 +153,14 @@ import cpuIO::*;
 
         .pmem_address(cacheline_dmem_address), 
         .pmem_read(cacheline_dmem_read), 
-        .pmem_write(cacheline_dmdm_write), 
+        .pmem_write(cacheline_dmem_write), 
         .pmem_rdata(dmem_cacheline_rdata), 
         .pmem_wdata(dmem_cacheline_wdata), 
         .pmem_resp(dmem_resp)
     );
 
     cache icache0(
-        .clk(clk), .rst(reset),
+        .clk(clk), .rst(rst),
         .mem_address(imem_address), 
         .mem_read(imem_read), 
         .mem_write(1'b0), 
@@ -178,7 +178,7 @@ import cpuIO::*;
     );
 
     cacheline_adaptor cacheline_adaptor(
-        .clk(clk), .reset_n(reset),
+        .clk(clk), .reset_n(rst),
         .line_i(cacheline_wdata_mem),          //cache
         .line_o(cacheline_rdata_mem),
         .address_i(cacheline_mem_address),
@@ -195,7 +195,7 @@ import cpuIO::*;
     );
 
     cache_arbiter cache_arbiter(
-        .clk(clk), .rst(reset),
+        .clk(clk), .rst(rst),
         .icache_addr(cacheline_imem_address),//in            //interface with icache
         .icache_read(imem_read),
         .icache_data(imem_cacheline_rdata), //out

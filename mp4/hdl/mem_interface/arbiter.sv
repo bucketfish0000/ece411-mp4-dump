@@ -29,9 +29,9 @@ enum int unsigned {
 } state, next_states; 
  
 function void set_defaults(); 
-    icache_data = 0; 
+    icache_data = 256'b0; 
     icache_resp = 1'b0; 
-    dcache_data_r = 0; 
+    dcache_data_r = 256'b0; 
     dcache_resp = 1'b0; 
 endfunction
 
@@ -45,7 +45,7 @@ always_comb begin : state_actions
             mem_read = icache_read; 
             //mem_read = 1'b1; 
             mem_write = 1'b0; 
-            mem_data_w = 0; 
+            mem_data_w = 256'b0; 
         end
         dcache: begin 
             dcache_resp = mem_resp; 
