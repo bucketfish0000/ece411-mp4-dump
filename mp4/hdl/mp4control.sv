@@ -227,7 +227,11 @@ always_comb begin : pipeline_regs_logic
         //only not try to fetch when waiting for resp from icache 
         imem_read = ((icache_resp) || (stall_if_de && !load_instuct_inserted)) ? 1'b0 : 1'b1; 
         //update pc when imem has responded (can proc)
+<<<<<<< HEAD
         load_pc = ((branch_taken&&icache_resp)||(icache_resp&&jump_taken)||(icache_resp && !stall_if_de)) ? 1'b1 : 1'b0;
+=======
+        load_pc = ((branch_taken&&icache_resp)||(icache_resp && !stall_if_de)) ? 1'b1 : 1'b0;
+>>>>>>> no-magicmem
         // load_pc = (icache_resp && (branch_taken)||(jump_taken)||(!stall_if_de)) ? 1'b1 : 1'b0;
 
         //ppr resets
