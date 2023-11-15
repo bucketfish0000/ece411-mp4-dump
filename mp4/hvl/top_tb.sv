@@ -32,25 +32,25 @@ module top_tb;
         .rst          (rst),
 
         // Use these for CP1
-        .imem_address  (magic_itf_i.addr),
-        .imem_read     (magic_itf_i.read),
-        .imem_rdata    (magic_itf_i.rdata),
-        .imem_resp     (magic_itf_i.resp),
-        .dmem_address  (magic_itf_d.addr),
-        .dmem_read     (magic_itf_d.read),
-        .dmem_write    (magic_itf_d.write),
-        .dmem_wmask    (magic_itf_d.wmask),
-        .dmem_rdata    (magic_itf_d.rdata),
-        .dmem_wdata    (magic_itf_d.wdata),
-        .dmem_resp     (magic_itf_d.resp)
+        // .imem_address  (magic_itf_i.addr),
+        // .imem_read     (magic_itf_i.read),
+        // .imem_rdata    (magic_itf_i.rdata),
+        // .imem_resp     (magic_itf_i.resp),
+        // .dmem_address  (magic_itf_d.addr),
+        // .dmem_read     (magic_itf_d.read),
+        // .dmem_write    (magic_itf_d.write),
+        // .dmem_wmask    (magic_itf_d.wmask),
+        // .dmem_rdata    (magic_itf_d.rdata),
+        // .dmem_wdata    (magic_itf_d.wdata),
+        // .dmem_resp     (magic_itf_d.resp)
 
         // Use these for CP2+
-        // .bmem_address (bmem_itf.addr),
-        // .bmem_read    (bmem_itf.read),
-        // .bmem_write   (bmem_itf.write),
-        // .bmem_rdata   (bmem_itf.rdata),
-        // .bmem_wdata   (bmem_itf.wdata),
-        // .bmem_resp    (bmem_itf.resp)
+        .bmem_address (bmem_itf.addr),
+        .bmem_read    (bmem_itf.read),
+        .bmem_write   (bmem_itf.write),
+        .bmem_rdata   (bmem_itf.rdata),
+        .bmem_wdata   (bmem_itf.wdata),
+        .bmem_resp    (bmem_itf.resp)
     );
 
     always_comb begin

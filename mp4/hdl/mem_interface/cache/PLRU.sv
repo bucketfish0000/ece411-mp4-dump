@@ -22,7 +22,7 @@ module PLRU_4_way#(
 
     genvar i;
     generate
-        for (i=0; i<num_sets; i++) begin
+        for (i=0; i<num_sets; i++) begin : make_compile_happy_2
             PLRU_4_way_unit plru_unit(
                 .clk(clk),
                 .rst(rst),
