@@ -95,7 +95,7 @@ module cache_datapath #(
     
     //valid
     logic [3:0] valid_out;
-
+    
 //////assignment//////
     //hardwire both of these two, control if to load separately with control machine to specify their r/w op.
     assign cpu_data_read = data_out;
@@ -110,7 +110,7 @@ module cache_datapath #(
     assign cache_hit = hit;
     assign cache_dirty = dirty_out;
     assign pmem_address = pmem_addr;
-    assign plru_num=plrunum;
+    //assign plru_num = plrunum;
 //////modules//////
     genvar i;
     generate 
