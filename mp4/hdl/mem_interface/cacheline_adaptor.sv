@@ -106,15 +106,19 @@ begin
                 end
                 3'b011:
                 begin
-                    read_o <= 1'b1;
+                    // read_o <= 1'b1;
                     //simply read from burst_i if memory responds
                     if (resp_i)
                     begin
+                        read_o <= 1'b0;
                         line_o[255:192] <= burst_i;
                         resp_o <= 1'b1; //raise return, which will be done in the next clk cycle
                         routine_state <= 3'b100;
                     end
-                    else routine_state <= routine_state;
+                    else begin
+                        read_o <= 1'b1;
+                        routine_state <= routine_state;
+                    end
                     //else do nothing, remain in READ
                 end
                 3'b100: //read is complete
