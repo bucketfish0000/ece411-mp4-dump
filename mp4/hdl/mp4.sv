@@ -29,11 +29,7 @@ import cpuIO::*;
     input   logic           bmem_resp
 );
 /*                             256bit                        32bit word
-<<<<<<< HEAD
           64bit              cacheline       -> word adapter    -> cpu datapath fetch
-=======
-          64bit              cacheline        -> icache    -> word adapter -> cpu datapath fetch
->>>>>>> no-magicmem
     memory <-> cacheline adapter <-> arbiter  
                                              <->  dcache  <-> word adapter <-> cpu datapath memory 
 */
