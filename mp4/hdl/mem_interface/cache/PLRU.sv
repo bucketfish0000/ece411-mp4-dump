@@ -67,8 +67,7 @@ module PLRU_4_way_unit #(
         if (rst) begin
             bits <= 3'b000;
         end //?
-
-        if (update) begin
+        else if (update) begin
             //update: taking hit # as input, convert to bits to invert
             //policy -- we store LRU ptr bits, meaning invert on update
             /* 
