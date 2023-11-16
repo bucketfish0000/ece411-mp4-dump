@@ -124,6 +124,8 @@ always_ff @(posedge clk) begin : prev_order_tracker
         prev_order <= ctrl_w.rvfi.order_commit;
 end
 
+logic [31:0] pc_temp;
+
 always_comb begin : regfile_ctrl_signals
 
     if(rst || !((de_exe_rdy == 1) && (de_exe_valid == 1))) begin
@@ -161,7 +163,7 @@ always_comb begin : regfile_ctrl_signals
         rvfi_exe.rvfi.mem_wdata = 32'b0;//done
     end
     else begin
-        if ((br_en_temp && opcode_exe == op_br) || (opcode_exe == op_jal) || (opcode_exe == op_jalr)) begin
+        if ((br_en_temp && opcode_exe == op_br) || (opcode_exe == op_jal)) begin
             rvfi_exe.rvfi.valid_commit = ctrl_w.rvfi.valid_commit;//done
             rvfi_exe.exe = ctrl_w.exe;
             rvfi_exe.mem = ctrl_w.mem;
@@ -175,6 +177,26 @@ always_comb begin : regfile_ctrl_signals
             rvfi_exe.rvfi.rd_wdata = 32'b0;//done
             rvfi_exe.rvfi.pc_rdata = ctrl_w.rvfi.pc_rdata;//done
             rvfi_exe.rvfi.pc_wdata = alu_out;//done
+            rvfi_exe.rvfi.mem_addr = ctrl_w.rvfi.mem_addr;//done
+            rvfi_exe.rvfi.rmask = ctrl_w.rvfi.rmask;//done
+            rvfi_exe.rvfi.wmask = ctrl_w.rvfi.wmask;//done
+            rvfi_exe.rvfi.mem_rdata = ctrl_w.rvfi.mem_rdata;//done
+            rvfi_exe.rvfi.mem_wdata = ctrl_w.rvfi.mem_wdata;//done
+        end
+        else if((opcode_exe == op_jalr)) begin
+            rvfi_exe.rvfi.valid_commit = ctrl_w.rvfi.valid_commit;//done
+            rvfi_exe.exe = ctrl_w.exe;
+            rvfi_exe.mem = ctrl_w.mem;
+            rvfi_exe.wb = ctrl_w.wb;
+            rvfi_exe.rvfi.order_commit = ctrl_w.rvfi.order_commit;//done
+            rvfi_exe.rvfi.instruction = ctrl_w.rvfi.instruction;//done
+            rvfi_exe.rvfi.rs1_addr = ctrl_w.rvfi.rs1_addr; //done
+            rvfi_exe.rvfi.rs2_addr = ctrl_w.rvfi.rs2_addr; //dome
+            rvfi_exe.rvfi.rs1_data = rs1_o; //done
+            rvfi_exe.rvfi.rs2_data = rs2_o; //done
+            rvfi_exe.rvfi.rd_wdata = 32'b0;//done
+            rvfi_exe.rvfi.pc_rdata = ctrl_w.rvfi.pc_rdata;//done
+            rvfi_exe.rvfi.pc_wdata = {alu_out[31:1], 1'b0};//done
             rvfi_exe.rvfi.mem_addr = ctrl_w.rvfi.mem_addr;//done
             rvfi_exe.rvfi.rmask = ctrl_w.rvfi.rmask;//done
             rvfi_exe.rvfi.wmask = ctrl_w.rvfi.wmask;//done
