@@ -11,7 +11,6 @@ _start:
     addi x2, x0, 7  #x2<= x0 + 7 = 0+7 = 7
     blt x0, x1, lol #test success
 
-
 halt:                 # Infinite loop to keep the processor
     beq x0, x0, halt  # from trying to execute the data below.
                       # Your own programs should also make use
