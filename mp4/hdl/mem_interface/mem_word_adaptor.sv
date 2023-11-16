@@ -21,7 +21,7 @@ module mem_word_adapter
 logic [2:0] word_offset;
 assign word_offset = mem_address[4:2]; // 0 to 7 index word within cacheline 
 assign cacheline_wdata = {8{mem_wdata}}; 
-assign mem_rdata = cacheline_rdata[32*word_offset +:32]; 
+assign mem_rdata = cacheline_rdata[(32*word_offset) +: 32]; 
 assign cacheline_mem_byte_enable = {28'b0, mem_byte_enable} << (word_offset << 2); 
 assign cacheline_mem_address = {mem_address[31:8],8'b00000000};
  

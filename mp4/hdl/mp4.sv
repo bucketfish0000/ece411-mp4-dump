@@ -169,7 +169,7 @@ import cpuIO::*;
         .pmem_address(arbiter_cacheline_dmem_address), //arbiter
         .pmem_read(arbiter_cacheline_dmem_read), 
         .pmem_write(arbiter_cacheline_dmem_write), 
-        .pmem_rdata(arbiter_dmem_cacheline_wdata), 
+        .pmem_rdata(arbiter_dmem_cacheline_rdata), 
         .pmem_wdata(arbiter_dmem_cacheline_wdata), 
         .pmem_resp(arbiter_dmem_resp)
     );
