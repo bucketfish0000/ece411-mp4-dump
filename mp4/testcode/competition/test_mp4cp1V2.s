@@ -26,7 +26,7 @@ _start:
     sw x3, 0(x1)    #M[mem_data] <= 8192
     lw x5, mem_data     #x5 <= 8192
 
-    addi x5, x5, 2   #x5 <= d00d + 2 = d00f
+    addi x5, x5, 2   #x5 <= 2000 + 2 = 2002
     addi x7, x0, 8   #x7 <= 0 + 8(x0==0) = 8
     xori x1, x7, 7   #x1 <= x7 xor 7 = 8 xor 7 = f
     andi x2, x1, 3   #x2 <= x1 & 3 = f & 3 = 3
