@@ -2,7 +2,7 @@ Magic 271485
 Revision Verdi_R-2020.12-SP1-1
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 25 854 279 153 65
+viewPort 0 25 1707 307 153 65
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
@@ -16,16 +16,16 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 784276.267749 848400.000000
-cursor 90000.000000
+zoom 61916273.795468 62172422.343749
+cursor 62110000.000000
 marker 0.000000
 
 ; user define markers
 ; userMarker time_pos marker_name color linestyle
 ; visible top row signal index
-top 27
+top 76
 ; marker line index
-markerPos 0
+markerPos 127
 
 ; event list
 ; addEvent event_name event_expression
@@ -69,7 +69,7 @@ addSignal -h 15 -holdScope dmem_write
 addSignal -h 15 -holdScope dmem_resp
 addSignal -h 15 -holdScope dmem_rdata[31:0]
 addSignal -expanded -h 15 -holdScope dmem_wdata[31:0]
-addGroup "Writeback"
+addGroup "Writeback" -e FALSE
 addSignal -h 15 /top_tb/clk
 addSignal -h 15 /top_tb/dut/datapath/writeback/cw_out_rvfi.rvfi.instruction[31:0]
 addSignal -h 15 -holdScope cw_out_rvfi.rvfi.order_commit[63:0]
@@ -127,7 +127,9 @@ addSignal -h 15 /top_tb/dut/datapath/decode/cr.instruction[31:0]
 addSignal -h 15 /top_tb/dut/datapath/dec_exe_reg/cw_in.rvfi.order_commit[63:0]
 addSignal -h 15 -holdScope cw_in.rvfi.instruction[31:0]
 addSignal -h 15 -UNSIGNED /top_tb/dut/datapath/decode/opcode[6:0]
-addGroup "exe stage"
+addGroup "exe stage" -e FALSE
+addSignal -h 15 /top_tb/dut/datapath/fet_dec_reg/order_counter[63:0]
+addSignal -h 15 -holdScope load
 addSignal -h 15 /top_tb/dut/datapath/execute/alumux1_o[31:0]
 addSignal -h 15 -holdScope alumux2_o[31:0]
 addSignal -h 15 -holdScope ctrl_w.exe.alumux1_sel
@@ -143,6 +145,9 @@ addSignal -h 15 -holdScope rvfi_exe.rvfi.pc_rdata[31:0]
 addSignal -h 15 -holdScope i_imm[31:0]
 addSignal -h 15 -UNSIGNED /top_tb/dut/datapath/dec_exe_reg/opcode_dec_exe[6:0]
 addSignal -h 15 /top_tb/dut/datapath/execute/br_en
+addSignal -h 15 -UNSIGNED -holdScope ctrl_w.exe.cmpop[2:0]
+addSignal -h 15 -holdScope rs1_o[31:0]
+addSignal -h 15 -holdScope cmpmux_o[31:0]
 addSignal -h 15 -holdScope clk
 addGroup "exe_mem" -e FALSE
 addSignal -h 15 /top_tb/dut/datapath/wb_fwding_reg/rst
@@ -174,7 +179,7 @@ addSignal -h 15 /top_tb/dut/datapath/fet_dec_reg/rst
 addSignal -h 15 -holdScope if_de_rst
 addSignal -h 15 -holdScope load
 addSignal -h 15 -holdScope sp_ld_commit
-addSignal -h 15 -holdScope instr_fetch[31:0]
+addSignal -expanded -h 15 -holdScope instr_fetch[31:0]
 addSignal -h 15 -holdScope instr_decode[31:0]
 addGroup "G16"
 addGroup "G18"

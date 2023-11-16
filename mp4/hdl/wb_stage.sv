@@ -29,7 +29,7 @@ import cpuIO::*;
 );
 
 logic [31:0] regfile_data;
-logic [63:0] prev_order;
+logic [63:0] prev_order, prev_order_commited;
 assign regfilemux_out = regfile_data;
 
 //this keeps track of the previous order so we don't output valid signal more than one cycle for any
@@ -38,7 +38,7 @@ always_ff @(posedge clk) begin : prev_order_tracker
     if(!mem_wb_valid)
         prev_order <= 64'hffffffffffffffff;
     else
-        prev_order <= cw_in.rvfi.order_commit;
+        prev_order <= prev_order_commited;
 end
 
 always_comb begin : regfile_ctrl_signals
@@ -91,6 +91,7 @@ always_comb begin : regfile_ctrl_signals
         cw_out_rvfi.mem = cw_in.mem;
         cw_out_rvfi.wb = cw_in.wb;
         cw_out_rvfi.rvfi.order_commit = cw_in.rvfi.order_commit;//done
+        prev_order_commited = cw_in.rvfi.order_commit;
         cw_out_rvfi.rvfi.instruction = cw_in.rvfi.instruction;//done
         cw_out_rvfi.rvfi.rs1_addr = cw_in.rvfi.rs1_addr; //done
         cw_out_rvfi.rvfi.rs2_addr = cw_in.rvfi.rs2_addr; //dome

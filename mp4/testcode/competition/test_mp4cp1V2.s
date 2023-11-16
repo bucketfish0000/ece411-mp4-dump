@@ -46,6 +46,14 @@ halt:                 # Infinite loop to keep the processor
 .section .rodata
 
 mem_data:    .word 0x0000d00d
+mem_data0:    .word 0x0000d01d
+mem_data1:    .word 0x0000d02d
+mem_data2:    .word 0x0000d03d
+mem_data3:    .word 0x0000d04d
+mem_data4:    .word 0x0000d05d
+mem_data5:    .word 0x0000d06d
+mem_data6:    .word 0x0000d07d
+mem_data7:    .word 0x0000d08d
 
 .section ".tohost"
 .globl tohost

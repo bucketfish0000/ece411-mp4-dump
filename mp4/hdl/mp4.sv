@@ -92,7 +92,7 @@ import cpuIO::*;
             logic mem_r_d, mem_w_d;
             logic br_en;
             logic [3:0] mem_byte_enable; 
-            logic [31:0] cacheline_mem_byte_enable, cacheline_mem_address;
+            logic [31:0] cacheline_mem_byte_enable;
             control_read ctrl_rd;
             logic load_pc;
             control_word cw_control, ctrl_rvfi;
