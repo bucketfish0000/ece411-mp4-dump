@@ -441,12 +441,12 @@ import cpuIO::*;
             marmux::alu_out: marmux_o = alu_out_i;
         endcase
     end
-
+    
     mem_data_out mdo_reg(
         .clk(clk),
         .reset(rst),
         .load_data_out((exe_mem_ld == 1) && ((cw_in.mem.mem_read_d) || (cw_in.mem.mem_write_d))),
-        .mdo_in(rs2_out_i),
+        .mdo_in(rs2_out_i),//fill in the shifted data: 
         .mdo_out(mem_wdata_d)
     );
 
