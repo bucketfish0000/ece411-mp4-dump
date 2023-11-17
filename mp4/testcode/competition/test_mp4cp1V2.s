@@ -38,6 +38,8 @@ _start:
     slti x9, x7, 1   #x9 <= x7 < 1 = -2,147,483,648 < 1 = 1
     sltiu x10, x7, 1 #x10 <= x7 < 1 = 2,147,483,648 < 1 = 0 
 
+    mul x12, x8, x3
+
 halt:                 # Infinite loop to keep the processor
     beq x0, x0, halt  # from trying to execute the data below.
                       # Your own programs should also make use
