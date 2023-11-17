@@ -35,7 +35,7 @@ import immediates::*;
 );
 
     logic [63:0] prev_order;
-    logic [31:0] rs1_o, rs2_o, alumux1_o, alumux2_o, cmpmux_o,;/* multi_low, multi_high, multi_r2, multi_r1, alu_fake;*/
+    logic [31:0] rs1_o, rs2_o, alumux1_o, alumux2_o, cmpmux_o;/* multi_low, multi_high, multi_r2, multi_r1, alu_fake;*/
     logic br_en_temp;
     cmpmux::cmpmux_sel_t cmp_sel;
     alumux::alumux1_sel_t alumux1_sel;
@@ -56,17 +56,7 @@ import immediates::*;
     assign j_imm = imm_in.j_imm;
     assign rs2_out = rs2_o;
     assign rs1_out = rs1_o;
-
-    //always_ff or always_comb??
-    // always_ff @(posedge clk, posedge rst) begin : exe_rdy_ctrl
-    //     if(rst)
-    //         exe_rdy <= 1'b0;
-    //     else if((de_exe_valid == 1) && (de_exe_rdy == 1)) //when sees these signals by the time rdy goes high operation will be done(1 cycle)
-    //         exe_rdy <= 1'b1;
-    //     else
-    //         exe_rdy <= 1'b0;
-    // end
-    // assign exe_rdy = 1'b1;
+    assign exe_rdy = 1'b1;
 
     cmp cmp_logic(
         .cmpop(ctrl_w.exe.cmpop),
