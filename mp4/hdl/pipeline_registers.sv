@@ -48,9 +48,9 @@ module fet_dec_reg
     always_ff @( posedge clk, posedge rst ) begin : counter_reg
         if(rst)
             order_counter <= 64'hffffffffffffffff;
-        else if((load || sp_ld_commit) && !if_de_rst)
+        else if(load && !if_de_rst)
             order_counter <= order_counter + 64'b01;
-        else if(if_de_rst && !load) begin
+        else if(load && if_de_rst) begin
             order_counter <= order_counter - 64'b01;
         end
     end
