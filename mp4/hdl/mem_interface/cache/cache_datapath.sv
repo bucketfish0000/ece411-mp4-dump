@@ -202,7 +202,7 @@ always_comb begin
         default:;
     endcase
     unique case(pmem_address_mux)
-        1'b0: pmem_addr = address;
+        1'b0: pmem_addr = {address[31:5],5'b0};
         1'b1: pmem_addr = {tag_o[plrunum],set,5'b00000};
         default:;
     endcase
