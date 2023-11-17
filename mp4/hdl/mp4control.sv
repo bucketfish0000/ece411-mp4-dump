@@ -238,7 +238,7 @@ always_comb begin : pipeline_regs_logic
 
         // //ppr loads (stalling control)
         if_de_ld = (stall_if_de || !icache_resp) ? 1'b0 : 1'b1;
-        load_hzd_q = ((stall_if_de && !load_instuct_inserted) || !icache_resp) ? 1'b0 : 1'b1; //issue for nop after load !!!
+        load_hzd_q = (stall_if_de /*&& !load_instuct_inserted)*/ || !icache_resp) ? 1'b0 : 1'b1; //issue for nop after load !!!
         de_exe_ld = (!icache_resp|| stall_de_exe || vald[4]==0) ? 1'b0: 1'b1;
         exe_mem_ld = (!icache_resp || stall_exe_mem || vald[3]==0) ? 1'b0 : 1'b1;
         mem_wb_ld = (!icache_resp || stall_mem_wb || vald[2]==0) ? 1'b0 : 1'b1;
