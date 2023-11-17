@@ -148,7 +148,7 @@ always_comb begin
     else begin
         true_cw_read = cw_read;
         sp_ld_commit = 1'b0;
-        if(cw_read.opcode != op_br) begin
+        if(cw_read.opcode != op_br && cw_read.opcode != op_store) begin
             instruct_in_if = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
         end
         else begin
@@ -253,6 +253,7 @@ always_comb begin : pipeline_regs_logic
         //
         if_de_rst = (branch_taken||jump_taken) ? 1'b1 : 1'b0;
         de_exe_rst = (branch_taken||jump_taken) ? 1'b1 : 1'b0;
+        flush_data_hzd_q = (branch_taken||jump_taken) ? 1'b1 : 1'b0;
         exe_mem_rst = 1'b0; 
         mem_wb_rst = 1'b0;
     
