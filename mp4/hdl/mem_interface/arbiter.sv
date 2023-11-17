@@ -33,6 +33,10 @@ function void set_defaults();
     icache_resp = 1'b0; 
     dcache_data_r = 256'b0; 
     dcache_resp = 1'b0; 
+    mem_write = 1'b0; 
+    mem_read = 1'b0;
+    mem_data_w = 256'b0; 
+    mem_addr = 32'b0;
 endfunction
 
 always_comb begin : state_actions

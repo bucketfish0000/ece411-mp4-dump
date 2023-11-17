@@ -65,6 +65,7 @@ always_comb begin : regfile_ctrl_signals
         cw_out_rvfi.wb.rd_sel = 5'b00000;
         cw_out_rvfi.rvfi.valid_commit = 1'b0;//done
         cw_out_rvfi.rvfi.order_commit = 64'b0;//done
+        prev_order_commited = 64'b0;
         cw_out_rvfi.rvfi.instruction = 32'b0;//done
         cw_out_rvfi.rvfi.rs1_addr = 5'b0; //done
         cw_out_rvfi.rvfi.rs2_addr = 5'b0; //dome
