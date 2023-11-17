@@ -37,13 +37,13 @@ assign regfilemux_out = regfile_data;
 always_ff @(posedge clk) begin : prev_order_tracker
     if(!mem_wb_valid)
         prev_order <= 64'hffffffffffffffff;
-    else
+    else if(cw_in.rvfi.pc_wdata != 32'b0)
         prev_order <= prev_order_commited;
 end
 
 always_comb begin : regfile_ctrl_signals
 
-    if(rst || !((mem_wb_rdy == 1) && (mem_wb_valid == 1))) begin
+    if(rst || !((mem_wb_valid == 1))) begin
         load_reg = 1'b0;
 
         cw_out_rvfi.exe.cmp_sel = cmpmux::rs2_out;
