@@ -230,6 +230,7 @@ import cpuIO::*;
     control_word cw_data;
     rv32i_opcode opcode_data;
     logic br_en_r, valid_r, ready_r;
+    logic[31:0] rs2_to_mem;
 
     logic [31:0] marmux_o, mem_addr;
     logic trap;
@@ -345,7 +346,7 @@ import cpuIO::*;
             cw_data.rvfi.rmask <= rmask;//done
             cw_data.rvfi.wmask <= wmask_temp;//done
             cw_data.rvfi.mem_rdata <= cw_in.rvfi.mem_rdata;//done
-            cw_data.rvfi.mem_wdata <= rs2_out_i;//done
+            cw_data.rvfi.mem_wdata <= rs2_to_mem;//done
 
             cw_out.exe <= cw_in.exe;
             cw_out.mem <= cw_in.mem;
@@ -364,7 +365,7 @@ import cpuIO::*;
             cw_out.rvfi.rmask <= rmask;//done
             cw_out.rvfi.wmask <= wmask_temp;//done
             cw_out.rvfi.mem_rdata <= cw_in.rvfi.mem_rdata;//done
-            cw_out.rvfi.mem_wdata <= rs2_out_i;//done
+            cw_out.rvfi.mem_wdata <= rs2_to_mem;//done
         end
         else begin
             cw_out <= cw_data;
@@ -441,15 +442,8 @@ import cpuIO::*;
             marmux::alu_out: marmux_o = alu_out_i;
         endcase
     end
-    
-    mem_data_out mdo_reg(
-        .clk(clk),
-        .reset(rst),
-        .load_data_out((exe_mem_ld == 1) && ((cw_in.mem.mem_read_d) || (cw_in.mem.mem_write_d))),
-        .mdo_in(rs2_out_i),//fill in the shifted data: 
-        .mdo_out(mem_wdata_d)
-    );
 
+    
     always_comb begin : calc_addr
         rmask = 4'b0000;
         wmask_temp = 4'b0000;
@@ -476,14 +470,17 @@ import cpuIO::*;
             case (cw_in.mem.store_funct3)
                 sw: begin
                     wmask_temp = 4'b1111;
+                    rs2_to_mem = rs2_out_i;
                 end
                 sh: begin
                     wmask_temp = (4'b0011) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
                     mem_addr = marmux_o - (marmux_o%4);
+                    rs2_to_mem = rs2_out_i << (8*(marmux_o%4));
                 end
                 sb: begin
                     wmask_temp = (4'b0001) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
                     mem_addr = marmux_o - (marmux_o%4);
+                    rs2_to_mem = rs2_out_i << (8*(marmux_o%4));
                 end
                 default: trap = '1;
             endcase
@@ -514,6 +511,14 @@ import cpuIO::*;
         end
     end
 
+    mem_data_out mdo_reg(
+        .clk(clk),
+        .reset(rst),
+        .load_data_out((exe_mem_ld == 1) && ((cw_in.mem.mem_read_d) || (cw_in.mem.mem_write_d))),
+        .mdo_in(rs2_to_mem),//fill in the shifted data: 
+        .mdo_out(mem_wdata_d)
+    );
+    
     mar mar_reg(
         .clk(clk),
         .reset(rst),
