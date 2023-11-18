@@ -2,6 +2,7 @@ module mp4datapath
     import rv32i_types::*;
     import cpuIO::*;
     import immediates::*;
+    import hazards::*;
 (
     input logic clk,
     input logic rst,
@@ -32,6 +33,10 @@ module mp4datapath
 
     output rv32i_opcode opcode_exec,
     output rv32i_word pc_rdata,
+
+    output hzds instruct_in_exe,
+    output hzds instruct_in_mem,
+    output hzds instruct_in_wb,
 
     output logic br_en,
     output logic if_rdy,
@@ -180,7 +185,9 @@ dec_exe_reg dec_exe_reg(
     .opcode_dec(cr.opcode),
     .opcode_dec_exe(opcode_dec_exe),
     .cw_in(cw_dec),
-    .cw_out(cw_exec)
+    .cw_out(cw_exec),
+
+    .instruct_in_exe(instruct_in_exe)
 );
 assign pc_exec = rvfi_exe.rvfi.pc_rdata;
 //exexute stage
@@ -237,7 +244,9 @@ exe_mem_reg exe_mem_register(
     .cw_in(rvfi_exe),
     .cw_out(cw_mem),
 
-    .wmask(wmask)
+    .wmask(wmask),
+
+    .instruct_in_mem(instruct_in_mem)
 );
 
 //memory stage
@@ -273,7 +282,9 @@ mem_wb_reg mem_wb_register(
     .br_en_o(br_en_mem_wb_o),
 
     .cw_in(cw_mem),
-    .cw_out(cw_wb)
+    .cw_out(cw_wb),
+
+    .instruct_in_wb(instruct_in_wb)
 );
 
 //writeback stage, what is going on in here???

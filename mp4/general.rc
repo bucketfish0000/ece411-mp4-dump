@@ -2,7 +2,7 @@ Magic 271485
 Revision Verdi_R-2020.12-SP1-1
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 25 1707 307 153 65
+viewPort 0 25 1600 355 153 65
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
@@ -16,14 +16,14 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 61916273.795468 62172422.343749
+zoom 71937246.921844 72498645.976543
 cursor 62110000.000000
 marker 0.000000
 
 ; user define markers
 ; userMarker time_pos marker_name color linestyle
 ; visible top row signal index
-top 76
+top 25
 ; marker line index
 markerPos 127
 
@@ -69,7 +69,7 @@ addSignal -h 15 -holdScope dmem_write
 addSignal -h 15 -holdScope dmem_resp
 addSignal -h 15 -holdScope dmem_rdata[31:0]
 addSignal -expanded -h 15 -holdScope dmem_wdata[31:0]
-addGroup "Writeback" -e FALSE
+addGroup "Writeback"
 addSignal -h 15 /top_tb/clk
 addSignal -h 15 /top_tb/dut/datapath/writeback/cw_out_rvfi.rvfi.instruction[31:0]
 addSignal -h 15 -holdScope cw_out_rvfi.rvfi.order_commit[63:0]
@@ -170,7 +170,6 @@ addSignal -h 15 /top_tb/dut/datapath/wb_fwding_reg/wb_fwd_data_i[31:0]
 addSignal -h 15 -holdScope wb_fwd_data_o[31:0]
 addGroup "G14" -e FALSE
 addSignal -h 15 /top_tb/dut/control/load_hzd_q
-addSignal -h 15 -holdScope instruct_in_if[85:0]
 addSignal -h 15 -UNSIGNED -holdScope cw_read.opcode[6:0]
 addSignal -h 15 -holdScope cw_read.rd_addr[4:0]
 addGroup "if_de_reg" -e FALSE
