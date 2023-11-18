@@ -86,6 +86,7 @@ endmodule : fet_dec_reg
 
 module dec_exe_reg
     import rv32i_types::*;
+    import hazards::*;
     import cpuIO::*;
 (
     input logic clk,
@@ -103,7 +104,9 @@ module dec_exe_reg
     output rv32i_opcode opcode_dec_exe,
 
     input control_word cw_in,
-    output control_word cw_out
+    output control_word cw_out,
+
+    output hzds instruct_in_exe
 );
 
     immediates::imm imm_data;
@@ -113,6 +116,7 @@ module dec_exe_reg
     always_ff @(posedge clk)
     begin
         if (rst) begin
+
             imm_data.i_imm <= 32'b0;
             imm_data.u_imm <= 32'b0;
             imm_data.b_imm <= 32'b0;
@@ -170,6 +174,14 @@ module dec_exe_reg
         opcode_dec_exe=opcode_data;
     end
 
+    always_comb begin : hzd_reg_in_exe
+        instruct_in_exe.opcode = cw_data.rvfi.instruction[6:0];
+        instruct_in_exe.rd_addr = cw_data.wb.rd_sel;
+        instruct_in_exe.rs1_addr = cw_data.rvfi.rs1_addr;
+        instruct_in_exe.rs2_addr = cw_data.rvfi.rs2_addr;
+        instruct_in_exe.commit_order = cw_data.rvfi.order_commit;
+    end
+
     //valid register
     always_ff @(posedge clk) begin : valid_reg
         if(rst) begin
@@ -194,6 +206,7 @@ module exe_mem_reg
 // e.g. pcmux::pc_plus4 and regfilemux::pc_plus4 are seperate identifiers
 // for seperate enumerated types, you cannot //import rv32i_mux_types::*;
 import rv32i_types::*;
+import hazards::*;
 import cpuIO::*;
 (
     input logic clk, //from datapath
@@ -222,7 +235,9 @@ import cpuIO::*;
     input control_word cw_in,
     output control_word cw_out,
 
-    output logic [3:0] wmask
+    output logic [3:0] wmask,
+
+    output hzds instruct_in_mem
 );
 
     logic [31:0] fwd_r_EX, u_imm_r, fwd_temp;
@@ -370,6 +385,14 @@ import cpuIO::*;
         else begin
             cw_out <= cw_data;
         end
+    end
+
+    always_comb begin : hzd_reg_in_mem
+        instruct_in_mem.opcode = cw_data.rvfi.instruction[6:0];
+        instruct_in_mem.rd_addr = cw_data.wb.rd_sel;
+        instruct_in_mem.rs1_addr = cw_data.rvfi.rs1_addr;
+        instruct_in_mem.rs2_addr = cw_data.rvfi.rs2_addr;
+        instruct_in_mem.commit_order = cw_data.rvfi.order_commit;
     end
 
     //br_en register
@@ -533,6 +556,7 @@ endmodule : exe_mem_reg
 
 module mem_wb_reg
     import rv32i_types::*;
+    import hazards::*;
     import cpuIO::*;
 (
     input clk,
@@ -553,7 +577,9 @@ module mem_wb_reg
     output logic br_en_o,
 
     input control_word cw_in,
-    output control_word cw_out
+    output control_word cw_out,
+
+    output hzds instruct_in_wb
 );
     logic [31:0] alu_out_r, u_imm_r, mem_rdata_r, memfwdmux_o, mem_fwd_data_r;
     control_word cw_data;
@@ -723,6 +749,14 @@ module mem_wb_reg
         else begin
             cw_out <= cw_data;
         end
+    end
+
+    always_comb begin : hzd_reg_in_wb
+        instruct_in_wb.opcode = cw_data.rvfi.instruction[6:0];
+        instruct_in_wb.rd_addr = cw_data.wb.rd_sel;
+        instruct_in_wb.rs1_addr = cw_data.rvfi.rs1_addr;
+        instruct_in_wb.rs2_addr = cw_data.rvfi.rs2_addr;
+        instruct_in_wb.commit_order = cw_data.rvfi.order_commit;
     end
 
     //br_en register

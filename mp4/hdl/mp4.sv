@@ -1,7 +1,7 @@
 module mp4
 import rv32i_types::*;
 import rv32i_cache_types::*; 
-
+import hazards::*;
 import cpuIO::*;
 (
     input   logic           clk,
@@ -97,6 +97,7 @@ import cpuIO::*;
             logic load_pc;
             control_word cw_control, ctrl_rvfi;
             rv32i_opcode opcode_exec;
+            hzds instruct_in_exe, instruct_in_mem, instruct_in_wb;
     
     mp4control control(
         .clk(clk),
@@ -137,6 +138,10 @@ import cpuIO::*;
         .exe_valid(exe_valid),
         .mem_valid(mem_valid),
         .wb_valid(wb_valid),
+
+        .instruct_in_exe(instruct_in_exe),
+        .instruct_in_mem(instruct_in_mem),
+        .instruct_in_wb(instruct_in_wb),
 
         /*---continue/load signals---*/
         .if_de_ld(if_de_ld),
@@ -282,6 +287,10 @@ import cpuIO::*;
 
         .opcode_exec(opcode_exec),
         .pc_rdata(pc_rdata),
+
+        .instruct_in_exe(instruct_in_exe),
+        .instruct_in_mem(instruct_in_mem),
+        .instruct_in_wb(instruct_in_wb),
 
         .br_en(br_en),
 
