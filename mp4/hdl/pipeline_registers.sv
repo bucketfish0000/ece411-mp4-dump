@@ -7,6 +7,7 @@ module fet_dec_reg
     input logic if_de_rst,
     input logic load,
     input logic sp_ld_commit,
+    input logic ld_commit,
 
     input logic ready_i,
     output logic ready_o,
@@ -48,9 +49,9 @@ module fet_dec_reg
     always_ff @( posedge clk, posedge rst ) begin : counter_reg
         if(rst)
             order_counter <= 64'hffffffffffffffff;
-        else if(load && !if_de_rst)
+        else if((load||ld_commit) && !if_de_rst)
             order_counter <= order_counter + 64'b01;
-        else if(load && if_de_rst) begin
+        else if(if_de_rst && sp_ld_commit) begin
             order_counter <= order_counter - 64'b01;
         end
     end
