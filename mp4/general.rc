@@ -2,7 +2,7 @@ Magic 271485
 Revision Verdi_R-2020.12-SP1-1
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 25 1600 355 153 65
+viewPort 0 25 1600 316 153 65
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
@@ -16,16 +16,16 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 71937246.921844 72498645.976543
+zoom 60572769.813395 60843029.288149
 cursor 62110000.000000
 marker 0.000000
 
 ; user define markers
 ; userMarker time_pos marker_name color linestyle
 ; visible top row signal index
-top 25
+top 38
 ; marker line index
-markerPos 127
+markerPos 47
 
 ; event list
 ; addEvent event_name event_expression
@@ -57,7 +57,6 @@ addSignal -h 15 -holdScope if_de_ld
 addSignal -h 15 -holdScope stall_if_de
 addSignal -h 15 -UNSIGNED -holdScope cw_read.opcode[6:0]
 addSignal -h 15 -holdScope load_instuct_inserted
-addSignal -h 15 -holdScope load_hzd_q
 addSignal -h 15 -holdScope true_cw_read.instruction[31:0]
 addSignal -h 15 -holdScope if_de_rst
 addGroup "G2" -e FALSE
@@ -69,7 +68,7 @@ addSignal -h 15 -holdScope dmem_write
 addSignal -h 15 -holdScope dmem_resp
 addSignal -h 15 -holdScope dmem_rdata[31:0]
 addSignal -expanded -h 15 -holdScope dmem_wdata[31:0]
-addGroup "Writeback"
+addGroup "Writeback" -e FALSE
 addSignal -h 15 /top_tb/clk
 addSignal -h 15 /top_tb/dut/datapath/writeback/cw_out_rvfi.rvfi.instruction[31:0]
 addSignal -h 15 -holdScope cw_out_rvfi.rvfi.order_commit[63:0]
@@ -82,7 +81,7 @@ addSignal -h 15 -holdScope regfilemux_out[31:0]
 addSignal -h 15 -holdScope mem_wb_valid
 addSignal -h 15 -holdScope cw_out_rvfi.rvfi.pc_rdata[31:0]
 addSignal -h 15 -holdScope cw_out_rvfi.rvfi.pc_wdata[31:0]
-addGroup "CTRL" -e FALSE
+addGroup "CTRL"
 addSignal -h 15 /top_tb/dut/control/clk
 addSignal -h 15 -holdScope rst
 addSignal -h 15 -UNSIGNED -holdScope true_cw_read.opcode[6:0]
@@ -92,6 +91,8 @@ addSignal -h 15 -holdScope true_cw_read.pc_rdata[31:0]
 addSignal -h 15 -holdScope true_cw_read.pc_wdata[31:0]
 addSignal -h 15 -holdScope true_cw_read.func3[2:0]
 addSignal -h 15 -UNSIGNED -holdScope ctrl_word.exe.rs1_sel[1:0]
+addSignal -h 15 -holdScope branch_taken
+addSignal -h 15 -holdScope jump_taken
 addSignal -h 15 -holdScope rdy[4]
 addSignal -h 15 -holdScope imem_read
 addSignal -h 15 -UNSIGNED -BIN -holdScope rdy[4:0]
@@ -169,8 +170,7 @@ addSignal -h 15 /top_tb/dut/datapath/writeback/regfilemux_out[31:0]
 addSignal -h 15 /top_tb/dut/datapath/wb_fwding_reg/wb_fwd_data_i[31:0]
 addSignal -h 15 -holdScope wb_fwd_data_o[31:0]
 addGroup "G14" -e FALSE
-addSignal -h 15 /top_tb/dut/control/load_hzd_q
-addSignal -h 15 -UNSIGNED -holdScope cw_read.opcode[6:0]
+addSignal -h 15 -UNSIGNED /top_tb/dut/control/cw_read.opcode[6:0]
 addSignal -h 15 -holdScope cw_read.rd_addr[4:0]
 addGroup "if_de_reg" -e FALSE
 addSignal -h 15 /top_tb/dut/control/imem_read
@@ -180,7 +180,14 @@ addSignal -h 15 -holdScope load
 addSignal -h 15 -holdScope sp_ld_commit
 addSignal -expanded -h 15 -holdScope instr_fetch[31:0]
 addSignal -h 15 -holdScope instr_decode[31:0]
-addGroup "G16"
+addGroup "G16" -e FALSE
+addSignal -h 15 /top_tb/dut/datapath/writeback/cw_in.rvfi.instruction[31:0]
+addSignal -h 15 -holdScope cw_in.rvfi.order_commit[63:0]
+addSignal -h 15 /top_tb/dut/datapath/instruct_in_wb.rd_addr[4:0]
+addSignal -h 15 -UNSIGNED -holdScope instruct_in_wb.opcode[6:0]
+addSignal -h 15 -holdScope instruct_in_wb.rs1_addr[4:0]
+addSignal -h 15 -holdScope instruct_in_wb.rs2_addr[4:0]
+addSignal -h 15 -holdScope instruct_in_wb.commit_order[63:0]
 addGroup "G18"
 
 ; getSignalForm Scope Hierarchy Status

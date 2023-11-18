@@ -94,6 +94,7 @@ import cpuIO::*;
     output logic exe_mem_ld,
     output logic mem_wb_ld,
     output logic sp_ld_commit,
+    output logic ld_commit,
 
     /*---cpu_cw---*/
     input control_read cw_read, 
@@ -105,7 +106,6 @@ import cpuIO::*;
 logic [4:0] rdy;
 logic [4:0] vald;
 logic [85:0] instruct_in_de;
-logic flush_data_hzd_q, load_hzd_q;
 
 assign rdy = {if_rdy, de_rdy, exe_rdy, mem_rdy, wb_rdy};
 assign vald = {if_valid, de_valid, exe_valid, mem_valid, wb_valid};
@@ -130,10 +130,10 @@ end
 always_comb begin
     if(rst) begin
         true_cw_read = cw_read;
-        sp_ld_commit = 1'b0;
+        ld_commit = 1'b0;
         instruct_in_de = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
     end
-    else if((load_instuct_inserted == 1) && (icache_resp)) begin
+    else if((load_instuct_inserted == 1) && (!icache_resp)) begin
         true_cw_read.order_commit = cw_read.order_commit;
         true_cw_read.opcode = op_imm;
         true_cw_read.func3 = 3'b0;
@@ -147,12 +147,12 @@ always_comb begin
         true_cw_read.rs2_data = 32'b0;
         true_cw_read.rd_addr = 5'b0;
         instruct_in_de = {5'b0, 5'b0, 5'b0, op_imm, cw_read.order_commit};
-        sp_ld_commit = 1'b1; //need to load new commit order bc otherwise wb will see the same commit order twice in a row and not commit it the 
+        ld_commit = 1'b1; //need to load new commit order bc otherwise wb will see the same commit order twice in a row and not commit it the 
                             //second time, but we want it to commit the instrutction after load
     end
     else begin
         true_cw_read = cw_read;
-        sp_ld_commit = 1'b0;
+        ld_commit = 1'b0;
         if(cw_read.opcode != op_br && cw_read.opcode != op_store) begin
             instruct_in_de = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
         end
@@ -202,11 +202,11 @@ always_comb begin : pipeline_regs_logic
     if(rst) begin
         if_de_ld = 1'b0;
         imem_read = 1'b0;
-        load_hzd_q = 1'b0;
         load_pc = 1'b0;
         de_exe_ld = 1'b0;
         exe_mem_ld = 1'b0;
         mem_wb_ld = 1'b0;
+        sp_ld_commit = 1'b0;
 
         // //flush every ppr on reset
         if_de_rst = 1'b1;
@@ -230,10 +230,10 @@ always_comb begin : pipeline_regs_logic
 
         // //ppr loads (stalling control)
         if_de_ld = (stall_if_de || !icache_resp) ? 1'b0 : 1'b1;
-        load_hzd_q = (stall_if_de /*&& !load_instuct_inserted)*/ || !icache_resp) ? 1'b0 : 1'b1; //issue for nop after load !!!
         de_exe_ld = (!icache_resp|| stall_de_exe || vald[4]==0) ? 1'b0: 1'b1;
         exe_mem_ld = (!icache_resp || stall_exe_mem || vald[3]==0) ? 1'b0 : 1'b1;
         mem_wb_ld = (!icache_resp || stall_mem_wb || vald[2]==0) ? 1'b0 : 1'b1;
+        sp_ld_commit = (jump&&jump_taken) || (br&&branch_taken);
         
         // //ppr rst (flushing control)
         // //
@@ -245,7 +245,6 @@ always_comb begin : pipeline_regs_logic
         //
         if_de_rst = (branch_taken||jump_taken) ? 1'b1 : 1'b0;
         de_exe_rst = (branch_taken||jump_taken) ? 1'b1 : 1'b0;
-        flush_data_hzd_q = (branch_taken||jump_taken) ? 1'b1 : 1'b0;
         exe_mem_rst = 1'b0; 
         mem_wb_rst = 1'b0;
     
