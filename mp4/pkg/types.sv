@@ -269,6 +269,17 @@ package cpuIO;
 
 endpackage : cpuIO
 
+package hazards;
+    import rv32i_types::*; 
+    typedef struct {
+        rv32i_opcode opcode;
+        logic [4:0] rd_addr;
+        logic [4:0] rs1_addr;
+        logic [4:0] rs2_addr;
+        logic [63:0] commit_order;
+    } hzds;
+endpackage : hazards
+
 package immediates;
 import rv32i_types::*; 
 typedef struct {
