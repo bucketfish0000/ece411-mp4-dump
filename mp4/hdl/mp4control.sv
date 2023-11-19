@@ -133,7 +133,7 @@ always_comb begin
         ld_commit = 1'b0;
         instruct_in_de = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
     end
-    else if((load_instuct_inserted == 1) && (!icache_resp)) begin
+    else if((load_instuct_inserted == 1) && (icache_resp)) begin
         true_cw_read.order_commit = cw_read.order_commit;
         true_cw_read.opcode = op_imm;
         true_cw_read.func3 = 3'b0;
@@ -147,7 +147,7 @@ always_comb begin
         true_cw_read.rs2_data = 32'b0;
         true_cw_read.rd_addr = 5'b0;
         instruct_in_de = {5'b0, 5'b0, 5'b0, op_imm, cw_read.order_commit};
-        ld_commit = 1'b1; //need to load new commit order bc otherwise wb will see the same commit order twice in a row and not commit it the 
+        ld_commit = 1'b0; //need to load new commit order bc otherwise wb will see the same commit order twice in a row and not commit it the 
                             //second time, but we want it to commit the instrutction after load
     end
     else begin
@@ -180,7 +180,7 @@ assign stall_exe_mem =
     ((rdy[0] == 0) && (vald[0] == 1));
 
 assign stall_mem_wb = 
-    ((rdy[0] == 0) && (vald[0] == 1));
+    ((rdy[0] == 0) && (vald[0] == 1)) || ((rdy[1] == 0)&&(vald[1] == 1));
 
 logic br, branch_taken;
 logic jump,jump_taken;
