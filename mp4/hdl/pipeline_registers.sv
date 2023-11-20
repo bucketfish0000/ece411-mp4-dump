@@ -172,7 +172,7 @@ module dec_exe_reg
         imm_out=imm_data;
         ready_o = ready;
         cw_out=cw_data;
-        opcode_dec_exe=opcode_data;
+        opcode_dec_exe=cw_data.rvfi.instruction[6:0];
     end
 
     always_comb begin : hzd_reg_in_exe
