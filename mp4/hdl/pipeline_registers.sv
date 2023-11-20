@@ -582,13 +582,33 @@ module mem_wb_reg
 
     output hzds instruct_in_wb
 );
-    logic [31:0] alu_out_r, u_imm_r, mem_rdata_r, memfwdmux_o, mem_fwd_data_r;
+    logic [31:0] alu_out_r, u_imm_r, mem_rdata_r, memfwdmux_o, mem_fwd_data_r, whole_byte, whole_half, true_mem_i;
     control_word cw_data;
     logic br_en_r, valid_r, ready_r;
 
+    sext_byte sexy_byte(
+        .byte_in(mem_rdata_D_i[7:0]),
+        .whole_byte_out(whole_byte)
+    );
+
+    sext_half sexy_half(
+        .half_in(mem_rdata_D_i[15:0]),
+        .whole_half_out(whole_half)
+    );
+
+    always_comb begin
+        case(cw_in.wb.regfilemux_sel)
+            regfilemux::lb: true_mem_i = whole_byte;
+            regfilemux::lbu: true_mem_i = {24'b0, mem_rdata_D_i[7:0]};
+            regfilemux::lh: true_mem_i = whole_half;
+            regfilemux::lhu: true_mem_i = {16'b0, mem_rdata_D_i[15:0]};
+            default: true_mem_i = mem_rdata_D_i;
+        endcase
+    end
+
     always_comb begin : memfwdmux
         unique case(cw_in.mem.memfwdmux_sel)
-            memfwdmux::mem_fwd_data: memfwdmux_o = mem_rdata_D_i;
+            memfwdmux::mem_fwd_data: memfwdmux_o = true_mem_i;
             memfwdmux::exe_fwd_data: memfwdmux_o = alu_out_i;
         endcase
     end
@@ -615,8 +635,8 @@ module mem_wb_reg
             mem_rdata_r <= 32'b0;
         end
         else if((mem_wb_ld == 1)) begin
-            mem_rdata_D_o <= mem_rdata_D_i;
-            mem_rdata_r <= mem_rdata_D_i;
+            mem_rdata_D_o <= true_mem_i;
+            mem_rdata_r <= true_mem_i;
         end
         else begin
             mem_rdata_D_o <= mem_rdata_r;
@@ -709,43 +729,84 @@ module mem_wb_reg
             cw_out.rvfi.mem_wdata <= 32'b0;//done
         end
         else if((mem_wb_ld == 1)) begin
-            cw_data.exe <= cw_in.exe;
-            cw_data.mem <= cw_in.mem;
-            cw_data.wb <= cw_in.wb;
-            cw_data.rvfi.valid_commit <= cw_in.rvfi.valid_commit;//done
-            cw_data.rvfi.order_commit <= cw_in.rvfi.order_commit;//done
-            cw_data.rvfi.instruction <= cw_in.rvfi.instruction;//done
-            cw_data.rvfi.rs1_addr <= cw_in.rvfi.rs1_addr; //done
-            cw_data.rvfi.rs2_addr <= cw_in.rvfi.rs2_addr; //dome
-            cw_data.rvfi.rs1_data <= cw_in.rvfi.rs1_data; //done
-            cw_data.rvfi.rs2_data <= cw_in.rvfi.rs2_data; //done
-            cw_data.rvfi.rd_wdata <= cw_in.rvfi.rd_wdata;//done
-            cw_data.rvfi.pc_rdata <= cw_in.rvfi.pc_rdata;//done
-            cw_data.rvfi.pc_wdata <= cw_in.rvfi.pc_wdata;//done
-            cw_data.rvfi.mem_addr <= cw_in.rvfi.mem_addr;//done
-            cw_data.rvfi.rmask <= cw_in.rvfi.rmask;//done
-            cw_data.rvfi.wmask <= cw_in.rvfi.wmask;//done
-            cw_data.rvfi.mem_rdata <= mem_rdata_D_i;//done
-            cw_data.rvfi.mem_wdata <= cw_in.rvfi.mem_wdata;//done
+            if(cw_data.rvfi.instruction[6:0] == 7'b0000011) begin
+                cw_data.exe <= cw_in.exe;
+                cw_data.mem <= cw_in.mem;
+                cw_data.wb <= cw_in.wb;
+                cw_data.rvfi.valid_commit <= cw_in.rvfi.valid_commit;//done
+                cw_data.rvfi.order_commit <= cw_in.rvfi.order_commit;//done
+                cw_data.rvfi.instruction <= cw_in.rvfi.instruction;//done
+                cw_data.rvfi.rs1_addr <= cw_in.rvfi.rs1_addr; //done
+                cw_data.rvfi.rs2_addr <= cw_in.rvfi.rs2_addr; //dome
+                cw_data.rvfi.rs1_data <= cw_in.rvfi.rs1_data; //done
+                cw_data.rvfi.rs2_data <= cw_in.rvfi.rs2_data; //done
+                cw_data.rvfi.rd_wdata <= true_mem_i;//done
+                cw_data.rvfi.pc_rdata <= cw_in.rvfi.pc_rdata;//done
+                cw_data.rvfi.pc_wdata <= cw_in.rvfi.pc_wdata;//done
+                cw_data.rvfi.mem_addr <= cw_in.rvfi.mem_addr;//done
+                cw_data.rvfi.rmask <= cw_in.rvfi.rmask;//done
+                cw_data.rvfi.wmask <= cw_in.rvfi.wmask;//done
+                cw_data.rvfi.mem_rdata <= mem_rdata_D_i;//done
+                cw_data.rvfi.mem_wdata <= cw_in.rvfi.mem_wdata;//done
 
-            cw_out.exe <= cw_in.exe;
-            cw_out.mem <= cw_in.mem;
-            cw_out.wb <= cw_in.wb;
-            cw_out.rvfi.valid_commit <= cw_in.rvfi.valid_commit;//done
-            cw_out.rvfi.order_commit <= cw_in.rvfi.order_commit;//done
-            cw_out.rvfi.instruction <= cw_in.rvfi.instruction;//done
-            cw_out.rvfi.rs1_addr <= cw_in.rvfi.rs1_addr; //done
-            cw_out.rvfi.rs2_addr <= cw_in.rvfi.rs2_addr; //dome
-            cw_out.rvfi.rs1_data <= cw_in.rvfi.rs1_data; //done
-            cw_out.rvfi.rs2_data <= cw_in.rvfi.rs2_data; //done
-            cw_out.rvfi.rd_wdata <= cw_in.rvfi.rd_wdata;//done
-            cw_out.rvfi.pc_rdata <= cw_in.rvfi.pc_rdata;//done
-            cw_out.rvfi.pc_wdata <= cw_in.rvfi.pc_wdata;//done
-            cw_out.rvfi.mem_addr <= cw_in.rvfi.mem_addr;//done
-            cw_out.rvfi.rmask <= cw_in.rvfi.rmask;//done
-            cw_out.rvfi.wmask <= cw_in.rvfi.wmask;//done
-            cw_out.rvfi.mem_rdata <= mem_rdata_D_i;//done
-            cw_out.rvfi.mem_wdata <= cw_in.rvfi.mem_wdata;//done
+                cw_out.exe <= cw_in.exe;
+                cw_out.mem <= cw_in.mem;
+                cw_out.wb <= cw_in.wb;
+                cw_out.rvfi.valid_commit <= cw_in.rvfi.valid_commit;//done
+                cw_out.rvfi.order_commit <= cw_in.rvfi.order_commit;//done
+                cw_out.rvfi.instruction <= cw_in.rvfi.instruction;//done
+                cw_out.rvfi.rs1_addr <= cw_in.rvfi.rs1_addr; //done
+                cw_out.rvfi.rs2_addr <= cw_in.rvfi.rs2_addr; //dome
+                cw_out.rvfi.rs1_data <= cw_in.rvfi.rs1_data; //done
+                cw_out.rvfi.rs2_data <= cw_in.rvfi.rs2_data; //done
+                cw_out.rvfi.rd_wdata <= true_mem_i;//done
+                cw_out.rvfi.pc_rdata <= cw_in.rvfi.pc_rdata;//done
+                cw_out.rvfi.pc_wdata <= cw_in.rvfi.pc_wdata;//done
+                cw_out.rvfi.mem_addr <= cw_in.rvfi.mem_addr;//done
+                cw_out.rvfi.rmask <= cw_in.rvfi.rmask;//done
+                cw_out.rvfi.wmask <= cw_in.rvfi.wmask;//done
+                cw_out.rvfi.mem_rdata <= mem_rdata_D_i;//done
+                cw_out.rvfi.mem_wdata <= cw_in.rvfi.mem_wdata;//done
+            end
+            else begin
+                cw_data.exe <= cw_in.exe;
+                cw_data.mem <= cw_in.mem;
+                cw_data.wb <= cw_in.wb;
+                cw_data.rvfi.valid_commit <= cw_in.rvfi.valid_commit;//done
+                cw_data.rvfi.order_commit <= cw_in.rvfi.order_commit;//done
+                cw_data.rvfi.instruction <= cw_in.rvfi.instruction;//done
+                cw_data.rvfi.rs1_addr <= cw_in.rvfi.rs1_addr; //done
+                cw_data.rvfi.rs2_addr <= cw_in.rvfi.rs2_addr; //dome
+                cw_data.rvfi.rs1_data <= cw_in.rvfi.rs1_data; //done
+                cw_data.rvfi.rs2_data <= cw_in.rvfi.rs2_data; //done
+                cw_data.rvfi.rd_wdata <= cw_in.rvfi.rd_wdata;//done
+                cw_data.rvfi.pc_rdata <= cw_in.rvfi.pc_rdata;//done
+                cw_data.rvfi.pc_wdata <= cw_in.rvfi.pc_wdata;//done
+                cw_data.rvfi.mem_addr <= cw_in.rvfi.mem_addr;//done
+                cw_data.rvfi.rmask <= cw_in.rvfi.rmask;//done
+                cw_data.rvfi.wmask <= cw_in.rvfi.wmask;//done
+                cw_data.rvfi.mem_rdata <= mem_rdata_D_i;//done
+                cw_data.rvfi.mem_wdata <= cw_in.rvfi.mem_wdata;//done
+
+                cw_out.exe <= cw_in.exe;
+                cw_out.mem <= cw_in.mem;
+                cw_out.wb <= cw_in.wb;
+                cw_out.rvfi.valid_commit <= cw_in.rvfi.valid_commit;//done
+                cw_out.rvfi.order_commit <= cw_in.rvfi.order_commit;//done
+                cw_out.rvfi.instruction <= cw_in.rvfi.instruction;//done
+                cw_out.rvfi.rs1_addr <= cw_in.rvfi.rs1_addr; //done
+                cw_out.rvfi.rs2_addr <= cw_in.rvfi.rs2_addr; //dome
+                cw_out.rvfi.rs1_data <= cw_in.rvfi.rs1_data; //done
+                cw_out.rvfi.rs2_data <= cw_in.rvfi.rs2_data; //done
+                cw_out.rvfi.rd_wdata <= cw_in.rvfi.rd_wdata;//done
+                cw_out.rvfi.pc_rdata <= cw_in.rvfi.pc_rdata;//done
+                cw_out.rvfi.pc_wdata <= cw_in.rvfi.pc_wdata;//done
+                cw_out.rvfi.mem_addr <= cw_in.rvfi.mem_addr;//done
+                cw_out.rvfi.rmask <= cw_in.rvfi.rmask;//done
+                cw_out.rvfi.wmask <= cw_in.rvfi.wmask;//done
+                cw_out.rvfi.mem_rdata <= mem_rdata_D_i;//done
+                cw_out.rvfi.mem_wdata <= cw_in.rvfi.mem_wdata;//done
+            end
         end
         else begin
             cw_out <= cw_data;

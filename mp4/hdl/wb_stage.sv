@@ -116,21 +116,22 @@ always_comb begin : regfilemux_sel
         regfilemux::u_imm:   regfile_data = ir_u_imm;         
         regfilemux::lw:      regfile_data = mem_data_out;
         regfilemux::pc_plus4: regfile_data = cw_in.rvfi.pc_rdata + 4; 
+        //mem_data_out set in mem_wb reg
         regfilemux::lb: begin 
             
-            regfile_data = 32'hdeadbeef; //wat is dis?
+            regfile_data = mem_data_out;
         end
         regfilemux::lbu: begin 
             
-            regfile_data = 32'hdeadbeef;  //wat is dis?
+            regfile_data = mem_data_out;
         end
         regfilemux::lh: begin 
             
-            regfile_data = 32'hdeadbeef;  //wat is dis?
+            regfile_data = mem_data_out;
         end
         regfilemux::lhu: begin 
             
-            regfile_data = 32'hdeadbeef;  //wat is dis?
+            regfile_data = mem_data_out;
         end
     endcase
 
