@@ -17,7 +17,7 @@ import cpuIO::*;
     input clk, //from datapath
     input rst, //from datapath
     input logic exe_mem_valid, //from EXE_MEM pipeline reg
-    input cw_mem ctrl_w_MEM,//from EXE_MEM pipeline reg
+    input control_word ctrl_w_MEM,//from EXE_MEM pipeline reg
     input logic mem_resp_d, //from data_cache
     output logic mem_r_d, //to data cache
     output logic mem_w_d, //to data cache
@@ -25,6 +25,16 @@ import cpuIO::*;
 );
     logic mem_resp_flag;
     logic mem_ready;
+    logic [63:0] prev_order;
+
+    //this keeps track of the previous order so we don't output valid signal more than one cycle for any
+    //instruction
+    always_ff @(posedge clk, posedge mem_resp_d) begin : prev_order_tracker
+        if(!exe_mem_valid)
+            prev_order <= 64'hffffffffffffffff;
+        else if(ctrl_w_MEM.rvfi.pc_wdata != 32'b0)
+            prev_order <= ctrl_w_MEM.rvfi.order_commit;
+    end
 
     assign mem_rdy = mem_ready;
 
@@ -35,8 +45,8 @@ import cpuIO::*;
 
     //essentialy clocked by dram resp signal
     always_comb begin : rdy_ctrl
-        if((((mem_resp_d == 1) || (mem_resp_flag)) 
-        || ((ctrl_w_MEM.mem_read_d == 0) && (ctrl_w_MEM.mem_write_d == 0))))
+        if(((((mem_resp_d == 1) || (mem_resp_flag)) && ((ctrl_w_MEM.mem.mem_read_d == 1) || (ctrl_w_MEM.mem.mem_write_d == 1))) 
+        || ((ctrl_w_MEM.mem.mem_read_d == 0) && (ctrl_w_MEM.mem.mem_write_d == 0))))
             mem_ready = 1'b1;
         else
             mem_ready = 1'b0;
@@ -46,24 +56,24 @@ import cpuIO::*;
         if(rst) begin
             do_default();
         end
-        else if(exe_mem_valid && !mem_resp_flag)begin
+        else if(exe_mem_valid && (!mem_ready || mem_resp_d))begin
             do_default();
-            mem_r_d = ctrl_w_MEM.mem_read_d;
-            mem_w_d = ctrl_w_MEM.mem_write_d;
+            mem_r_d = ctrl_w_MEM.mem.mem_read_d;
+            mem_w_d = ctrl_w_MEM.mem.mem_write_d;
         end
         else begin
             do_default();
         end
     end
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk, posedge mem_resp_d) begin
         if(rst) begin
             mem_resp_flag <= 1'b0;
         end
-        else if(mem_ready && ((ctrl_w_MEM.mem_read_d == 1) || (ctrl_w_MEM.mem_write_d == 1))) begin
+        else if(mem_resp_d && ((ctrl_w_MEM.mem.mem_read_d == 1) || (ctrl_w_MEM.mem.mem_write_d == 1))) begin
             mem_resp_flag <= 1'b1;
         end
-        else begin
+        else if(prev_order != ctrl_w_MEM.rvfi.order_commit) begin
             mem_resp_flag <= 1'b0;
         end
     end

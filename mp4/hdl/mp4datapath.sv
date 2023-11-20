@@ -256,7 +256,7 @@ mem_stage memory(
     .clk(clk), //from datapath
     .rst(rst), //from datapath
     .exe_mem_valid(mem_valid_i), //from EXE_MEM pipeline reg, don't want to accidentally do junk memory operations
-    .ctrl_w_MEM(cw_mem.mem),//from EXE_MEM pipeline reg
+    .ctrl_w_MEM(cw_mem),//from EXE_MEM pipeline reg
     .mem_resp_d(dcache_resp), //from data_cache
     .mem_r_d(mem_r_d), //to data cache
     .mem_w_d(mem_w_d), //to data cache
