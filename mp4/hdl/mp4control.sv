@@ -133,7 +133,7 @@ always_comb begin
         ld_commit = 1'b0;
         instruct_in_de = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
     end
-    else if((load_instuct_inserted == 1) && (icache_resp)) begin
+    else if((load_instuct_inserted == 1)) begin
         true_cw_read.order_commit = cw_read.order_commit;
         true_cw_read.opcode = op_imm;
         true_cw_read.func3 = 3'b0;
