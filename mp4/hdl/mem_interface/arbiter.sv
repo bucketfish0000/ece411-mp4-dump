@@ -27,7 +27,32 @@ module cache_arbiter
 enum int unsigned { 
     icache, dcache, idle
 } state, next_states; 
- 
+
+enum logic[1:0] {
+    none,iread,dread,dwrite
+} current_request, pending_request;
+
+/*
+the guideline is that from the arbiter's point of view there can never be more than one pending request: if one of the caches is waiting for pmem it cannot send in another request, and on the other hand if one of the caches is requesting something it cannot be the cache that is being handled.
+*/
+
+always_comb begin : request_track_logic
+    if (reset) begin
+        current_request = none;
+        pending_request = none;
+    end
+    case (state)
+        icache: begin
+            current_request = iread;//only option
+            if (dcache_read) pending_request = dread;
+            else if (dcache_write) pending_request = dwrite;
+        end
+        dcache: begin
+            current_request = (dcache_read) ? dread : dwrite;
+            pending_request = (icache_read) ? iread : none;
+        end
+    endcase
+end
 function void set_defaults(); 
     icache_data = 256'b0; 
     icache_resp = 1'b0; 
@@ -37,6 +62,8 @@ function void set_defaults();
     mem_read = 1'b0;
     mem_data_w = 256'b0; 
     mem_addr = 32'b0;
+    icache_resp = 1'b0;
+    dcache_resp = 1'b0;
 endfunction
 
 always_comb begin : state_actions
@@ -49,7 +76,7 @@ always_comb begin : state_actions
             mem_read = icache_read; 
             //mem_read = 1'b1; 
             mem_write = 1'b0; 
-            mem_data_w = 256'b0; 
+            mem_data_w = 256'b0;
         end
         dcache: begin 
             dcache_resp = mem_resp; 
@@ -70,19 +97,19 @@ begin: next_state_assignment
     state <= next_states; 
 end
 
-always_ff @(posedge clk) begin : next_state_logic
+always_comb begin: next_state_logic
     if(reset) next_states = icache; 
     else begin 
         case(state)
             icache: begin 
-                if(icache_resp) begin
-                    if(dcache_read || dcache_write) next_states = dcache; 
+                if(mem_resp) begin
+                    if(pending_request == dread || pending_request == dwrite) next_states = dcache; 
                     else next_states = idle; 
                 end
             end
             dcache: begin 
-                if(dcache_resp) begin
-                    if(icache_read) next_states = icache; 
+                if(mem_resp) begin
+                    if(pending_request == iread) next_states = icache; 
                     else next_states = idle; 
                 end
             end
