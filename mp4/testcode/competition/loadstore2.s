@@ -6,6 +6,7 @@ auipc.s:
     # the instructions in this test program.
 _start:
     
+    lw x5, mem_data
     addi x6, x0, 69
     lw x4, mem_data     #x4 <= 0x0d00d
     addi x9, x0, 96
