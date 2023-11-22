@@ -119,7 +119,7 @@ always_ff @(posedge clk, posedge rst) begin
     if(rst) begin
         load_instuct_inserted <= 1'b0;
     end
-    else if((cw_read.opcode == op_load) && (cw_read.opcode == op_store) && (load_instuct_inserted == 0) && (icache_resp)) begin
+    else if((cw_read.opcode == op_load || cw_read.opcode == op_store) && (load_instuct_inserted == 0) && (icache_resp)) begin
         load_instuct_inserted <= 1'b1;
     end
     else if((load_instuct_inserted == 1) && (icache_resp)) begin
