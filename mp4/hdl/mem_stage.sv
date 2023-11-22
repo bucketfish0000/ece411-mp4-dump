@@ -66,7 +66,7 @@ import cpuIO::*;
         end
     end
 
-    always_ff @(posedge clk, posedge mem_resp_d) begin
+    always_ff @(posedge clk) begin
         if(rst) begin
             mem_resp_flag <= 1'b0;
         end
