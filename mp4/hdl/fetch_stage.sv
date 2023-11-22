@@ -30,9 +30,6 @@ module fetch_stage
     register #(.width(32), .resetData(32'h40000000)) 
         PC0(.clk(clk),.rst(rst),.load(load_pc),.in(pc_in), .out(pc));
 
-       // register #(.width(32), .resetData(32'h40000000)) 
-       // PC1(.clk(clk),.rst(rst),.load(load_pc),.in(pc), .out(pc_prev));
-
     //pcmux
     always_comb begin : pc_mux_logic
         unique case(pcmux_sel)
