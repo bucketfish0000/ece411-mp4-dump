@@ -24,20 +24,16 @@ import cpuIO::*;
     output logic mem_rdy //to ctrl / MEM_WB reg
 );
     logic mem_resp_flag;
-    logic mem_ready, clky;
+    logic mem_ready;
     logic [63:0] prev_order;
-    assign clky = clk || mem_resp_d;
-
 
     //this keeps track of the previous order so we don't output valid signal more than one cycle for any
     //instruction
-    always_ff @(posedge clky, posedge rst) begin : prev_order_tracker
-        if(rst) begin
+    always_ff @(posedge clk, posedge mem_resp_d) begin : prev_order_tracker
+        if(!exe_mem_valid)
             prev_order <= 64'hffffffffffffffff;
-        end
-        else if(ctrl_w_MEM.rvfi.pc_wdata != 32'b0) begin
+        else if(ctrl_w_MEM.rvfi.pc_wdata != 32'b0)
             prev_order <= ctrl_w_MEM.rvfi.order_commit;
-        end
     end
 
     assign mem_rdy = mem_ready;
@@ -70,7 +66,7 @@ import cpuIO::*;
         end
     end
 
-    always_ff @(posedge clky, posedge rst) begin
+    always_ff @(posedge clk, posedge mem_resp_d) begin
         if(rst) begin
             mem_resp_flag <= 1'b0;
         end
