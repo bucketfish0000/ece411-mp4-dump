@@ -26,19 +26,20 @@ _start:
     sw x3, 0(x1)    #M[mem_data] <= 8192
     lw x5, mem_data     #x5 <= 8192
 
-    addi x5, x5, 2   #x5 <= 2000 + 2 = 0x2002
-    addi x7, x0, 8   #x7 <= 0 + 8(x0==0) = 0x8
-    xori x1, x7, 7   #x1 <= x7 xor 7 = 8 xor 7 = 0xf
-    andi x2, x1, 3   #x2 <= x1 & 3 = f & 3 = 0x3
-    ori x4, x7, 16   #x4 <= x7 | 16 = 8 | 16 = 0x18
-    srli x3, x7, 1   #x3 <= x7 >> 1 = 8 >> 1 = 0x4 
-    slli x8, x3, 3   #x8 <= x3 << 3 = 4 << 3 = 0x20
-    lui x7, 524288   #x7 <= 80000 << 12 = 0x80 00 00 00
-    srai x11, x7, 4  #x11 <= x7 >> 4 = 80000000 >> 4 = 0xf8000000
-    slti x9, x7, 1   #x9 <= x7 < 1 = -2,147,483,648 < 1 = 0x1
-    sltiu x10, x7, 1 #x10 <= x7 < 1 = 2,147,483,648 < 1 = 0x0 
+    addi x5, x5, 2   #x5 <= 2000 + 2 = 2002
+    addi x7, x0, 8   #x7 <= 0 + 8(x0==0) = 8
+    xori x1, x7, 7   #x1 <= x7 xor 7 = 8 xor 7 = f
+    andi x2, x1, 3   #x2 <= x1 & 3 = f & 3 = 3
+    ori x4, x7, 16   #x4 <= x7 | 16 = 8 | 16 = 18
+    srli x3, x7, 1   #x3 <= x7 >> 1 = 8 >> 1 = 4 
+    slli x8, x3, 3   #x8 <= x3 << 3 = 4 << 3 = 20
+    lui x7, 524288   #x7 <= 80000 << 12 = 80 00 00 00
+    srai x11, x7, 4  #x11 <= x7 >> 4 = 80000000 >> 4 = f8000000
+    slti x9, x7, 1   #x9 <= x7 < 1 = -2,147,483,648 < 1 = 1
+    sltiu x10, x7, 1 #x10 <= x7 < 1 = 2,147,483,648 < 1 = 0 
 
-                     
+    #mul x12, x8, x3
+
 halt:                 # Infinite loop to keep the processor
     beq x0, x0, halt  # from trying to execute the data below.
                       # Your own programs should also make use
