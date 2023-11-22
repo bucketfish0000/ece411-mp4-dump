@@ -167,25 +167,26 @@ typedef enum bit [2:0] {
 } store_funct3_t;
 
 typedef enum bit [2:0] {
-    add  = 3'b000, //check bit30 for sub if op_reg opcode
-    sll  = 3'b001,
+    add  = 3'b000, //check bit30 for sub if op_reg opcode, check funct7[0] for mul
+    sll  = 3'b001, //check funct7[0] for mulh
     slt  = 3'b010,
     sltu = 3'b011,
-    axor = 3'b100,
+    axor = 3'b100,//check funct7[0] for mulhu
     sr   = 3'b101, //check bit30 for logical/arithmetic
     aor  = 3'b110,
     aand = 3'b111
 } arith_funct3_t;
 
-typedef enum bit [2:0] {
-    alu_add = 3'b000,
-    alu_sll = 3'b001,
-    alu_sra = 3'b010,
-    alu_sub = 3'b011,
-    alu_xor = 3'b100,
-    alu_srl = 3'b101,
-    alu_or  = 3'b110,
-    alu_and = 3'b111
+typedef enum bit [3:0] {
+    alu_add = 4'b0000,
+    alu_sll = 4'b0001,
+    alu_sra = 4'b0010,
+    alu_sub = 4'b0011,
+    alu_xor = 4'b0100,
+    alu_srl = 4'b0101,
+    alu_or  = 4'b0110,
+    alu_and = 4'b0111,
+    alu_mul = 4'b1000
 } alu_ops;
 
 endpackage
@@ -209,6 +210,9 @@ package cpuIO;
         rv32i_types::alu_ops aluop;
         rv32i_types::branch_funct3_t cmpop;
         exefwdmux::exefwdmux_sel_t exefwdmux_sel;
+        rs1signunsignmux::rs1signunsignmux_sel_t rs1signunsignmux_sel;
+        rs2signunsignmux::rs2signunsignmux_sel_t rs2signunsignmux_sel;
+        multihighlowmux::multihighlowmux_sel_t multihighlowmux_sel;
     } cw_execute;
 
     typedef struct {
