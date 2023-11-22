@@ -119,7 +119,7 @@ always_ff @(posedge clk, posedge rst) begin
     if(rst) begin
         load_instuct_inserted <= 1'b0;
     end
-    else if((cw_read.opcode == op_load) && (load_instuct_inserted == 0) && (icache_resp)) begin
+    else if((cw_read.opcode == op_load) && (cw_read.opcode == op_store) && (load_instuct_inserted == 0) && (icache_resp)) begin
         load_instuct_inserted <= 1'b1;
     end
     else if((load_instuct_inserted == 1) && (icache_resp)) begin
@@ -243,8 +243,8 @@ always_comb begin : pipeline_regs_logic
         // mem_wb_rst = 1'b0;
         //ppr rst (flushing control)
         //
-        if_de_rst = (branch_taken||jump_taken) ? 1'b1 : 1'b0;
-        de_exe_rst = (branch_taken||jump_taken) ? 1'b1 : 1'b0;
+        if_de_rst = ((branch_taken||jump_taken)) ? 1'b1 : 1'b0;
+        de_exe_rst = ((branch_taken||jump_taken)) ? 1'b1 : 1'b0;
         exe_mem_rst = 1'b0; 
         mem_wb_rst = 1'b0;
     
