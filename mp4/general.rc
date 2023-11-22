@@ -2,7 +2,7 @@ Magic 271485
 Revision Verdi_R-2020.12-SP1-1
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 25 1600 289 169 147
+viewPort 0 25 1600 369 169 145
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
@@ -16,16 +16,16 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 1284720.000000 1605900.000000
-cursor 1480000.000000
+zoom 581952.465600 745882.737600
+cursor 20000.000000
 marker 0.000000
 
 ; user define markers
 ; userMarker time_pos marker_name color linestyle
 ; visible top row signal index
-top 92
+top 53
 ; marker line index
-markerPos 99
+markerPos 80
 
 ; event list
 ; addEvent event_name event_expression
@@ -64,11 +64,11 @@ addSignal -h 15 -holdScope if_de_ld
 addSignal -h 15 -holdScope stall_if_de
 addSignal -h 15 -UNSIGNED -holdScope cw_read.opcode[6:0]
 addSignal -h 15 -holdScope load_instuct_inserted
-addSignal -h 15 -UNSIGNED -BIN -holdScope true_cw_read.instruction[31:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope true_cw_read.instruction[31:0]
 addSignal -h 15 -holdScope if_de_rst
 addGroup "G2" -e FALSE
 addSignal -h 15 /top_tb/dut/control/de_exe_ld
-addGroup "Dmem"
+addGroup "Dmem" -e FALSE
 addSignal -h 15 /top_tb/dut/dmem_address[31:0]
 addSignal -h 15 /top_tb/dut/datapath/memory/clk
 addSignal -h 15 /top_tb/dut/dmem_read
@@ -96,12 +96,12 @@ addSignal -h 15 -holdScope instruct_in_wb.rd_addr[4:0]
 addSignal -h 15 -holdScope instruct_in_wb.rs1_addr[4:0]
 addSignal -h 15 -holdScope instruct_in_wb.rs2_addr[4:0]
 addSignal -h 15 -holdScope instruct_in_wb.commit_order[63:0]
-addGroup "CTRL" -e FALSE
+addGroup "CTRL"
 addSignal -h 15 /top_tb/dut/control/clk
 addSignal -h 15 -holdScope rst
 addSignal -h 15 -UNSIGNED -holdScope true_cw_read.opcode[6:0]
 addSignal -h 15 -holdScope true_cw_read.order_commit[63:0]
-addSignal -h 15 -UNSIGNED -BIN -holdScope true_cw_read.instruction[31:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope true_cw_read.instruction[31:0]
 addSignal -h 15 -holdScope true_cw_read.pc_rdata[31:0]
 addSignal -h 15 -holdScope true_cw_read.pc_wdata[31:0]
 addSignal -h 15 -holdScope true_cw_read.func3[2:0]
@@ -111,6 +111,8 @@ addSignal -h 15 -holdScope branch_taken
 addSignal -h 15 -holdScope jump_taken
 addSignal -h 15 -holdScope rdy[4]
 addSignal -h 15 -holdScope imem_read
+addSignal -h 15 -holdScope if_rdy
+addSignal -h 15 -holdScope mem_rdy
 addSignal -h 15 -UNSIGNED -BIN -holdScope rdy[4:0]
 addSignal -h 15 -UNSIGNED -BIN -holdScope vald[4:0]
 addSignal -h 15 -holdScope if_de_ld
@@ -121,6 +123,10 @@ addSignal -h 15 -holdScope if_de_rst
 addSignal -h 15 -holdScope de_exe_rst
 addSignal -h 15 -holdScope exe_mem_rst
 addSignal -h 15 -holdScope mem_wb_rst
+addSignal -h 15 -holdScope stall_if_de
+addSignal -h 15 -holdScope stall_exe_mem
+addSignal -h 15 -holdScope stall_mem_wb
+addSignal -h 15 -holdScope icache_resp
 addGroup "Imem" -e FALSE
 addSignal -h 15 /top_tb/dut/datapath/memory/clk
 addSignal -h 15 /top_tb/dut/imem_address[31:0]
@@ -128,7 +134,7 @@ addSignal -h 15 -holdScope imem_read
 addSignal -h 15 -holdScope imem_rdata[31:0]
 addSignal -h 15 -holdScope imem_resp
 addSignal -h 15 /top_tb/dut/datapath/fet_dec_load
-addGroup "exe_mem"
+addGroup "exe_mem" -e FALSE
 addSignal -h 15 /top_tb/dut/datapath/wb_fwding_reg/rst
 addSignal -h 15 /top_tb/dut/datapath/exe_mem_register/exe_mem_ld
 addSignal -h 15 /top_tb/dut/dmem_resp
@@ -155,6 +161,7 @@ addSignal -h 15 -holdScope mem_r_d
 addSignal -h 15 -holdScope mem_w_d
 addSignal -h 15 -holdScope prev_order[63:0]
 addSignal -h 15 -holdScope ctrl_w_MEM.rvfi.order_commit[63:0]
+addSignal -h 15 -holdScope rst
 addSignal -h 15 /top_tb/dut/datapath/mem_wb_register/cw_in.mem
 addGroup "mem_wb" -e FALSE
 addSignal -h 15 /top_tb/dut/datapath/mem_wb_register/cw_in.rvfi.pc_rdata[31:0]
@@ -170,7 +177,7 @@ addSignal -h 15 -holdScope valid_o
 addSignal -h 15 -UNSIGNED -holdScope instruct_in_exe.opcode[6:0]
 addSignal -h 15 -holdScope instruct_in_exe.rd_addr[4:0]
 addSignal -h 15 -holdScope instruct_in_exe.commit_order[63:0]
-addGroup "G9"
+addGroup "G9" -e FALSE
 addSignal -h 15 /top_tb/dut/datapath/fetch/clk
 addSignal -h 15 -holdScope rst
 addSignal -h 15 -holdScope load_pc
@@ -249,12 +256,11 @@ addSignal -h 15 /top_tb/dut/cacheline_adaptor/burst_i[63:0]
 addSignal -h 15 -holdScope address_o[31:0]
 addSignal -h 15 -holdScope burst_o[63:0]
 addSignal -h 15 -holdScope line_o[255:0]
-addSignal -h 15 -holdScope read_i
-addSignal -h 15 -holdScope write_i
 addSignal -h 15 -holdScope address_i[31:0]
+addSignal -h 15 -holdScope read_o
+addSignal -h 15 -holdScope write_o
 addSignal -h 15 -holdScope address_o[31:0]
-addSignal -h 15 -holdScope read_i
-addGroup "arbiter"
+addGroup "arbiter" -e FALSE
 addSignal -h 15 /top_tb/dut/cache_arbiter/clk
 addSignal -h 15 -UNSIGNED -holdScope state[31:0]
 addSignal -h 15 -holdScope mem_data_r[255:0]
@@ -269,7 +275,19 @@ addSignal -h 15 -holdScope dcache_write
 addSignal -h 15 -holdScope icache_read
 addSignal -h 15 -holdScope dcache_resp
 addSignal -h 15 -holdScope icache_resp
-addGroup "G21"
+addGroup "G21" -e FALSE
+addSignal -h 15 /top_tb/dut/dmem_resp
+addSignal -h 15 -holdScope imem_resp
+addGroup "G22" -e FALSE
+addSignal -h 15 /top_tb/dut/icache0/mem_resp
+addSignal -h 15 -holdScope pmem_resp
+addSignal -h 15 -UNSIGNED /top_tb/dut/icache0/control/state[1:0]
+addSignal -h 15 -holdScope cpu_read
+addGroup "G23" -e FALSE
+addSignal -h 15 /top_tb/dut/dcache0/mem_resp
+addSignal -h 15 -holdScope pmem_resp
+addSignal -h 15 -holdScope mem_write
+addGroup "G24"
 
 ; getSignalForm Scope Hierarchy Status
 ; active file of getSignalForm
