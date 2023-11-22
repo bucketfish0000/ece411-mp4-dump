@@ -176,12 +176,10 @@ assign stall_de_exe =
     ((rdy[0] == 0) && (vald[0] == 1));
 
 assign stall_exe_mem = 
-    ((rdy[2] == 0) && (vald[2] == 1)) || 
     ((rdy[1] == 0) && (vald[1] == 1)) || 
     ((rdy[0] == 0) && (vald[0] == 1));
 
 assign stall_mem_wb = 
-    ((rdy[2] == 0) && (vald[2] == 1)) || 
     ((rdy[0] == 0) && (vald[0] == 1)) || ((rdy[1] == 0)&&(vald[1] == 1));
 
 logic br, branch_taken;
@@ -284,9 +282,6 @@ function void set_def();
     ctrl_word.exe.cmpop = beq;
     ctrl_word.exe.aluop = alu_add;
     ctrl_word.exe.exefwdmux_sel = exefwdmux::alu_out;
-    ctrl_word.exe.rs1signunsignmux_sel = rs1signunsignmux::sign;
-    ctrl_word.exe.rs2signunsignmux_sel = rs2signunsignmux::sign;
-    ctrl_word.exe.multihighlowmux_sel = multihighlowmux::low;
     ctrl_word.mem.mem_read_d = 1'b0;
     ctrl_word.mem.mem_write_d = 1'b0;
     ctrl_word.mem.store_funct3 = sb;
@@ -774,9 +769,6 @@ always_comb begin : cpu_cw
                         if(true_cw_read.func7[5]) begin
                             ctrl_word.exe.aluop =  alu_sub;
                         end
-                        else if(true_cw_read.func7[0]) begin
-                            ctrl_word.exe.aluop = alu_mul;
-                        end
                         else begin
                             ctrl_word.exe.aluop =  alu_add;
                         end
@@ -791,13 +783,7 @@ always_comb begin : cpu_cw
                     
                     3'b001: begin
                         //exe
-                        if(true_cw_read.func7[0]) begin
-                            ctrl_word.exe.aluop = alu_mul;
-                            ctrl_word.exe.multihighlowmux_sel = multihighlowmux::high;
-                        end
-                        else begin
-                            ctrl_word.exe.aluop =  alu_sll;
-                        end
+                        ctrl_word.exe.aluop =  alu_sll;
                         ctrl_word.exe.alumux1_sel = alumux::rs1_out;
                         ctrl_word.exe.alumux2_sel = alumux::rs2_out;
 
@@ -809,51 +795,24 @@ always_comb begin : cpu_cw
 
                     3'b010: begin
                         //exe
-                        if(true_cw_read.func7[0]) begin
-                            ctrl_word.exe.aluop = alu_mul;
-                            ctrl_word.exe.multihighlowmux_sel = multihighlowmux::high;
-                            ctrl_word.exe.rs1signunsignmux_sel = rs1signunsignmux::sign;
-                            ctrl_word.exe.rs2signunsignmux_sel = rs2signunsignmux::unsign;
-                            ctrl_word.exe.alumux1_sel = alumux::rs1_out;
-                            ctrl_word.exe.alumux2_sel = alumux::rs2_out;
+                        ctrl_word.exe.cmpop = blt;
+                        ctrl_word.exe.cmp_sel = cmpmux::rs2_out;
+                        ctrl_word.exe.exefwdmux_sel = exefwdmux::br_en_zext;
 
-                            //writeback
-                            ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
-                        end
-                        else begin
-                            ctrl_word.exe.cmpop = blt;
-                            ctrl_word.exe.cmp_sel = cmpmux::rs2_out;
-                            ctrl_word.exe.exefwdmux_sel = exefwdmux::br_en_zext;
-
-                            //writeback
-                            ctrl_word.wb.regfilemux_sel = regfilemux::br_en;
-                        end
-
+                        //writeback
+                        ctrl_word.wb.regfilemux_sel = regfilemux::br_en;
                         ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
 
                     3'b011: begin
                         //exe
-                        if(true_cw_read.func7[0]) begin
-                            ctrl_word.exe.aluop = alu_mul;
-                            ctrl_word.exe.multihighlowmux_sel = multihighlowmux::high;
-                            ctrl_word.exe.rs1signunsignmux_sel = rs1signunsignmux::unsign;
-                            ctrl_word.exe.rs2signunsignmux_sel = rs2signunsignmux::unsign;
-                            ctrl_word.exe.alumux1_sel = alumux::rs1_out;
-                            ctrl_word.exe.alumux2_sel = alumux::rs2_out;
+                        ctrl_word.exe.cmpop = bltu;
+                        ctrl_word.exe.cmp_sel = cmpmux::rs2_out;
+                        ctrl_word.exe.exefwdmux_sel = exefwdmux::br_en_zext;
 
-                            //writeback
-                            ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
-                        end
-                        else begin
-                            ctrl_word.exe.cmpop = bltu;
-                            ctrl_word.exe.cmp_sel = cmpmux::rs2_out;
-                            ctrl_word.exe.exefwdmux_sel = exefwdmux::br_en_zext;
-
-                            //writeback
-                            ctrl_word.wb.regfilemux_sel = regfilemux::br_en;
-                        end
+                        //writeback
+                        ctrl_word.wb.regfilemux_sel = regfilemux::br_en;
                         ctrl_word.wb.rd_sel = true_cw_read.rd_addr;
                         ctrl_word.wb.ld_reg = 1'b1;
                     end
