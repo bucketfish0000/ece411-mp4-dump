@@ -224,7 +224,7 @@ exe_mem_reg exe_mem_register(
     .exe_mem_rst(exe_mem_rst),
 
     .br_en_i(br_en_exe_o), //from exe_stage
-    .exe_mem_ld(exe_mem_load), //from cpu_ctrl
+    .exe_mem_ld(exe_mem_load||sp_ld_commit), //from cpu_ctrl
     .exe_rdy(exec_ready_o),
     .de_exe_valid(exec_valid_i),
     .alu_out_i(alu_out_exe), //from exe_stage
@@ -268,7 +268,7 @@ rv32i_word u_imm_wb;
 mem_wb_reg mem_wb_register(
     .clk(clk),
     .rst(mem_wb_rst),
-    .mem_wb_ld(mem_wb_load),
+    .mem_wb_ld(mem_wb_load||sp_ld_commit),
     .mem_rdy(mem_ready_o),
     .alu_out_i(exe_fwd_data), //aka exe_fwd_data
     .br_en_i(br_en_exe_mem_o),
