@@ -156,10 +156,10 @@ always_comb begin
     // for (int i = 0; i < 4; i++) begin
     //     hitmap[i] = (valid_out[i] && (tag_o[i]==tag));
     // end
-    hitmap[0] = (valid_out[0] && (tag_o[0]===tag)) ? 1'b1 : 1'b0;
-    hitmap[1] = (valid_out[1] && (tag_o[1]===tag)) ? 1'b1 : 1'b0;
-    hitmap[2] = (valid_out[2] && (tag_o[2]===tag)) ? 1'b1 : 1'b0;
-    hitmap[3] = (valid_out[3] && (tag_o[3]===tag)) ? 1'b1 : 1'b0;
+    hitmap[0] = (valid_out[0] && (tag_o[0]==tag)) ? 1'b1 : 1'b0;
+    hitmap[1] = (valid_out[1] && (tag_o[1]==tag)) ? 1'b1 : 1'b0;
+    hitmap[2] = (valid_out[2] && (tag_o[2]==tag)) ? 1'b1 : 1'b0;
+    hitmap[3] = (valid_out[3] && (tag_o[3]==tag)) ? 1'b1 : 1'b0;
     hit=|hitmap;
     unique case(hitmap)
         4'b0001: hitnum = 2'b00;
