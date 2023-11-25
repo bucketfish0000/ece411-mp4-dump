@@ -149,7 +149,7 @@ begin: next_state_logic
     else begin
     case(state)
         idle:begin
-            if ((ex_read || ex_write)&&(~cache_resp)) next_state = hit_look;
+            if ((ex_read || ex_write)) next_state = hit_look;
             else next_state = idle;
         end
         hit_look: begin
