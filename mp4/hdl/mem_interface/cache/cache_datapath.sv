@@ -117,7 +117,7 @@ module cache_datapath #(
         for (i = 0; i < 4; i++) 
         begin : arrays
             mp3_data_array data_array (
-                .clk0       (clk),
+                .clk0       (~clk),
                 .csb0       (1'b0),
                 .web0       (data_web[i]),
                 .wmask0     (data_wmask),
