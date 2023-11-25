@@ -46,10 +46,15 @@ always_comb begin : request_track_logic
             current_request = iread;//only option
             if (dcache_read) pending_request = dread;
             else if (dcache_write) pending_request = dwrite;
+            else pending_request = none;
         end
         dcache: begin
             current_request = (dcache_read) ? dread : dwrite;
             pending_request = (icache_read) ? iread : none;
+        end
+        default: begin
+            current_request = none;
+            pending_request = none;
         end
     endcase
 end
@@ -106,17 +111,25 @@ always_comb begin: next_state_logic
                     if(pending_request == dread || pending_request == dwrite) next_states = dcache; 
                     else next_states = idle; 
                 end
+                else begin
+                    next_states = icache;
+                end
             end
             dcache: begin 
                 if(mem_resp) begin
                     if(pending_request == iread) next_states = icache; 
                     else next_states = idle; 
                 end
+                else begin
+                    next_states = dcache;
+                end
             end
             idle: begin
                 if(icache_read) next_states = icache; 
-                if(~icache_read && (dcache_read || dcache_write)) next_states = dcache;  
+                else if(~icache_read && (dcache_read || dcache_write)) next_states = dcache;  
+                else next_states = idle;
             end
+            default: next_states = idle;
         endcase
     end
 end

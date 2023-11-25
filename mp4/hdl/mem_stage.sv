@@ -29,8 +29,10 @@ import cpuIO::*;
 
     //this keeps track of the previous order so we don't output valid signal more than one cycle for any
     //instruction
-    always_ff @(posedge clk, posedge mem_resp_d) begin : prev_order_tracker
-        if(!exe_mem_valid)
+    always_ff @(posedge clk) begin : prev_order_tracker
+        if(rst)
+            prev_order <= 64'hffffffffffffffff;
+        else if(!exe_mem_valid)
             prev_order <= 64'hffffffffffffffff;
         else if(ctrl_w_MEM.rvfi.pc_wdata != 32'b0)
             prev_order <= ctrl_w_MEM.rvfi.order_commit;

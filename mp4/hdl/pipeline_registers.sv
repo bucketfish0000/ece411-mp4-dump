@@ -472,6 +472,7 @@ import cpuIO::*;
         rmask = 4'b0000;
         wmask_temp = 4'b0000;
         mem_addr = marmux_o;
+        rs2_to_mem = rs2_out_i;
         trap = 1'b0;
 
         if(cw_in.mem.mem_read_d) begin
