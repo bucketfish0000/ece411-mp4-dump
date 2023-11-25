@@ -586,23 +586,58 @@ module mem_wb_reg
     logic [31:0] alu_out_r, u_imm_r, mem_rdata_r, memfwdmux_o, mem_fwd_data_r, whole_byte, whole_half, true_mem_i;
     control_word cw_data;
     logic br_en_r, valid_r, ready_r;
+    logic [7:0] byte_in;
+    logic [15:0] half_in;
+
+    always_comb begin : mem_data_slice_selection
+        case(cw_in.rvfi.rmask)
+            4'b0001: begin
+                byte_in = mem_rdata_D_i[7:0];
+                half_in = 16'hb00b;
+            end
+            4'b0010: begin
+                byte_in = mem_rdata_D_i[15:8];
+                half_in = 16'hb00b;
+            end
+            4'b0100: begin
+                byte_in = mem_rdata_D_i[23:16];
+                half_in = 16'hb00b;
+            end
+            4'b1000: begin
+                byte_in = mem_rdata_D_i[31:24];
+                half_in = 16'hb00b;
+            end
+            4'b0011: begin
+                byte_in = 8'hab;
+                half_in = mem_rdata_D_i[15:0];
+            end
+            4'b1100: begin
+                byte_in = 8'hab;
+                half_in = mem_rdata_D_i[31:16];
+            end
+            default: begin
+                byte_in = 8'hab;
+                half_in = 16'hb00b;
+            end
+        endcase
+    end
 
     sext_byte sexy_byte(
-        .byte_in(mem_rdata_D_i[7:0]),
+        .byte_in(byte_in),
         .whole_byte_out(whole_byte)
     );
 
     sext_half sexy_half(
-        .half_in(mem_rdata_D_i[15:0]),
+        .half_in(half_in),
         .whole_half_out(whole_half)
     );
 
     always_comb begin
         case(cw_in.wb.regfilemux_sel)
             regfilemux::lb: true_mem_i = whole_byte;
-            regfilemux::lbu: true_mem_i = {24'b0, mem_rdata_D_i[7:0]};
+            regfilemux::lbu: true_mem_i = {24'b0, byte_in};
             regfilemux::lh: true_mem_i = whole_half;
-            regfilemux::lhu: true_mem_i = {16'b0, mem_rdata_D_i[15:0]};
+            regfilemux::lhu: true_mem_i = {16'b0, half_in};
             default: true_mem_i = mem_rdata_D_i;
         endcase
     end

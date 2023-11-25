@@ -53,6 +53,7 @@ import cpuIO::*;
     //none...?
     output logic load_pc,
     output logic  imem_read,
+    output logic imem_cancel,
     input logic icache_resp,
     /*---de signals... none?---*/
 
@@ -106,7 +107,6 @@ import cpuIO::*;
 logic [4:0] rdy;
 logic [4:0] vald;
 logic [85:0] instruct_in_de;
-
 assign rdy = {if_rdy, de_rdy, exe_rdy, mem_rdy, wb_rdy};
 assign vald = {if_valid, de_valid, exe_valid, mem_valid, wb_valid};
 
@@ -234,6 +234,7 @@ always_comb begin : pipeline_regs_logic
         exe_mem_ld = (!icache_resp || stall_exe_mem || vald[3]==0) ? 1'b0 : 1'b1;
         mem_wb_ld = (!icache_resp || stall_mem_wb || vald[2]==0) ? 1'b0 : 1'b1;
         sp_ld_commit = (jump&&jump_taken) || (br&&branch_taken);
+        imem_cancel = (jump&&jump_taken) || (br&&branch_taken);
         
         // //ppr rst (flushing control)
         // //

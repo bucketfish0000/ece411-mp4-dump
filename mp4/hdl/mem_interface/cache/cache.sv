@@ -13,6 +13,7 @@ module cache #(
     input   logic   [31:0]  mem_address,
     input   logic           mem_read,
     input   logic           mem_write,
+    input   logic           mem_cancel,
     input   logic   [31:0]  mem_byte_enable,
     output  logic   [255:0] mem_rdata,
     input   logic   [255:0] mem_wdata,
@@ -44,6 +45,7 @@ module cache #(
 cache_control control
 (   .clk(clk),.rst(rst), 
     .cpu_read(mem_read),.cpu_write(mem_write),
+    .mem_cancel(mem_cancel),
     .cache_resp(mem_resp),
     .pmem_resp(pmem_resp),
     .mem_read(pmem_read),
