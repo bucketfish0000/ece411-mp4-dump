@@ -182,9 +182,9 @@ import cpuIO::*;
         .mem_address(imem_address),  // cpu datapath 
         .mem_read(imem_read), 
         .mem_write(1'b0), 
-        .mem_byte_enable(),
+        .mem_byte_enable(32'hffffffff),
         .mem_rdata(imem_cacheline_rdata), 
-        .mem_wdata(), 
+        .mem_wdata(256'h0), 
         .mem_resp(imem_resp), 
 
         .pmem_address(arbiter_cacheline_imem_address), //arbiter 
@@ -241,9 +241,9 @@ import cpuIO::*;
         .cacheline_mem_address(cacheline_imem_address), //out
         .cacheline_rdata(imem_cacheline_rdata), //in
         .cacheline_wdata(), //out
-        .mem_wdata(), //in
+        .mem_wdata(32'b0), //in
         .mem_rdata(imem_rdata), //out
-        .mem_byte_enable(), //in
+        .mem_byte_enable(4'hf), //in
         .cacheline_mem_byte_enable() //out
     );
 

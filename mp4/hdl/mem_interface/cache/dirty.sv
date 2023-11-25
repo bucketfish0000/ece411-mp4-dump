@@ -14,7 +14,9 @@ localparam num_sets = 2**s_index;
 localparam num_ways = 2**w_index;
 
 logic [num_ways-1:0] web;
+logic [num_ways-1:0] web_prev;
 logic [num_ways-1:0] in;
+logic [num_ways-1:0] in_prev;
 logic [num_ways-1:0] out;
 
 genvar i;
@@ -33,21 +35,32 @@ generate
 endgenerate
 assign dirty_out = out[way_sel];
 
+always_ff @( posedge clk ) begin
+    if(rst) begin
+        web_prev <= web;
+        in_prev <= in;
+    end
+    else begin
+        web_prev <= web;
+        in_prev <= in;
+    end
+end
+
 always_comb begin
     case (operation)
-    00,11:begin //idle, read out
+    00:begin //idle, read out
         web = 4'b1111; //rd
         in = 4'b0000;
     end
     01:begin //mark
-        web = web;
-        in = in;
+        web = web_prev;
+        in = in_prev;
         web[way_sel] = 1'b0;
         in[way_sel] = 1'b1;
     end
     10:begin //unmark
-        web = web;
-        in = in;
+        web = web_prev;
+        in = in_prev;
         web[way_sel]= 1'b0;
         in[way_sel] = 1'b0;
     end
