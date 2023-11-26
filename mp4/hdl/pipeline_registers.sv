@@ -646,6 +646,7 @@ module mem_wb_reg
         unique case(cw_in.mem.memfwdmux_sel)
             memfwdmux::mem_fwd_data: memfwdmux_o = true_mem_i;
             memfwdmux::exe_fwd_data: memfwdmux_o = alu_out_i;
+            memfwdmux::pc_plus_4: memfwdmux_o = cw_in.rvfi.pc_rdata + 4;
         endcase
     end
 
