@@ -417,7 +417,7 @@ always_comb begin : cpu_cw
                 ctrl_word.exe.alumux2_sel = alumux::i_imm;
 
                 //mem
-                ctrl_word.mem.memfwdmux_sel = memfwdmux::exe_fwd_data;
+                ctrl_word.mem.memfwdmux_sel = memfwdmux::pc_plus_4;
 
                 //writeback
                 ctrl_word.wb.ld_reg = 1'b1;
