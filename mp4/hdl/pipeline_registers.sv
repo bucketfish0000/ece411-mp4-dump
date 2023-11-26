@@ -257,6 +257,7 @@ import cpuIO::*;
             exefwdmux::alu_out: fwd_temp = alu_out_i;
             exefwdmux::br_en_zext: fwd_temp = {31'b0, br_en_i};
             exefwdmux::u_imm: fwd_temp = u_imm_i;
+            exefwdmux::jalr: fwd_temp = cw_in.rvfi.pc_rdata + 32'h04;
         endcase
     end
 

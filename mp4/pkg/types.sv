@@ -80,6 +80,7 @@ typedef enum bit [1:0] {
     alu_out = 2'b00
     ,br_en_zext = 2'b01
     ,u_imm = 2'b10
+    ,jalr = 2'b11
 } exefwdmux_sel_t;
 endpackage
 
