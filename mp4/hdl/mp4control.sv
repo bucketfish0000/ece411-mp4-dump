@@ -122,7 +122,7 @@ always_ff @(posedge clk, posedge rst) begin
     else if((cw_read.opcode == op_load) && (load_instuct_inserted == 0) && (icache_resp)) begin
         load_instuct_inserted <= 1'b1;
     end
-    else if((load_instuct_inserted == 1) && (icache_resp)) begin
+    else if((load_instuct_inserted == 1) && (icache_resp) && ((rdy[1] == 1) && (vald[1] == 1))) begin
         load_instuct_inserted <= 1'b0;
     end
 end
@@ -207,6 +207,7 @@ always_comb begin : pipeline_regs_logic
         exe_mem_ld = 1'b0;
         mem_wb_ld = 1'b0;
         sp_ld_commit = 1'b0;
+        imem_cancel = 1'b0;
 
         // //flush every ppr on reset
         if_de_rst = 1'b1;
