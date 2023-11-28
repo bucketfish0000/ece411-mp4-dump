@@ -117,7 +117,7 @@ module cache_datapath #(
         for (i = 0; i < 4; i++) 
         begin : arrays
             mp3_data_array data_array (
-                .clk0       (clk),
+                .clk0       (~clk),
                 .csb0       (1'b0),
                 .web0       (data_web[i]),
                 .wmask0     (data_wmask),
@@ -126,7 +126,7 @@ module cache_datapath #(
                 .dout0      (data_o[i])
             );
             mp3_tag_array tag_array (
-                .clk0(clk),
+                .clk0(~clk),
                 .csb0(1'b0),
                 .web0(tag_web[i]),
                 .addr0(set),
@@ -156,10 +156,10 @@ always_comb begin
     // for (int i = 0; i < 4; i++) begin
     //     hitmap[i] = (valid_out[i] && (tag_o[i]==tag));
     // end
-    hitmap[0] = (valid_out[0] && (tag_o[0]==tag));
-    hitmap[1] = (valid_out[1] && (tag_o[1]==tag));
-    hitmap[2] = (valid_out[2] && (tag_o[2]==tag));
-    hitmap[3] = (valid_out[3] && (tag_o[3]==tag));
+    hitmap[0] = (valid_out[0] && (tag_o[0]==tag)) ? 1'b1 : 1'b0;
+    hitmap[1] = (valid_out[1] && (tag_o[1]==tag)) ? 1'b1 : 1'b0;
+    hitmap[2] = (valid_out[2] && (tag_o[2]==tag)) ? 1'b1 : 1'b0;
+    hitmap[3] = (valid_out[3] && (tag_o[3]==tag)) ? 1'b1 : 1'b0;
     hit=|hitmap;
     unique case(hitmap)
         4'b0001: hitnum = 2'b00;

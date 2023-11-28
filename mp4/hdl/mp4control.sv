@@ -53,6 +53,7 @@ import cpuIO::*;
     //none...?
     output logic load_pc,
     output logic  imem_read,
+    output logic imem_cancel,
     input logic icache_resp,
     /*---de signals... none?---*/
 
@@ -106,7 +107,6 @@ import cpuIO::*;
 logic [4:0] rdy;
 logic [4:0] vald;
 logic [85:0] instruct_in_de;
-
 assign rdy = {if_rdy, de_rdy, exe_rdy, mem_rdy, wb_rdy};
 assign vald = {if_valid, de_valid, exe_valid, mem_valid, wb_valid};
 
@@ -122,7 +122,7 @@ always_ff @(posedge clk, posedge rst) begin
     else if((cw_read.opcode == op_load || cw_read.opcode == op_store) && (load_instuct_inserted == 0) && (icache_resp)) begin
         load_instuct_inserted <= 1'b1;
     end
-    else if((load_instuct_inserted == 1) && (icache_resp)) begin
+    else if((load_instuct_inserted == 1) && (icache_resp) && ((rdy[1] == 1) && (vald[1] == 1))) begin
         load_instuct_inserted <= 1'b0;
     end
 end
@@ -207,6 +207,7 @@ always_comb begin : pipeline_regs_logic
         exe_mem_ld = 1'b0;
         mem_wb_ld = 1'b0;
         sp_ld_commit = 1'b0;
+        imem_cancel = 1'b0;
 
         // //flush every ppr on reset
         if_de_rst = 1'b1;
@@ -219,7 +220,7 @@ always_comb begin : pipeline_regs_logic
         //only not try to fetch when waiting for resp from icache 
         imem_read =((icache_resp) || (stall_if_de && !load_instuct_inserted)) ? 1'b0 : 1'b1; 
         //update pc when imem has responded (can proc)
-        load_pc = ((branch_taken&&br)||(jump&&jump_taken)||(icache_resp && !stall_if_de)) ? 1'b1 : 1'b0;
+        load_pc = ((branch_taken&&br)||(jump&&jump_taken)||(icache_resp && !jump_taken && !stall_if_de)) ? 1'b1 : 1'b0;
         // load_pc = (icache_resp && (branch_taken)||(jump_taken)||(!stall_if_de)) ? 1'b1 : 1'b0;
 
         //ppr resets
@@ -234,6 +235,7 @@ always_comb begin : pipeline_regs_logic
         exe_mem_ld = (!icache_resp || stall_exe_mem || vald[3]==0) ? 1'b0 : 1'b1;
         mem_wb_ld = (!icache_resp || stall_mem_wb || vald[2]==0) ? 1'b0 : 1'b1;
         sp_ld_commit = (jump&&jump_taken) || (br&&branch_taken);
+        imem_cancel = (jump&&jump_taken) || (br&&branch_taken);
         
         // //ppr rst (flushing control)
         // //
@@ -414,9 +416,10 @@ always_comb begin : cpu_cw
                 ctrl_word.exe.aluop =  alu_add;
                 ctrl_word.exe.alumux1_sel = alumux::rs1_out;
                 ctrl_word.exe.alumux2_sel = alumux::i_imm;
+                ctrl_word.exe.exefwdmux_sel = exefwdmux::jalr;
 
                 //mem
-                ctrl_word.mem.memfwdmux_sel = memfwdmux::exe_fwd_data;
+                ctrl_word.mem.memfwdmux_sel = memfwdmux::pc_plus_4;
 
                 //writeback
                 ctrl_word.wb.ld_reg = 1'b1;

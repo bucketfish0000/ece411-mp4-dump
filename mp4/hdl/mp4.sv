@@ -98,7 +98,8 @@ import cpuIO::*;
             control_word cw_control, ctrl_rvfi;
             rv32i_opcode opcode_exec;
             hzds instruct_in_exe, instruct_in_mem, instruct_in_wb;
-    
+            logic imem_cancel;
+
     mp4control control(
         .clk(clk),
         .rst(rst),
@@ -107,6 +108,7 @@ import cpuIO::*;
         //none...?
         .load_pc(load_pc),
         .imem_read(imem_read),
+        .imem_cancel(imem_cancel),
         .icache_resp(imem_resp),
         /*---de signals... none?---*/
 
@@ -163,6 +165,7 @@ import cpuIO::*;
         .mem_address(dmem_address), //cpu datapath 
         .mem_read(dmem_read), 
         .mem_write(dmem_write), 
+        .mem_cancel(1'b0),
         .mem_byte_enable(cacheline_mem_byte_enable),
         .mem_rdata(dmem_cacheline_rdata), 
         .mem_wdata(dmem_cacheline_wdata), 
@@ -181,10 +184,11 @@ import cpuIO::*;
         .clk(clk), .rst(rst),
         .mem_address(imem_address),  // cpu datapath 
         .mem_read(imem_read), 
-        .mem_write(1'b0), 
-        .mem_byte_enable(),
+        .mem_write(1'b0),
+        .mem_cancel(imem_cancel), 
+        .mem_byte_enable(32'hffffffff),
         .mem_rdata(imem_cacheline_rdata), 
-        .mem_wdata(), 
+        .mem_wdata(256'h0), 
         .mem_resp(imem_resp), 
 
         .pmem_address(arbiter_cacheline_imem_address), //arbiter 
@@ -241,9 +245,9 @@ import cpuIO::*;
         .cacheline_mem_address(cacheline_imem_address), //out
         .cacheline_rdata(imem_cacheline_rdata), //in
         .cacheline_wdata(), //out
-        .mem_wdata(), //in
+        .mem_wdata(32'b0), //in
         .mem_rdata(imem_rdata), //out
-        .mem_byte_enable(), //in
+        .mem_byte_enable(4'hf), //in
         .cacheline_mem_byte_enable() //out
     );
 

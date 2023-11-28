@@ -14,7 +14,9 @@ localparam num_sets = 2**s_index;
 localparam num_ways = 2**w_index;
 
 logic [num_ways-1:0] web;
+logic [num_ways-1:0] web_prev;
 logic [num_ways-1:0] in;
+logic [num_ways-1:0] in_prev;
 logic [num_ways-1:0] out;
 assign valid_out = out;
 
@@ -34,20 +36,18 @@ generate
 endgenerate
 
 always_comb begin
+    web = 4'hf;
+    in = 4'h0;
     case (operation)
-    00,11:begin //idle, read out
+    2'b00:begin //idle, read out
         web = 4'b1111; //rd
         in = 4'b0000;
     end
-    01:begin //mark
-        web = web;
-        in = in;
+    2'b01:begin //mark
         web[way_sel] = 1'b0;
         in[way_sel] = 1'b1;
     end
-    10:begin //unmark
-        web = web;
-        in = in;
+    2'b10:begin //unmark
         web[way_sel]= 1'b0;
         in[way_sel] = 1'b0;
     end
