@@ -35,32 +35,19 @@ generate
     end
 endgenerate
 
-always_ff @( posedge clk ) begin
-    if(rst) begin
-        web_prev <= web;
-        in_prev <= in;
-    end
-    else begin
-        web_prev <= web;
-        in_prev <= in;
-    end
-end
-
 always_comb begin
+    web = 4'hf;
+    in = 4'h0;
     case (operation)
-    00:begin //idle, read out
+    2'b00:begin //idle, read out
         web = 4'b1111; //rd
         in = 4'b0000;
     end
-    01:begin //mark
-        web = web_prev;
-        in = in_prev;
+    2'b01:begin //mark
         web[way_sel] = 1'b0;
         in[way_sel] = 1'b1;
     end
-    10:begin //unmark
-        web = web_prev;
-        in = in_prev;
+    2'b10:begin //unmark
         web[way_sel]= 1'b0;
         in[way_sel] = 1'b0;
     end
