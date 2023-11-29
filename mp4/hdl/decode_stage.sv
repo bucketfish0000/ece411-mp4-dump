@@ -16,8 +16,6 @@ module decode_stage
 
     output immediates::imm imm_data,
 
-    input logic ready_i,
-    input logic valid_i,
     output logic ready_o,
 
     output control_read cr
