@@ -18,7 +18,6 @@ import cpuIO::*;
     input logic br_en, 
     input rv32i_word ir_u_imm,  // make sure correct bit width? 
     input rv32i_word mem_data_out,
-    input logic mem_wb_rdy,
     input logic mem_wb_valid, 
 
     output rv32i_word regfilemux_out,
@@ -54,6 +53,10 @@ always_comb begin : regfile_ctrl_signals
         cw_out_rvfi.exe.cmpop = beq;
         cw_out_rvfi.exe.aluop = alu_add;
         cw_out_rvfi.exe.exefwdmux_sel = exefwdmux::alu_out;
+        cw_out_rvfi.exe.rs1signunsignmux_sel = rs1signunsignmux::sign;
+        cw_out_rvfi.exe.rs2signunsignmux_sel = rs2signunsignmux::sign;
+        cw_out_rvfi.exe.multihighlowmux_sel = multihighlowmux::low;
+        cw_out_rvfi.exe.divremquotmux_sel = divremquotmux::quotient;
         cw_out_rvfi.mem.mem_read_d = 1'b0;
         cw_out_rvfi.mem.mem_write_d = 1'b0;
         cw_out_rvfi.mem.store_funct3 = sb;
