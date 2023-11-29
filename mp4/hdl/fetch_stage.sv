@@ -15,7 +15,6 @@ module fetch_stage
    // output rv32i_word pc_prev,
     output rv32i_word pc_next,
     output rv32i_word instr_out,
-    output logic imem_read,
     
     output logic ready
 );

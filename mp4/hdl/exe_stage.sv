@@ -33,10 +33,9 @@ import immediates::*;
 
     output control_word rvfi_exe
 );
-
-    logic [63:0] prev_order;
     logic [31:0] rs1_o, rs2_o, alumux1_o, alumux2_o, cmpmux_o;/* multi_low, multi_high, multi_r2, multi_r1, alu_fake;*/
-    logic br_en_temp;
+    logic [63:0] prev_order;
+    logic br_en_temp, exe_rdy_multi;
     cmpmux::cmpmux_sel_t cmp_sel;
     alumux::alumux1_sel_t alumux1_sel;
     alumux::alumux2_sel_t alumux2_sel;
@@ -56,7 +55,13 @@ import immediates::*;
     assign j_imm = imm_in.j_imm;
     assign rs2_out = rs2_o;
     assign rs1_out = rs1_o;
-    assign exe_rdy = 1'b1;
+
+    always_ff @(posedge clk) begin : prev_order_tracker
+    if(rst)
+        prev_order <= 64'hffffffffffffffff;
+    else
+        prev_order <= ctrl_w.rvfi.order_commit;
+    end
 
     cmp cmp_logic(
         .cmpop(ctrl_w.exe.cmpop),
@@ -66,10 +71,14 @@ import immediates::*;
     );
 
     alu alu_logic(
-        .aluop(ctrl_w.exe.aluop),
+        .clk(clk),
+        .rst(rst),
+        .ctrl_w(ctrl_w.exe),
+        .new_instruction((prev_order != ctrl_w.rvfi.order_commit)),
         .a(alumux1_o), 
         .b(alumux2_o),
-        .f(alu_out) 
+        .f(alu_out),
+        .done(exe_rdy) 
     );
 
     always_comb begin : exe_mux
@@ -107,41 +116,6 @@ import immediates::*;
         endcase
     end
 
-// multiplier markiplier(
-//         .rs1(multi_r1),
-//         .rs2(multi_r2),
-//         .rd_low(alu_out),
-//         .rd_high(multi_high)
-// );
-
-// logic [6:0] counter; 
-
-// always_ff @ (posedge clk) begin
-//     if(rst) begin
-//         multi_r1 <= 32'b0001;
-//         multi_r2 <= 32'b0111;
-//         counter <= 7'b0;
-//         exe_rdy <= 1'b1;
-//     end
-//     else if(counter == 7'b1111111) begin
-//         multi_r1 <= multi_r1 + 32'b0101;
-//         multi_r2 <= multi_r2 + 32'b011;
-//         counter <=  counter + 7'b01;
-//         exe_rdy <= 1'b1;
-//     end
-//     else begin
-//         counter <=  counter + 7'b01;
-//         exe_rdy <= 1'b0;
-//     end
-// end
-
-always_ff @(posedge clk) begin : prev_order_tracker
-    if(!de_exe_valid)
-        prev_order <= 64'hffffffffffffffff;
-    else
-        prev_order <= ctrl_w.rvfi.order_commit;
-end
-
 logic [31:0] pc_temp;
 
 always_comb begin : regfile_ctrl_signals
@@ -155,6 +129,10 @@ always_comb begin : regfile_ctrl_signals
         rvfi_exe.exe.cmpop = beq;
         rvfi_exe.exe.aluop = alu_add;
         rvfi_exe.exe.exefwdmux_sel = exefwdmux::alu_out;
+        rvfi_exe.exe.rs1signunsignmux_sel = rs1signunsignmux::sign;
+        rvfi_exe.exe.rs2signunsignmux_sel = rs2signunsignmux::sign;
+        rvfi_exe.exe.multihighlowmux_sel = multihighlowmux::low;
+        rvfi_exe.exe.divremquotmux_sel = divremquotmux::quotient;
         rvfi_exe.mem.mem_read_d = 1'b0;
         rvfi_exe.mem.mem_write_d = 1'b0;
         rvfi_exe.mem.store_funct3 = sb;
@@ -226,6 +204,4 @@ always_comb begin : regfile_ctrl_signals
         end
     end
 end
-
-
 endmodule : exe_stage
