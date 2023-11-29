@@ -182,10 +182,19 @@ assign stall_exe_mem =
 assign stall_mem_wb = 
     ((rdy[0] == 0) && (vald[0] == 1)) || ((rdy[1] == 0)&&(vald[1] == 1));
 
+logic prediction;
 logic br, branch_taken;
 logic jump,jump_taken;
 assign br = br_en && (opcode_exec == op_br);
 assign jump = (opcode_exec == op_jal || opcode_exec == op_jalr);
+
+prediction = 0; //TODO temporary: this should come from ctrl word of exe
+/*
+TODO: case 
+prediction==take - no flush
+prediction = 0, take = 1: flush, new pc is alu_out
+prediction = 1, take = 0: flush, new pc is exe_pc + 4
+*/
 
 always_ff @(posedge clk, posedge rst) begin: br_jump_delay
     if (rst) begin
@@ -245,8 +254,8 @@ always_comb begin : pipeline_regs_logic
         // mem_wb_rst = 1'b0;
         //ppr rst (flushing control)
         //
-        if_de_rst = ((branch_taken||jump_taken)) ? 1'b1 : 1'b0;
-        de_exe_rst = ((branch_taken||jump_taken)) ? 1'b1 : 1'b0;
+        if_de_rst = (prediction!=(branch_taken||jump_taken)) ? 1'b1 : 1'b0;
+        de_exe_rst = (prediction!=(branch_taken||jump_taken)) ? 1'b1 : 1'b0;
         exe_mem_rst = 1'b0; 
         mem_wb_rst = 1'b0;
     
