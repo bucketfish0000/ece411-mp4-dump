@@ -243,6 +243,7 @@ package cpuIO;
         logic [3:0] wmask; //set in exe_mem
         logic [31:0] mem_rdata; //set in mem_wb(from mem)
         logic [31:0] mem_wdata; //set in exe_mem(mdo)
+        logic prediction;
     } rvfi_sigs;
 
     typedef struct {
