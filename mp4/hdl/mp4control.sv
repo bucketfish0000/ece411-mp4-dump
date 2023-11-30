@@ -188,7 +188,7 @@ logic jump,jump_taken;
 assign br = br_en && (opcode_exec == op_br);
 assign jump = (opcode_exec == op_jal || opcode_exec == op_jalr);
 
-prediction = 0; //TODO temporary: this should come from ctrl word of exe
+assign prediction = 0; //TODO temporary: this should come from ctrl word of exe
 /*
 TODO: case 
 prediction==take - no flush
