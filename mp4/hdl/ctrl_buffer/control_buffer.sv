@@ -102,16 +102,18 @@ function void set_defaults();
     update_jp_history = 16'b0;
 endfunction
 
-function logic[4:0] log2(logic[31:0] log_input);
+function logic[4:0] log2;
+    input logic[31:0] log_input;
+
     logic[31:0] input_copy;
-    logic[4:0] out_val = 5'b0;
+    log2 = 5'b0;
     
     input_copy=log_input;
     while(input_copy[0]==0) begin
         input_copy = input_copy >>1;
-        out_val +=1;
+        log2 +=1;
     end
-    return out_val;
+    return log2;
 endfunction
 
 always_comb begin : hit_idx_convert
