@@ -60,8 +60,8 @@ assign br_fetch_hit = |br_fetch_hits;
 assign jp_exe_hit = |jp_exe_hits;
 assign jp_fetch_hit = |jp_fetch_hits;
 
-logic [4:0] btb_head,btb_exe_hit_index, btb_fetch_hit_index;
-logic [3:0] jtb_head,jtb_exe_hit_index, jtb_fetch_hit_index;
+logic [4:0] btb_head, btb_exe_hit_index, btb_fetch_hit_index;
+logic [3:0] jtb_head, jtb_exe_hit_index, jtb_fetch_hit_index;
 
 ///generate!
 genvar i,j;
@@ -74,7 +74,7 @@ generate
             .pc_exe(pc_exe),.pc_fetch(pc_fetch),
             
             .fetch_pc_hit(br_fetch_hits[i]),.exe_pc_hit(br_exe_hits[i]),
-            .branch_prediction(branch_prediction[i]),
+            .branch_prediction(branch_predictions[i]),
             .branch_target(br_targets[i])
         );
     end
@@ -104,14 +104,14 @@ endfunction
 
 function logic[4:0] log2(logic[31:0] log_input);
     logic[31:0] input_copy;
-    logic[4:0] out = 5'b0;
+    logic[4:0] out_val = 5'b0;
     
     input_copy=log_input;
     while(input_copy[0]==0) begin
         input_copy = input_copy >>1;
-        out +=1;
+        out_val +=1;
     end
-    return out;
+    return out_val;
 endfunction
 
 always_comb begin : hit_idx_convert
@@ -120,21 +120,21 @@ always_comb begin : hit_idx_convert
     jtb_exe_hit_index = 4'b0;
     jtb_fetch_hit_index = 4'b0;
     if (br_exe_hit) btb_exe_hit_index = log2(br_exe_hits);
-    if (br_fetch_hit) btb_fetch_hit_indx = log2(br_fetch_hits);
-    if (jp_exe_hit) jtb_exe_hit_index = log2({16'b0,jp_exe_hits})[3:0];
-    if (jp_fetch_hit) jtb_fetch_hit_index = log2({16'b0,jp_fetch_hits})[3:0];
+    if (br_fetch_hit) btb_fetch_hit_index = log2(br_fetch_hits);
+    if (jp_exe_hit) jtb_exe_hit_index = log2({16'b0,jp_exe_hits});
+    if (jp_fetch_hit) jtb_fetch_hit_index = log2({16'b0,jp_fetch_hits});
 end
 
 always_comb begin : fetch_pc_lookup
     prediction = 1'b0;
     target = 32'hffffffff;//default to invalid
     if (br_fetch_hit) begin
-        prediction = branch_predictions[btb_fetch_hit_idx];
-        if (prediction) target = br_targets[btb_fetch_hit_idx];
+        prediction = branch_predictions[btb_fetch_hit_index];
+        if (prediction) target = br_targets[btb_fetch_hit_index];
     end
     else if (jp_fetch_hit) begin
         prediction = 1'b1;
-        target = jp_targets[jtb_fetch_hit_idx];
+        target = jp_targets[jtb_fetch_hit_index];
     end
 end
 
@@ -146,12 +146,12 @@ always_ff @(posedge clk) begin : queue_heads
     else if (sel) begin
         if (opcode == op_br) begin
             if (branch_taken) begin
-                btb_head <= (btb_head+1)[4:0];
+                btb_head <= (btb_head + 5'b01);
             end
         end
-        else if (opcode == op_jal || opcode == jalr) begin
+        else if (opcode == op_jal || opcode == op_jalr) begin
             if ((!jp_exe_hit) && branch_taken) begin
-                jtb_head <= (jtb_head+1)[3:0];
+                jtb_head <= (jtb_head + 4'b01);
             end
         end
     end
@@ -168,12 +168,12 @@ always_comb begin : buffer_operation
                 update_br_history[btb_exe_hit_index] = 1'b1;
             end
             else if (branch_taken) begin
-                update_br_pc[int'btb_head] = 1'b1;
+                update_br_pc[int'(btb_head)] = 1'b1;
             end
         end
         else if (opcode == op_jal || opcode == op_jalr) begin
             if ((!jp_exe_hit) && branch_taken) begin
-                update_jp_pc[int'jtb_head] = 1'b1;
+                update_jp_pc[int'(jtb_head)] = 1'b1;
             end
         end
     end
@@ -191,7 +191,7 @@ module btb_entry
     import cpuIO::*;
 (
     input clk,rst,
-    input logic update_pc, update_history, branch_taken,
+    input logic update_pc, update_history, branch_taken, prediction,
     input rv32i_word pc_exe, pc_fetch, target_offset,
     
     output logic fetch_pc_hit, exe_pc_hit,
@@ -203,18 +203,25 @@ module btb_entry
     logic[11:0] offset;
     logic[9:0] branch_hist;
     logic[9:0] prediction_hist;
+    logic[28:0] sig_ext_29;
+
+    always_comb begin : sig_ext_29_logic
+        if(offset[11]) sig_ext_29 = 29'b11111111111111111111111111111;
+        else sig_ext_29 = 29'b00000000000000000000000000000;
+    end
     
     assign fetch_pc_hit = (pc_fetch==instr_pc);
     assign exe_pc_hit = (pc_exe==instr_pc);
-    assign branch_target = (instr_pc + {29{offset[11]},offset[11:0],1'b0}); //sext bimm 
+    assign branch_target = (instr_pc + {sig_ext_29, offset[11:0], 1'b0}); //sext bimm 
 
     always_comb begin
         branch_prediction = 1'b0;
         if (branch_hist >= 10'b1110000000) branch_prediction = 1'b1;
-        else if (branch_hist < 10'b0000010000) branch_prediciton =  1'b0;
-        else 
+        else if (branch_hist < 10'b0000010000) branch_prediction =  1'b0;
+        else begin
             if (branch_hist ^ prediction_hist >= 10'b1101010000) branch_prediction = ~prediction_hist[9];
             else branch_prediction = prediction_hist[9];
+        end
     end
 
     always_ff @(posedge clk) begin 
@@ -233,7 +240,7 @@ module btb_entry
             end
             else if (update_history) begin
                 branch_hist <= {branch_taken,branch_hist[9:1]};
-                prediction_hist <= {prediction, prediction_hist[9:1]}
+                prediction_hist <= {prediction, prediction_hist[9:1]};
             end
         end
     end
