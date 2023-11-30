@@ -2,7 +2,7 @@ Magic 271485
 Revision Verdi_R-2020.12-SP1-1
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 25 1600 286 169 65
+viewPort 0 25 900 256 169 65
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
@@ -132,7 +132,6 @@ addSignal -h 15 /top_tb/dut/datapath/wb_fwding_reg/rst
 addSignal -h 15 /top_tb/dut/datapath/exe_mem_register/exe_mem_ld
 addSignal -h 15 /top_tb/dut/dmem_resp
 addSignal -h 15 -holdScope imem_resp
-addSignal -h 15 /top_tb/dut/datapath/mem_wb_register/exe_mem_valid
 addSignal -h 15 /top_tb/dut/datapath/exe_mem_register/br_en_i
 addSignal -h 15 -holdScope cw_in.rvfi.rs1_addr[4:0]
 addSignal -h 15 -holdScope cw_in.rvfi.rs2_addr[4:0]
@@ -144,12 +143,9 @@ addSignal -h 15 -holdScope instruct_in_mem.rs2_addr[4:0]
 addSignal -h 15 -holdScope instruct_in_mem.commit_order[63:0]
 addGroup "Memory Stage" -e FALSE
 addSignal -h 15 /top_tb/dut/icache0/datapath/clk
-addSignal -h 15 /top_tb/dut/datapath/memory/ctrl_w_MEM.mem_write_d
 addSignal -h 15 /top_tb/dut/dmem_resp
 addSignal -h 15 /top_tb/dut/datapath/memory/mem_resp_flag
 addSignal -h 15 -holdScope mem_ready
-addSignal -h 15 -holdScope ctrl_w_MEM.mem_write_d
-addSignal -h 15 -holdScope ctrl_w_MEM.mem_read_d
 addSignal -h 15 /top_tb/dut/datapath/mem_wb_register/cw_data.mem.mem_write_d
 addSignal -h 15 -holdScope cw_in.mem
 addGroup "mem_wb" -e FALSE

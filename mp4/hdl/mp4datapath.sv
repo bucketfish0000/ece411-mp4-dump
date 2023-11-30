@@ -114,7 +114,6 @@ fetch_stage fetch(
     .pc_next(pc_wdata),
     .instr_out(instr_fetch),
     .ready(fetch_ready_o)
-    //.imem_read(imem_read)
     );
 
 assign pc_rdata = pc_fetch;
@@ -157,8 +156,6 @@ decode_stage decode(
 
     .imm_data(imm_decode),
 
-    .ready_i(decode_ready_i),
-    .valid_i(decode_valid_i),
     .ready_o(decode_ready_o),
 
     .cr(cr)
@@ -178,7 +175,6 @@ dec_exe_reg dec_exe_reg(
 
     .imm_out(imm_exec),
 
-    .valid_i(decode_valid_i),
     .ready_i(decode_ready_o),
 
     .ready_o(exec_ready_i),
@@ -226,7 +222,6 @@ exe_mem_reg exe_mem_register(
     .br_en_i(br_en_exe_o), //from exe_stage
     .exe_mem_ld(exe_mem_load||sp_ld_commit), //from cpu_ctrl
     .exe_rdy(exec_ready_o),
-    .de_exe_valid(exec_valid_i),
     .alu_out_i(alu_out_exe), //from exe_stage
     .rs1_out_i(rs1_out), //from exe_stage
     .rs2_out_i(rs2_out), //from exe_stage
@@ -274,7 +269,6 @@ mem_wb_reg mem_wb_register(
     .br_en_i(br_en_exe_mem_o),
     .u_imm_i(u_imm_exec),
     .mem_rdata_D_i(dcache_out),
-    .exe_mem_valid(mem_valid_i),
     .u_imm_o(u_imm_wb),
     .mem_rdata_D_o(mem_rdata),
     .mem_fwd_data(mem_fwd_data),
@@ -297,7 +291,6 @@ wb_stage writeback(
     .br_en(br_en_mem_wb_o), 
     .ir_u_imm(u_imm_wb),
     .mem_data_out(mem_rdata),
-    .mem_wb_rdy(wb_ready_i),
     .mem_wb_valid(wb_valid_i),
 
     .regfilemux_out(regfilemux_out),

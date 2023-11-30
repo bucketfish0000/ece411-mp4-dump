@@ -1,0 +1,89 @@
+Magic 271485
+Revision Verdi_R-2020.12-SP1-1
+
+; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
+viewPort 0 25 1600 276 168 76
+
+; File list:
+; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
+openDirFile -d / "" "/home/bak7/fa23_ece411_fish-3880083d63d392c7ed446a7f52fdcab9e9e3a553/mp4/sim/dump.fsdb"
+
+; file time scale:
+; fileTimeScale ### s|ms|us|ns|ps
+
+; signal spacing:
+signalSpacing 5
+
+; windowTimeUnit is used for zoom, cursor & marker
+; waveform viewport range
+zoom 642360.000000 1067128.636699
+cursor 990000.000000
+marker 0.000000
+
+; user define markers
+; userMarker time_pos marker_name color linestyle
+; visible top row signal index
+top 21
+; marker line index
+markerPos 35
+
+; event list
+; addEvent event_name event_expression
+; curEvent event_name
+
+
+
+COMPLEX_EVENT_BEGIN
+
+
+COMPLEX_EVENT_END
+
+
+
+; toolbar current search type
+; curSTATUS search_type
+curSTATUS ByChange
+
+
+addGroup "G1"
+activeDirFile "" "/home/bak7/fa23_ece411_fish-3880083d63d392c7ed446a7f52fdcab9e9e3a553/mp4/sim/dump.fsdb"
+addSignal -h 15 /top_tb/dut/datapath/clk
+addSignal -h 15 -holdScope rst
+addSignal -h 15 /top_tb/dut/datapath/execute/alu_logic/multi_div/div_slow/a[31:0]
+addSignal -h 15 -holdScope b[31:0]
+addSignal -h 15 -holdScope q[31:0]
+addSignal -h 15 -holdScope r[31:0]
+addSignal -h 15 -holdScope done
+addSignal -h 15 -holdScope z_out[63:0]
+addGroup "G2"
+addGroup "G3"
+addSignal -h 15 -UNSIGNED /top_tb/dut/datapath/execute/alu_logic/ctrl_w.aluop[3:0]
+addSignal -h 15 -UNSIGNED /top_tb/dut/datapath/execute/opcode_exe[6:0]
+addSignal -h 15 -holdScope ctrl_w.rvfi.order_commit[63:0]
+addSignal -h 15 -holdScope ctrl_w.rvfi.instruction[31:0]
+addSignal -h 15 /top_tb/dut/datapath/execute/alu_logic/multi_div/div_slow/a[31:0]
+addSignal -h 15 -holdScope b[31:0]
+addGroup "G4"
+addSignal -h 15 /top_tb/dut/datapath/execute/alu_logic/multi_div/div_error
+addSignal -h 15 -holdScope overflow
+addSignal -h 15 -holdScope div_zero
+addSignal -h 15 -holdScope rs1_i[31:0]
+addSignal -h 15 /top_tb/dut/datapath/execute/alu_logic/multi_div/div_slow/divy_cmp
+addSignal -h 15 /top_tb/dut/datapath/execute/alu_logic/multi_div/rs2_i[31:0]
+addSignal -h 15 -holdScope rd_o[31:0]
+addSignal -h 15 -holdScope rs1signunsignmux_sel
+addGroup "G5"
+addSignal -h 15 /top_tb/dut/datapath/execute/alu_logic/multi_div/div_slow/div_cpm/zed_in[32:0]
+addSignal -h 15 -holdScope ded_in[32:0]
+addSignal -h 15 -holdScope compare
+addSignal -h 15 /top_tb/dut/datapath/execute/alu_logic/multi_div/div_slow/shifty_2_duh_left/z_in[63:0]
+addGroup "G6"
+addSignal -h 15 /top_tb/dut/datapath/execute/alu_logic/multi_div/done_multi
+addSignal -h 15 -holdScope rs2signunsignmux_sel
+addSignal -h 15 -holdScope rs1signunsignmux_sel
+addSignal -h 15 -holdScope multi_o[31:0]
+addGroup "G7"
+
+; getSignalForm Scope Hierarchy Status
+; active file of getSignalForm
+
