@@ -3,8 +3,6 @@ module mem_word_adapter
     import rv32i_cache_types::*; 
     import cpuIO::*;
 (
-    input clk, rst,
-
     input rv32i_word mem_address, // word aligned 
     output rv32i_word cacheline_mem_address, 
 

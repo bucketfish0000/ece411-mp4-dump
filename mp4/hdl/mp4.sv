@@ -117,8 +117,6 @@ import cpuIO::*;
         //...anything else?
 
         /*---mem_stage signals---*/
-        .mem_read_D(mem_r_d),
-        .mem_write_D(mem_w_d),
         //...anything else?
 
         .opcode_exec(opcode_exec),
@@ -240,7 +238,6 @@ import cpuIO::*;
 
     //good
     mem_word_adapter imem_word_adapter(
-        .clk(clk), .rst(rst),
         .mem_address(imem_address), //in
         .cacheline_mem_address(cacheline_imem_address), //out
         .cacheline_rdata(imem_cacheline_rdata), //in
@@ -252,7 +249,6 @@ import cpuIO::*;
     );
 
     mem_word_adapter dmem_word_adapter(
-        .clk(clk), .rst(rst),
         .mem_address(dmem_address), //in
         .cacheline_mem_address(cacheline_dmem_address), 
         .cacheline_rdata(dmem_cacheline_rdata), 
