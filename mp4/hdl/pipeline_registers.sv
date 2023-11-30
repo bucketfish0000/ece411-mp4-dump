@@ -52,7 +52,11 @@ module fet_dec_reg
         else if((load||ld_commit) && !if_de_rst)
             order_counter <= order_counter + 64'b01;
         else if(if_de_rst && sp_ld_commit) begin
+            //min 4800 clk cycle, 1.28e+04 power draw, shaves 5.5 seconds off of 10000 cycle time
             order_counter <= order_counter - 64'b01;
+            //if we cheat we can get to clock cycle of 4400, maybe a bit lower. Assumes that only bottom 24 bits will be used
+            //saves like 5.5 seconds in coremark im vs 4800 clk cycle, but 1.38e+04 power draw
+            // order_counter <= {40'h0, order_counter[23:0] - 24'b01};
         end
     end
 
