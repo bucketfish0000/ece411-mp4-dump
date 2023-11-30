@@ -2,11 +2,11 @@ Magic 271485
 Revision Verdi_R-2020.12-SP1-1
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 25 960 332 153 65
+viewPort 0 25 1600 241 153 65
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
-openDirFile -d / "" "/home/bak7/fa23_ece411_fish-main/working_fwding/mp4/sim/dump.fsdb"
+openDirFile -d / "" "/home/bak7/fa23_ece411_fish-3880083d63d392c7ed446a7f52fdcab9e9e3a553/mp4/sim/dump.fsdb"
 
 ; file time scale:
 ; fileTimeScale ### s|ms|us|ns|ps
@@ -16,16 +16,16 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 0.000000 155540.000000
-cursor 0.000000
+zoom 695453.958656 989800.000000
+cursor 920000.000000
 marker 0.000000
 
 ; user define markers
 ; userMarker time_pos marker_name color linestyle
 ; visible top row signal index
-top 0
+top 15
 ; marker line index
-markerPos 3
+markerPos 19
 
 ; event list
 ; addEvent event_name event_expression
@@ -46,10 +46,26 @@ curSTATUS ByChange
 
 
 addGroup "G1"
-activeDirFile "" "/home/bak7/fa23_ece411_fish-main/working_fwding/mp4/sim/dump.fsdb"
-addSignal -h 15 /top_tb/dut/datapath/execute/multi_o[31:0]
-addSignal -h 15 /top_tb/dut/datapath/execute/markiplier/rs1[31:0]
+activeDirFile "" "/home/bak7/fa23_ece411_fish-3880083d63d392c7ed446a7f52fdcab9e9e3a553/mp4/sim/dump.fsdb"
+addSignal -h 15 /top_tb/dut/datapath/execute/alu_logic/multi_div/multi/clk
+addSignal -h 15 -holdScope rst
+addSignal -h 15 -holdScope start
+addSignal -h 15 -holdScope rs1[31:0]
 addSignal -h 15 -holdScope rs2[31:0]
+addSignal -h 15 -holdScope rd_low[31:0]
+addSignal -h 15 -holdScope rd_high[31:0]
+addSignal -h 15 -holdScope done
+addSignal -expanded -h 15 -holdScope ult_result
+addSignal -h 15 -holdScope ult_result.lay_1_struct
+addSignal -h 15 -holdScope ult_result.lay_2_struct
+addSignal -h 15 -holdScope ult_result.lay_3_struct
+addSignal -h 15 -holdScope ult_result.lay_4_struct
+addSignal -h 15 -holdScope ult_result.lay_5_struct
+addSignal -h 15 -holdScope ult_result.lay_6_struct
+addSignal -h 15 -holdScope count[3:0]
+addSignal -h 15 -holdScope new_instruction
+addSignal -h 15 /top_tb/dut/datapath/execute/alu_logic/multi_div/multi_o[31:0]
+addSignal -h 15 -holdScope rd_o[31:0]
 addGroup "G2"
 
 ; getSignalForm Scope Hierarchy Status

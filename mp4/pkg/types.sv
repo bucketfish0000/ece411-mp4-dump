@@ -113,6 +113,12 @@ typedef enum bit {
 } multihighlowmux_sel_t;
 endpackage
 
+package divremquotmux;
+typedef enum bit {
+    quotient = 1'b0
+    ,remainder = 1'b1
+} divremquotmux_sel_t;
+endpackage
 
 package rv32i_types;
 // Mux types are in their own packages to prevent identiier collisions
@@ -179,16 +185,19 @@ typedef enum bit [2:0] {
     aand = 3'b111
 } arith_funct3_t;
 
-typedef enum bit [2:0] {
-    alu_add = 3'b000,
-    alu_sll = 3'b001,
-    alu_sra = 3'b010,
-    alu_sub = 3'b011,
-    alu_xor = 3'b100,
-    alu_srl = 3'b101,
-    alu_or  = 3'b110,
-    alu_and = 3'b111
+typedef enum bit [3:0] {
+    alu_add = 4'b0000,
+    alu_sll = 4'b0001,
+    alu_sra = 4'b0010,
+    alu_sub = 4'b0011,
+    alu_xor = 4'b0100,
+    alu_srl = 4'b0101,
+    alu_or  = 4'b0110,
+    alu_and = 4'b0111,
+    alu_mul = 4'b1000,
+    alu_div = 4'b1001
 } alu_ops;
+
 
 endpackage
 
@@ -211,6 +220,10 @@ package cpuIO;
         rv32i_types::alu_ops aluop;
         rv32i_types::branch_funct3_t cmpop;
         exefwdmux::exefwdmux_sel_t exefwdmux_sel;
+        rs1signunsignmux::rs1signunsignmux_sel_t rs1signunsignmux_sel;
+        rs2signunsignmux::rs2signunsignmux_sel_t rs2signunsignmux_sel;
+        multihighlowmux::multihighlowmux_sel_t multihighlowmux_sel;
+        divremquotmux::divremquotmux_sel_t divremquotmux_sel;
     } cw_execute;
 
     typedef struct {
