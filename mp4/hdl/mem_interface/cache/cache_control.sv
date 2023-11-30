@@ -5,6 +5,7 @@ module cache_control (
     //cpu interaction    
     input cpu_read,
     input cpu_write,
+    input mem_cancel,
     output logic cache_resp,//!!!
 
     //mem interaction
@@ -145,11 +146,11 @@ end
 //state transition
 always_comb
 begin: next_state_logic
-    if(rst) next_state=idle;
+    if(rst || mem_cancel) next_state=idle;
     else begin
     case(state)
         idle:begin
-            if ((ex_read || ex_write)&&(~cache_resp)) next_state = hit_look;
+            if ((ex_read || ex_write)) next_state = hit_look;
             else next_state = idle;
         end
         hit_look: begin

@@ -24,7 +24,7 @@ module fet_dec_reg
     output logic [63:0] commit_order
 );
 
-    logic ready,valid_r;
+    logic ready;
     logic[31:0] instr,pc_r, pc_w;
     logic [63:0] order_counter;
 
@@ -52,7 +52,11 @@ module fet_dec_reg
         else if((load||ld_commit) && !if_de_rst)
             order_counter <= order_counter + 64'b01;
         else if(if_de_rst && sp_ld_commit) begin
+            //min 4800 clk cycle, 1.28e+04 power draw, shaves 5.5 seconds off of 10000 cycle time
             order_counter <= order_counter - 64'b01;
+            //if we cheat we can get to clock cycle of 4400, maybe a bit lower. Assumes that only bottom 24 bits will be used
+            //saves like 5.5 seconds in coremark im vs 4800 clk cycle, but 1.38e+04 power draw
+            // order_counter <= {40'h0, order_counter[23:0] - 24'b01};
         end
     end
 
@@ -68,19 +72,13 @@ module fet_dec_reg
     //valid register
     always_ff @(posedge clk, posedge rst) begin : valid_reg
         if(rst) begin
-            valid_r <= 1'b0;
             valid_o <= 1'b0;
         end
         else if(if_de_rst) begin
-            valid_r <= 1'b0;
             valid_o <= 1'b0;
         end
         else if((load == 1)) begin
-            valid_r <= 1'b1;
             valid_o <= 1'b1;
-        end
-        else begin
-            valid_o <= valid_r;
         end
     end
 endmodule : fet_dec_reg
@@ -98,7 +96,6 @@ module dec_exe_reg
     output immediates::imm imm_out,
 
     input logic ready_i,
-    input logic valid_i,
     output logic ready_o,
     output logic valid_o,
     input rv32i_opcode opcode_dec,
@@ -111,7 +108,7 @@ module dec_exe_reg
 );
 
     immediates::imm imm_data;
-    logic ready,valid_r;
+    logic ready;
     control_word cw_data;
     rv32i_opcode opcode_data;
     always_ff @(posedge clk)
@@ -123,7 +120,7 @@ module dec_exe_reg
             imm_data.b_imm <= 32'b0;
             imm_data.s_imm <= 32'b0;
             imm_data.j_imm <= 32'b0;
-            opcode_data<=7'b0;
+            opcode_data<= rv32i_opcode'(7'b0);
             ready<= 1'b0;
 
             cw_data.exe.cmp_sel <= cmpmux::rs2_out;
@@ -134,6 +131,10 @@ module dec_exe_reg
             cw_data.exe.cmpop <= beq;
             cw_data.exe.aluop <= alu_add;
             cw_data.exe.exefwdmux_sel <= exefwdmux::alu_out;
+            cw_data.exe.rs1signunsignmux_sel <= rs1signunsignmux::sign;
+            cw_data.exe.rs2signunsignmux_sel <= rs2signunsignmux::sign;
+            cw_data.exe.multihighlowmux_sel <= multihighlowmux::low;
+            cw_data.exe.divremquotmux_sel <= divremquotmux::quotient;
             cw_data.mem.mem_read_d <= 1'b0;
             cw_data.mem.mem_write_d <= 1'b0;
             cw_data.mem.store_funct3 <= sb;
@@ -172,11 +173,11 @@ module dec_exe_reg
         imm_out=imm_data;
         ready_o = ready;
         cw_out=cw_data;
-        opcode_dec_exe=cw_data.rvfi.instruction[6:0];
+        opcode_dec_exe=rv32i_opcode'(cw_data.rvfi.instruction[6:0]);
     end
 
     always_comb begin : hzd_reg_in_exe
-        instruct_in_exe.opcode = cw_data.rvfi.instruction[6:0];
+        instruct_in_exe.opcode = rv32i_opcode'(cw_data.rvfi.instruction[6:0]);
         instruct_in_exe.rd_addr = cw_data.wb.rd_sel;
         instruct_in_exe.rs1_addr = cw_data.rvfi.rs1_addr;
         instruct_in_exe.rs2_addr = cw_data.rvfi.rs2_addr;
@@ -186,15 +187,10 @@ module dec_exe_reg
     //valid register
     always_ff @(posedge clk) begin : valid_reg
         if(rst) begin
-            valid_r <= 1'b0;
             valid_o <= 1'b0;
         end
         else if((load == 1)) begin
-            valid_r <= 1'b1;
             valid_o <= 1'b1;
-        end
-        else begin
-            valid_o <= valid_r;
         end
     end
 
@@ -217,7 +213,6 @@ import cpuIO::*;
     input logic br_en_i, 
     input logic exe_mem_ld, 
     input logic exe_rdy,
-    input logic de_exe_valid,
     input logic [31:0] alu_out_i,
     input logic [31:0] rs1_out_i, 
     input logic [31:0] rs2_out_i,
@@ -241,11 +236,8 @@ import cpuIO::*;
     output hzds instruct_in_mem
 );
 
-    logic [31:0] fwd_r_EX, u_imm_r, fwd_temp;
-    logic [3:0] mem_byte_enable_r;
+    logic [31:0] fwd_temp;
     control_word cw_data;
-    rv32i_opcode opcode_data;
-    logic br_en_r, valid_r, ready_r;
     logic[31:0] rs2_to_mem;
 
     logic [31:0] marmux_o, mem_addr;
@@ -257,6 +249,7 @@ import cpuIO::*;
             exefwdmux::alu_out: fwd_temp = alu_out_i;
             exefwdmux::br_en_zext: fwd_temp = {31'b0, br_en_i};
             exefwdmux::u_imm: fwd_temp = u_imm_i;
+            exefwdmux::jalr: fwd_temp = cw_in.rvfi.pc_rdata + 32'h04;
         endcase
     end
 
@@ -264,14 +257,9 @@ import cpuIO::*;
     always_ff @ (posedge clk, posedge rst) begin : fwd_EX_reg
         if(rst)begin
             exe_fwd_data <= 32'b0;
-            fwd_r_EX <= 32'b0;
         end
         else if((exe_mem_ld == 1)) begin
             exe_fwd_data <= fwd_temp;
-            fwd_r_EX <= fwd_temp;
-        end
-        else begin
-            exe_fwd_data <= fwd_r_EX;
         end
     end
 
@@ -286,6 +274,10 @@ import cpuIO::*;
             cw_data.exe.cmpop <= beq;
             cw_data.exe.aluop <= alu_add;
             cw_data.exe.exefwdmux_sel <= exefwdmux::alu_out;
+            cw_data.exe.rs1signunsignmux_sel <= rs1signunsignmux::sign;
+            cw_data.exe.rs2signunsignmux_sel <= rs2signunsignmux::sign;
+            cw_data.exe.multihighlowmux_sel <= multihighlowmux::low;
+            cw_data.exe.divremquotmux_sel <= divremquotmux::quotient;
             cw_data.mem.mem_read_d <= 1'b0;
             cw_data.mem.mem_write_d <= 1'b0;
             cw_data.mem.store_funct3 <= sb;
@@ -310,39 +302,6 @@ import cpuIO::*;
             cw_data.rvfi.wmask <= 4'b0;//done
             cw_data.rvfi.mem_rdata <= 32'b0;//done
             cw_data.rvfi.mem_wdata <= 32'b0;//done
-
-            cw_out.exe.cmp_sel <= cmpmux::rs2_out;
-            cw_out.exe.alumux1_sel <= alumux::rs1_out;
-            cw_out.exe.alumux2_sel <= alumux::i_imm;
-            cw_out.exe.rs1_sel <= rs1mux::rs1_data;
-            cw_out.exe.rs2_sel <= rs2mux::rs2_data;
-            cw_out.exe.cmpop <= beq;
-            cw_out.exe.aluop <= alu_add;
-            cw_out.exe.exefwdmux_sel <= exefwdmux::alu_out;
-            cw_out.mem.mem_read_d <= 1'b0;
-            cw_out.mem.mem_write_d <= 1'b0;
-            cw_out.mem.store_funct3 <= sb;
-            cw_out.mem.load_funct3 <= lb;
-            cw_out.mem.mar_sel <= marmux::pc_out;
-            cw_out.mem.memfwdmux_sel <= memfwdmux::mem_fwd_data;
-            cw_out.wb.ld_reg <= 1'b0;
-            cw_out.wb.regfilemux_sel <= regfilemux::alu_out;
-            cw_out.wb.rd_sel <= 5'b00000;
-            cw_out.rvfi.valid_commit <= 1'b0;//done
-            cw_out.rvfi.order_commit <= 64'b0;//done
-            cw_out.rvfi.instruction <= 32'b0;//done
-            cw_out.rvfi.rs1_addr <= 5'b0; //done
-            cw_out.rvfi.rs2_addr <= 5'b0; //dome
-            cw_out.rvfi.rs1_data <= 32'b0; //done
-            cw_out.rvfi.rs2_data <= 32'b0; //done
-            cw_out.rvfi.rd_wdata <= 32'b0;//done
-            cw_out.rvfi.pc_rdata <= 32'h40000000;//done
-            cw_out.rvfi.pc_wdata <= 32'b0;//done
-            cw_out.rvfi.mem_addr <= 32'b0;//done
-            cw_out.rvfi.rmask <= 4'b0;//done
-            cw_out.rvfi.wmask <= 4'b0;//done
-            cw_out.rvfi.mem_rdata <= 32'b0;//done
-            cw_out.rvfi.mem_wdata <= 32'b0;//done
         end
         else if((exe_mem_ld == 1)) begin
             cw_data.exe <= cw_in.exe;
@@ -363,33 +322,13 @@ import cpuIO::*;
             cw_data.rvfi.wmask <= wmask_temp;//done
             cw_data.rvfi.mem_rdata <= cw_in.rvfi.mem_rdata;//done
             cw_data.rvfi.mem_wdata <= rs2_to_mem;//done
-
-            cw_out.exe <= cw_in.exe;
-            cw_out.mem <= cw_in.mem;
-            cw_out.wb <= cw_in.wb;
-            cw_out.rvfi.valid_commit <= cw_in.rvfi.valid_commit;//done
-            cw_out.rvfi.order_commit <= cw_in.rvfi.order_commit;//done
-            cw_out.rvfi.instruction <= cw_in.rvfi.instruction;//done
-            cw_out.rvfi.rs1_addr <= cw_in.rvfi.rs1_addr; //done
-            cw_out.rvfi.rs2_addr <= cw_in.rvfi.rs2_addr; //dome
-            cw_out.rvfi.rs1_data <= rs1_out_i; //done
-            cw_out.rvfi.rs2_data <= rs2_out_i; //done
-            cw_out.rvfi.rd_wdata <= cw_in.rvfi.rd_wdata;//done
-            cw_out.rvfi.pc_rdata <= cw_in.rvfi.pc_rdata;//done
-            cw_out.rvfi.pc_wdata <= cw_in.rvfi.pc_wdata;//done
-            cw_out.rvfi.mem_addr <= mem_addr;//done
-            cw_out.rvfi.rmask <= rmask;//done
-            cw_out.rvfi.wmask <= wmask_temp;//done
-            cw_out.rvfi.mem_rdata <= cw_in.rvfi.mem_rdata;//done
-            cw_out.rvfi.mem_wdata <= rs2_to_mem;//done
-        end
-        else begin
-            cw_out <= cw_data;
         end
     end
 
+    assign cw_out = cw_data;
+
     always_comb begin : hzd_reg_in_mem
-        instruct_in_mem.opcode = cw_data.rvfi.instruction[6:0];
+        instruct_in_mem.opcode = rv32i_opcode'(cw_data.rvfi.instruction[6:0]);
         instruct_in_mem.rd_addr = cw_data.wb.rd_sel;
         instruct_in_mem.rs1_addr = cw_data.rvfi.rs1_addr;
         instruct_in_mem.rs2_addr = cw_data.rvfi.rs2_addr;
@@ -409,34 +348,23 @@ import cpuIO::*;
     //valid register
     always_ff @(posedge clk, posedge rst) begin : valid_reg
         if(rst) begin
-            valid_r <= 1'b0;
             exe_mem_valid <= 1'b0;
         end
         else if(exe_mem_rst) begin
-            valid_r <= 1'b0;
             exe_mem_valid <= 1'b0;
         end
         else if((exe_mem_ld == 1)) begin
-            valid_r <= 1'b1;
             exe_mem_valid <= 1'b1;
-        end
-        else begin
-            exe_mem_valid <= valid_r;
         end
     end
 
     //ready register
     always_ff @(posedge clk, posedge rst) begin : ready_reg
         if(rst) begin
-            ready_r <= 1'b0;
             exe_mem_rdy <= 1'b0;
         end
         else if((exe_mem_ld == 1)) begin
-            ready_r <= exe_rdy;
             exe_mem_rdy <= exe_rdy;
-        end
-        else begin
-            exe_mem_rdy <= ready_r;
         end
     end
 
@@ -444,14 +372,9 @@ import cpuIO::*;
     always_ff @ (posedge clk, posedge rst) begin : u_imm_register
         if(rst)begin
             u_imm_o <= 32'b0;
-            u_imm_r <= 32'b0;
         end
         else if((exe_mem_ld == 1)) begin
             u_imm_o <= u_imm_i;
-            u_imm_r <= u_imm_i;
-        end
-        else begin
-            u_imm_o <= u_imm_r;
         end
     end
 
@@ -495,7 +418,6 @@ import cpuIO::*;
             case (cw_in.mem.store_funct3)
                 sw: begin
                     wmask_temp = 4'b1111;
-                    rs2_to_mem = rs2_out_i;
                 end
                 sh: begin
                     wmask_temp = (4'b0011) << (marmux_o%4); /* Modify for MP1 Final */ //correct???
@@ -519,20 +441,14 @@ import cpuIO::*;
     always_ff @ (posedge clk, posedge rst) begin : mem_byte_enable_register
         if(rst)begin
             mem_byte_enable <= 4'b0000;
-            mem_byte_enable_r <= 4'b0000;
         end
         else if((exe_mem_ld == 1) && ((cw_in.mem.mem_read_d) || (cw_in.mem.mem_write_d))) begin
             if(cw_in.mem.mem_read_d) begin
                 mem_byte_enable <= rmask;
-                mem_byte_enable_r <= rmask;
             end
             else if(cw_in.mem.mem_write_d) begin
                 mem_byte_enable <= wmask_temp;
-                mem_byte_enable_r <= wmask_temp;
             end
-        end
-        else begin
-            mem_byte_enable <= mem_byte_enable_r;
         end
     end
 
@@ -569,7 +485,6 @@ module mem_wb_reg
     input logic br_en_i,
     input logic [31:0] u_imm_i,
     input logic [31:0] mem_rdata_D_i,
-    input logic exe_mem_valid,
     output logic [31:0] u_imm_o,
     output logic [31:0] mem_rdata_D_o,
     output logic [31:0] mem_fwd_data,
@@ -586,23 +501,58 @@ module mem_wb_reg
     logic [31:0] alu_out_r, u_imm_r, mem_rdata_r, memfwdmux_o, mem_fwd_data_r, whole_byte, whole_half, true_mem_i;
     control_word cw_data;
     logic br_en_r, valid_r, ready_r;
+    logic [7:0] byte_in;
+    logic [15:0] half_in;
+
+    always_comb begin : mem_data_slice_selection
+        case(cw_in.rvfi.rmask)
+            4'b0001: begin
+                byte_in = mem_rdata_D_i[7:0];
+                half_in = 16'hb00b;
+            end
+            4'b0010: begin
+                byte_in = mem_rdata_D_i[15:8];
+                half_in = 16'hb00b;
+            end
+            4'b0100: begin
+                byte_in = mem_rdata_D_i[23:16];
+                half_in = 16'hb00b;
+            end
+            4'b1000: begin
+                byte_in = mem_rdata_D_i[31:24];
+                half_in = 16'hb00b;
+            end
+            4'b0011: begin
+                byte_in = 8'hab;
+                half_in = mem_rdata_D_i[15:0];
+            end
+            4'b1100: begin
+                byte_in = 8'hab;
+                half_in = mem_rdata_D_i[31:16];
+            end
+            default: begin
+                byte_in = 8'hab;
+                half_in = 16'hb00b;
+            end
+        endcase
+    end
 
     sext_byte sexy_byte(
-        .byte_in(mem_rdata_D_i[7:0]),
+        .byte_in(byte_in),
         .whole_byte_out(whole_byte)
     );
 
     sext_half sexy_half(
-        .half_in(mem_rdata_D_i[15:0]),
+        .half_in(half_in),
         .whole_half_out(whole_half)
     );
 
     always_comb begin
         case(cw_in.wb.regfilemux_sel)
             regfilemux::lb: true_mem_i = whole_byte;
-            regfilemux::lbu: true_mem_i = {24'b0, mem_rdata_D_i[7:0]};
+            regfilemux::lbu: true_mem_i = {24'b0, byte_in};
             regfilemux::lh: true_mem_i = whole_half;
-            regfilemux::lhu: true_mem_i = {16'b0, mem_rdata_D_i[15:0]};
+            regfilemux::lhu: true_mem_i = {16'b0, half_in};
             default: true_mem_i = mem_rdata_D_i;
         endcase
     end
@@ -611,6 +561,7 @@ module mem_wb_reg
         unique case(cw_in.mem.memfwdmux_sel)
             memfwdmux::mem_fwd_data: memfwdmux_o = true_mem_i;
             memfwdmux::exe_fwd_data: memfwdmux_o = alu_out_i;
+            memfwdmux::pc_plus_4: memfwdmux_o = cw_in.rvfi.pc_rdata + 4;
         endcase
     end
 
@@ -618,14 +569,9 @@ module mem_wb_reg
     always_ff @ (posedge clk, posedge rst) begin : mem_fwd_data_reg
         if(rst)begin
             mem_fwd_data <= 32'b0;
-            mem_fwd_data_r <= 32'b0;
         end
         else if((mem_wb_ld == 1)) begin
             mem_fwd_data <= memfwdmux_o;
-            mem_fwd_data_r <= memfwdmux_o;
-        end
-        else begin
-            mem_fwd_data <= mem_fwd_data_r;
         end
     end
 
@@ -633,14 +579,9 @@ module mem_wb_reg
     always_ff @ (posedge clk, posedge rst) begin : mem_rdata_reg
         if(rst)begin
             mem_rdata_D_o <= 32'b0;
-            mem_rdata_r <= 32'b0;
         end
         else if((mem_wb_ld == 1)) begin
             mem_rdata_D_o <= true_mem_i;
-            mem_rdata_r <= true_mem_i;
-        end
-        else begin
-            mem_rdata_D_o <= mem_rdata_r;
         end
     end
 
@@ -648,14 +589,9 @@ module mem_wb_reg
     always_ff @ (posedge clk, posedge rst) begin : alu_out_reg
         if(rst)begin
             alu_out_o <= 32'b0;
-            alu_out_r <= 32'b0;
         end
         else if((mem_wb_ld == 1)) begin
             alu_out_o <= alu_out_i;
-            alu_out_r <= alu_out_i;
-        end
-        else begin
-            alu_out_o <= alu_out_r;
         end
     end
 
@@ -671,6 +607,10 @@ module mem_wb_reg
             cw_data.exe.cmpop <= beq;
             cw_data.exe.aluop <= alu_add;
             cw_data.exe.exefwdmux_sel <= exefwdmux::alu_out;
+            cw_data.exe.rs1signunsignmux_sel <= rs1signunsignmux::sign;
+            cw_data.exe.rs2signunsignmux_sel <= rs2signunsignmux::sign;
+            cw_data.exe.multihighlowmux_sel <= multihighlowmux::low;
+            cw_data.exe.divremquotmux_sel <= divremquotmux::quotient;
             cw_data.mem.mem_read_d <= 1'b0;
             cw_data.mem.mem_write_d <= 1'b0;
             cw_data.mem.store_funct3 <= sb;
@@ -695,39 +635,6 @@ module mem_wb_reg
             cw_data.rvfi.wmask <= 4'b0;//done
             cw_data.rvfi.mem_rdata <= 32'b0;//done
             cw_data.rvfi.mem_wdata <= 32'b0;//done
-
-            cw_out.exe.cmp_sel <= cmpmux::rs2_out;
-            cw_out.exe.alumux1_sel <= alumux::rs1_out;
-            cw_out.exe.alumux2_sel <= alumux::i_imm;
-            cw_out.exe.rs1_sel <= rs1mux::rs1_data;
-            cw_out.exe.rs2_sel <= rs2mux::rs2_data;
-            cw_out.exe.cmpop <= beq;
-            cw_out.exe.aluop <= alu_add;
-            cw_out.exe.exefwdmux_sel <= exefwdmux::alu_out;
-            cw_out.mem.mem_read_d <= 1'b0;
-            cw_out.mem.mem_write_d <= 1'b0;
-            cw_out.mem.store_funct3 <= sb;
-            cw_out.mem.load_funct3 <= lb;
-            cw_out.mem.mar_sel <= marmux::pc_out;
-            cw_out.mem.memfwdmux_sel <= memfwdmux::mem_fwd_data;
-            cw_out.wb.ld_reg <= 1'b0;
-            cw_out.wb.regfilemux_sel <= regfilemux::alu_out;
-            cw_out.wb.rd_sel <= 5'b00000;
-            cw_out.rvfi.valid_commit <= 1'b0;//done
-            cw_out.rvfi.order_commit <= 64'b0;//done
-            cw_out.rvfi.instruction <= 32'b0;//done
-            cw_out.rvfi.rs1_addr <= 5'b0; //done
-            cw_out.rvfi.rs2_addr <= 5'b0; //dome
-            cw_out.rvfi.rs1_data <= 32'b0; //done
-            cw_out.rvfi.rs2_data <= 32'b0; //done
-            cw_out.rvfi.rd_wdata <= 32'b0;//done
-            cw_out.rvfi.pc_rdata <= 32'h40000000;//done
-            cw_out.rvfi.pc_wdata <= 32'b0;//done
-            cw_out.rvfi.mem_addr <= 32'b0;//done
-            cw_out.rvfi.rmask <= 4'b0;//done
-            cw_out.rvfi.wmask <= 4'b0;//done
-            cw_out.rvfi.mem_rdata <= 32'b0;//done
-            cw_out.rvfi.mem_wdata <= 32'b0;//done
         end
         else if((mem_wb_ld == 1)) begin
             if(cw_data.rvfi.instruction[6:0] == 7'b0000011) begin
@@ -749,25 +656,6 @@ module mem_wb_reg
                 cw_data.rvfi.wmask <= cw_in.rvfi.wmask;//done
                 cw_data.rvfi.mem_rdata <= mem_rdata_D_i;//done
                 cw_data.rvfi.mem_wdata <= cw_in.rvfi.mem_wdata;//done
-
-                cw_out.exe <= cw_in.exe;
-                cw_out.mem <= cw_in.mem;
-                cw_out.wb <= cw_in.wb;
-                cw_out.rvfi.valid_commit <= cw_in.rvfi.valid_commit;//done
-                cw_out.rvfi.order_commit <= cw_in.rvfi.order_commit;//done
-                cw_out.rvfi.instruction <= cw_in.rvfi.instruction;//done
-                cw_out.rvfi.rs1_addr <= cw_in.rvfi.rs1_addr; //done
-                cw_out.rvfi.rs2_addr <= cw_in.rvfi.rs2_addr; //dome
-                cw_out.rvfi.rs1_data <= cw_in.rvfi.rs1_data; //done
-                cw_out.rvfi.rs2_data <= cw_in.rvfi.rs2_data; //done
-                cw_out.rvfi.rd_wdata <= true_mem_i;//done
-                cw_out.rvfi.pc_rdata <= cw_in.rvfi.pc_rdata;//done
-                cw_out.rvfi.pc_wdata <= cw_in.rvfi.pc_wdata;//done
-                cw_out.rvfi.mem_addr <= cw_in.rvfi.mem_addr;//done
-                cw_out.rvfi.rmask <= cw_in.rvfi.rmask;//done
-                cw_out.rvfi.wmask <= cw_in.rvfi.wmask;//done
-                cw_out.rvfi.mem_rdata <= mem_rdata_D_i;//done
-                cw_out.rvfi.mem_wdata <= cw_in.rvfi.mem_wdata;//done
             end
             else begin
                 cw_data.exe <= cw_in.exe;
@@ -788,34 +676,14 @@ module mem_wb_reg
                 cw_data.rvfi.wmask <= cw_in.rvfi.wmask;//done
                 cw_data.rvfi.mem_rdata <= mem_rdata_D_i;//done
                 cw_data.rvfi.mem_wdata <= cw_in.rvfi.mem_wdata;//done
-
-                cw_out.exe <= cw_in.exe;
-                cw_out.mem <= cw_in.mem;
-                cw_out.wb <= cw_in.wb;
-                cw_out.rvfi.valid_commit <= cw_in.rvfi.valid_commit;//done
-                cw_out.rvfi.order_commit <= cw_in.rvfi.order_commit;//done
-                cw_out.rvfi.instruction <= cw_in.rvfi.instruction;//done
-                cw_out.rvfi.rs1_addr <= cw_in.rvfi.rs1_addr; //done
-                cw_out.rvfi.rs2_addr <= cw_in.rvfi.rs2_addr; //dome
-                cw_out.rvfi.rs1_data <= cw_in.rvfi.rs1_data; //done
-                cw_out.rvfi.rs2_data <= cw_in.rvfi.rs2_data; //done
-                cw_out.rvfi.rd_wdata <= cw_in.rvfi.rd_wdata;//done
-                cw_out.rvfi.pc_rdata <= cw_in.rvfi.pc_rdata;//done
-                cw_out.rvfi.pc_wdata <= cw_in.rvfi.pc_wdata;//done
-                cw_out.rvfi.mem_addr <= cw_in.rvfi.mem_addr;//done
-                cw_out.rvfi.rmask <= cw_in.rvfi.rmask;//done
-                cw_out.rvfi.wmask <= cw_in.rvfi.wmask;//done
-                cw_out.rvfi.mem_rdata <= mem_rdata_D_i;//done
-                cw_out.rvfi.mem_wdata <= cw_in.rvfi.mem_wdata;//done
             end
-        end
-        else begin
-            cw_out <= cw_data;
         end
     end
 
+    assign cw_out = cw_data;
+
     always_comb begin : hzd_reg_in_wb
-        instruct_in_wb.opcode = cw_data.rvfi.instruction[6:0];
+        instruct_in_wb.opcode = rv32i_opcode'(cw_data.rvfi.instruction[6:0]);
         instruct_in_wb.rd_addr = cw_data.wb.rd_sel;
         instruct_in_wb.rs1_addr = cw_data.rvfi.rs1_addr;
         instruct_in_wb.rs2_addr = cw_data.rvfi.rs2_addr;
@@ -826,44 +694,29 @@ module mem_wb_reg
     always_ff @ (posedge clk, posedge rst) begin : br_en_register
         if(rst)begin
             br_en_o <= 1'b0;
-            br_en_r <= 1'b0;
         end
         else if((mem_wb_ld == 1)) begin
             br_en_o <= br_en_i;
-            br_en_r <= br_en_i;
-        end
-        else begin
-            br_en_o <= br_en_r;
         end
     end
 
     //valid register
     always_ff @(posedge clk, posedge rst) begin : valid_reg
         if(rst) begin
-            valid_r <= 1'b0;
             mem_wb_valid <= 1'b0;
         end
         else if((mem_wb_ld == 1)) begin
-            valid_r <= 1'b1;
             mem_wb_valid <= 1'b1;
-        end
-        else begin
-            mem_wb_valid <= valid_r;
         end
     end
 
     //ready register
     always_ff @(posedge clk, posedge rst) begin : ready_reg
         if(rst) begin
-            ready_r <= 1'b0;
             mem_wb_rdy <= 1'b0;
         end
         else if((mem_wb_ld == 1)) begin
-            ready_r <= mem_rdy;
             mem_wb_rdy <= mem_rdy;
-        end
-        else begin
-            mem_wb_rdy <= ready_r;
         end
     end
 
@@ -871,14 +724,9 @@ module mem_wb_reg
     always_ff @ (posedge clk, posedge rst) begin : u_imm_register
         if(rst)begin
             u_imm_o <= 32'b0;
-            u_imm_r <= 32'b0;
         end
         else if((mem_wb_ld == 1)) begin
             u_imm_o <= u_imm_i;
-            u_imm_r <= u_imm_i;
-        end
-        else begin
-            u_imm_o <= u_imm_r;
         end
     end
 

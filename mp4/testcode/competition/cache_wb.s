@@ -1,0 +1,347 @@
+cache_wb.s:
+.align 4
+.section .text
+.globl _start
+    # Refer to the RISC-V ISA Spec for the functionality of
+    # the instructions in this test program.
+_start:
+    addi x3, x0, 70
+    la x4, mem_data00
+    sw x3, 0(x4)
+    lw x1, mem_data10    
+    lw x1, mem_data20    
+    lw x1, mem_data30    
+    lw x1, mem_data40    
+    lw x1, mem_data50    
+    lw x1, mem_data60    
+    lw x1, mem_data70    
+    lw x1, mem_data80    
+    lw x1, mem_data90    
+    lw x1, mem_data100    
+    lw x1, mem_data110    
+    lw x1, mem_data120    
+    lw x1, mem_data130    
+    lw x1, mem_data140    
+    lw x1, mem_data150    
+    lw x1, mem_data160    
+    lw x1, mem_data170    
+    lw x1, mem_data180    
+    lw x1, mem_data190    
+    lw x1, mem_data200    
+    lw x1, mem_data210    
+    lw x1, mem_data220    
+    lw x1, mem_data230    
+    lw x1, mem_data240    
+    lw x1, mem_data250    
+    lw x1, mem_data260    
+    lw x1, mem_data270    
+    lw x1, mem_data280    
+    lw x1, mem_data290    
+    lw x1, mem_data300    
+    lw x1, mem_data310    
+
+    lw x1, mem_data01    
+    lw x1, mem_data11    
+    lw x1, mem_data21    
+    lw x1, mem_data31    
+    lw x1, mem_data41    
+    lw x1, mem_data51    
+    lw x1, mem_data61    
+    lw x1, mem_data71    
+    lw x1, mem_data81    
+    lw x1, mem_data91    
+    lw x1, mem_data101    
+    lw x1, mem_data111    
+    lw x1, mem_data121    
+    lw x1, mem_data131    
+    lw x1, mem_data141    
+    lw x1, mem_data151    
+    lw x1, mem_data161    
+    lw x1, mem_data171    
+    lw x1, mem_data181    
+    lw x1, mem_data191    
+    lw x1, mem_data201    
+    lw x1, mem_data211    
+    lw x1, mem_data221    
+    lw x1, mem_data231    
+    lw x1, mem_data241    
+    lw x1, mem_data251    
+    lw x1, mem_data261    
+    lw x1, mem_data271    
+    lw x1, mem_data281    
+    lw x1, mem_data291    
+    lw x1, mem_data301    
+    lw x1, mem_data311    
+
+    lw x1, mem_data02    
+    lw x1, mem_data12    
+    lw x1, mem_data22    
+    lw x1, mem_data32    
+    lw x1, mem_data42    
+    lw x1, mem_data52    
+    lw x1, mem_data62    
+    lw x1, mem_data72    
+    lw x1, mem_data82    
+    lw x1, mem_data92    
+    lw x1, mem_data102    
+    lw x1, mem_data112    
+    lw x1, mem_data122    
+    lw x1, mem_data132    
+    lw x1, mem_data142    
+    lw x1, mem_data152    
+    lw x1, mem_data162    
+    lw x1, mem_data172    
+    lw x1, mem_data182    
+    lw x1, mem_data192    
+    lw x1, mem_data202    
+    lw x1, mem_data212    
+    lw x1, mem_data222    
+    lw x1, mem_data232    
+    lw x1, mem_data242    
+    lw x1, mem_data252    
+    lw x1, mem_data262    
+    lw x1, mem_data272    
+    lw x1, mem_data282    
+    lw x1, mem_data292    
+    lw x1, mem_data302    
+    lw x1, mem_data312    
+
+    lw x1, mem_data03    
+    lw x1, mem_data13    
+    lw x1, mem_data23    
+    lw x1, mem_data33    
+    lw x1, mem_data43    
+    lw x1, mem_data53    
+    lw x1, mem_data63    
+    lw x1, mem_data73    
+    lw x1, mem_data83    
+    lw x1, mem_data93    
+    lw x1, mem_data103    
+    lw x1, mem_data113    
+    lw x1, mem_data123    
+    lw x1, mem_data133    
+    lw x1, mem_data143    
+    lw x1, mem_data153    
+    lw x1, mem_data163    
+    lw x1, mem_data173    
+    lw x1, mem_data183    
+    lw x1, mem_data193    
+    lw x1, mem_data203    
+    lw x1, mem_data213    
+    lw x1, mem_data223    
+    lw x1, mem_data233    
+    lw x1, mem_data243    
+    lw x1, mem_data253    
+    lw x1, mem_data263    
+    lw x1, mem_data273    
+    lw x1, mem_data283    
+    lw x1, mem_data293    
+    lw x1, mem_data303    
+    lw x1, mem_data313    
+
+    lw x1, mem_data04    
+    lw x1, mem_data14    
+    lw x1, mem_data24    
+    lw x1, mem_data34    
+    lw x1, mem_data44    
+    lw x1, mem_data54    
+    lw x1, mem_data64    
+    lw x1, mem_data74    
+    lw x1, mem_data84    
+    lw x1, mem_data94    
+    lw x1, mem_data104    
+    lw x1, mem_data114    
+    lw x1, mem_data124    
+    lw x1, mem_data134    
+    lw x1, mem_data144    
+    lw x1, mem_data154    
+    lw x1, mem_data164    
+    lw x1, mem_data174    
+    lw x1, mem_data184    
+    lw x1, mem_data194    
+    lw x1, mem_data204    
+    lw x1, mem_data214    
+    lw x1, mem_data224    
+    lw x1, mem_data234    
+    lw x1, mem_data244    
+    lw x1, mem_data254    
+    lw x1, mem_data264    
+    lw x1, mem_data274    
+    lw x1, mem_data284    
+    lw x1, mem_data294    
+    lw x1, mem_data304    
+    lw x1, mem_data314    
+
+    lw x4, mem_data00
+
+halt:                 # Infinite loop to keep the processor
+    beq x0, x0, halt  # from trying to execute the data below.
+                      # Your own programs should also make use
+                      # of an infinite loop at the end.
+
+.section .rodata
+
+mem_data00:    .word 0x0000d01d
+mem_data10:    .word 0x0000d02d
+mem_data20:    .word 0x0000d03d
+mem_data30:    .word 0x0000d04d
+mem_data40:    .word 0x0000d05d
+mem_data50:    .word 0x0000d06d
+mem_data60:    .word 0x0000d07d
+mem_data70:    .word 0x0000d08d
+mem_data80:    .word 0x0000d01d
+mem_data90:    .word 0x0000d02d
+mem_data100:    .word 0x0000d03d
+mem_data110:    .word 0x0000d04d
+mem_data120:    .word 0x0000d05d
+mem_data130:    .word 0x0000d06d
+mem_data140:    .word 0x0000d07d
+mem_data150:    .word 0x0000d08d
+mem_data160:    .word 0x0000d01d
+mem_data170:    .word 0x0000d02d
+mem_data180:    .word 0x0000d03d
+mem_data190:    .word 0x0000d04d
+mem_data200:    .word 0x0000d05d
+mem_data210:    .word 0x0000d06d
+mem_data220:    .word 0x0000d07d
+mem_data230:    .word 0x0000d08d
+mem_data240:    .word 0x0000d01d
+mem_data250:    .word 0x0000d02d
+mem_data260:    .word 0x0000d03d
+mem_data270:    .word 0x0000d04d
+mem_data280:    .word 0x0000d05d
+mem_data290:    .word 0x0000d06d
+mem_data300:    .word 0x0000d07d
+mem_data310:    .word 0x0000d08d
+
+mem_data01:    .word 0x0000d01d
+mem_data11:    .word 0x0000d02d
+mem_data21:    .word 0x0000d03d
+mem_data31:    .word 0x0000d04d
+mem_data41:    .word 0x0000d05d
+mem_data51:    .word 0x0000d06d
+mem_data61:    .word 0x0000d07d
+mem_data71:    .word 0x0000d08d
+mem_data81:    .word 0x0000d01d
+mem_data91:    .word 0x0000d02d
+mem_data101:    .word 0x0000d03d
+mem_data111:    .word 0x0000d04d
+mem_data121:    .word 0x0000d05d
+mem_data131:    .word 0x0000d06d
+mem_data141:    .word 0x0000d07d
+mem_data151:    .word 0x0000d08d
+mem_data161:    .word 0x0000d01d
+mem_data171:    .word 0x0000d02d
+mem_data181:    .word 0x0000d03d
+mem_data191:    .word 0x0000d04d
+mem_data201:    .word 0x0000d05d
+mem_data211:    .word 0x0000d06d
+mem_data221:    .word 0x0000d07d
+mem_data231:    .word 0x0000d08d
+mem_data241:    .word 0x0000d01d
+mem_data251:    .word 0x0000d02d
+mem_data261:    .word 0x0000d03d
+mem_data271:    .word 0x0000d04d
+mem_data281:    .word 0x0000d05d
+mem_data291:    .word 0x0000d06d
+mem_data301:    .word 0x0000d07d
+mem_data311:    .word 0x0000d08d
+
+mem_data02:    .word 0x0000d01d
+mem_data12:    .word 0x0000d02d
+mem_data22:    .word 0x0000d03d
+mem_data32:    .word 0x0000d04d
+mem_data42:    .word 0x0000d05d
+mem_data52:    .word 0x0000d06d
+mem_data62:    .word 0x0000d07d
+mem_data72:    .word 0x0000d08d
+mem_data82:    .word 0x0000d01d
+mem_data92:    .word 0x0000d02d
+mem_data102:    .word 0x0000d03d
+mem_data112:    .word 0x0000d04d
+mem_data122:    .word 0x0000d05d
+mem_data132:    .word 0x0000d06d
+mem_data142:    .word 0x0000d07d
+mem_data152:    .word 0x0000d08d
+mem_data162:    .word 0x0000d01d
+mem_data172:    .word 0x0000d02d
+mem_data182:    .word 0x0000d03d
+mem_data192:    .word 0x0000d04d
+mem_data202:    .word 0x0000d05d
+mem_data212:    .word 0x0000d06d
+mem_data222:    .word 0x0000d07d
+mem_data232:    .word 0x0000d08d
+mem_data242:    .word 0x0000d01d
+mem_data252:    .word 0x0000d02d
+mem_data262:    .word 0x0000d03d
+mem_data272:    .word 0x0000d04d
+mem_data282:    .word 0x0000d05d
+mem_data292:    .word 0x0000d06d
+mem_data302:    .word 0x0000d07d
+mem_data312:    .word 0x0000d08d
+
+mem_data03:    .word 0x0000d01d
+mem_data13:    .word 0x0000d02d
+mem_data23:    .word 0x0000d03d
+mem_data33:    .word 0x0000d04d
+mem_data43:    .word 0x0000d05d
+mem_data53:    .word 0x0000d06d
+mem_data63:    .word 0x0000d07d
+mem_data73:    .word 0x0000d08d
+mem_data83:    .word 0x0000d01d
+mem_data93:    .word 0x0000d02d
+mem_data103:    .word 0x0000d03d
+mem_data113:    .word 0x0000d04d
+mem_data123:    .word 0x0000d05d
+mem_data133:    .word 0x0000d06d
+mem_data143:    .word 0x0000d07d
+mem_data153:    .word 0x0000d08d
+mem_data163:    .word 0x0000d01d
+mem_data173:    .word 0x0000d02d
+mem_data183:    .word 0x0000d03d
+mem_data193:    .word 0x0000d04d
+mem_data203:    .word 0x0000d05d
+mem_data213:    .word 0x0000d06d
+mem_data223:    .word 0x0000d07d
+mem_data233:    .word 0x0000d08d
+mem_data243:    .word 0x0000d01d
+mem_data253:    .word 0x0000d02d
+mem_data263:    .word 0x0000d03d
+mem_data273:    .word 0x0000d04d
+mem_data283:    .word 0x0000d05d
+mem_data293:    .word 0x0000d06d
+mem_data303:    .word 0x0000d07d
+mem_data313:    .word 0x0000d08d
+
+mem_data04:    .word 0x0000d01d
+mem_data14:    .word 0x0000d02d
+mem_data24:    .word 0x0000d03d
+mem_data34:    .word 0x0000d04d
+mem_data44:    .word 0x0000d05d
+mem_data54:    .word 0x0000d06d
+mem_data64:    .word 0x0000d07d
+mem_data74:    .word 0x0000d08d
+mem_data84:    .word 0x0000d01d
+mem_data94:    .word 0x0000d02d
+mem_data104:    .word 0x0000d03d
+mem_data114:    .word 0x0000d04d
+mem_data124:    .word 0x0000d05d
+mem_data134:    .word 0x0000d06d
+mem_data144:    .word 0x0000d07d
+mem_data154:    .word 0x0000d08d
+mem_data164:    .word 0x0000d01d
+mem_data174:    .word 0x0000d02d
+mem_data184:    .word 0x0000d03d
+mem_data194:    .word 0x0000d04d
+mem_data204:    .word 0x0000d05d
+mem_data214:    .word 0x0000d06d
+mem_data224:    .word 0x0000d07d
+mem_data234:    .word 0x0000d08d
+mem_data244:    .word 0x0000d01d
+mem_data254:    .word 0x0000d02d
+mem_data264:    .word 0x0000d03d
+mem_data274:    .word 0x0000d04d
+mem_data284:    .word 0x0000d05d
+mem_data294:    .word 0x0000d06d
+mem_data304:    .word 0x0000d07d
+mem_data314:    .word 0x0000d08d
