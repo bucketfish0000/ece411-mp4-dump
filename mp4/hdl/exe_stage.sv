@@ -26,7 +26,8 @@ import immediates::*;
     output logic [31:0] rs2_out,
     output logic [31:0] alu_out,
     output logic br_en,
-  
+    output logic [31:0] bimm_out,
+    output logic prediction_exe,
     input logic de_exe_valid,
     input logic de_exe_rdy,
     output logic exe_rdy,
@@ -55,7 +56,8 @@ import immediates::*;
     assign j_imm = imm_in.j_imm;
     assign rs2_out = rs2_o;
     assign rs1_out = rs1_o;
-
+    assign bimm_out = b_imm;
+    assign prediction_exe = ctrl_w.rvfi.prediction;
     always_ff @(posedge clk) begin : prev_order_tracker
     if(rst)
         prev_order <= 64'hffffffffffffffff;

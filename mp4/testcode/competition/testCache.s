@@ -28,6 +28,8 @@ _start:
 
 loop:
     addi x1, x1, -1024
+    addi x1, x1, 10
+    addi x1, x1, 12
     blt x1, x0, halt
     beq x0, x0, loop
 

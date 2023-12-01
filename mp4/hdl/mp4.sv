@@ -100,6 +100,10 @@ import cpuIO::*;
             hzds instruct_in_exe, instruct_in_mem, instruct_in_wb;
             logic imem_cancel;
 
+            logic [31:0] prediction_target, banch_target_exe,pc_exe,bimm_exec;
+            logic branch_prediction,prediction_exe;
+            logic exe_fwd_pc_sel,ctrl_buffer_sel;
+
     mp4control control(
         .clk(clk),
         .rst(rst),
@@ -155,7 +159,11 @@ import cpuIO::*;
         .cw_read(ctrl_rd), 
         .ctrl_word(cw_control),
 
-        .pcmux_sel(pcmux_sel)
+        .branch_prediction(branch_prediction), 
+        .pcmux_sel(pcmux_sel),
+        .exe_fwd_pc_sel(exe_fwd_pc_sel),
+        .ctrl_buffer_sel(ctrl_buffer_sel),
+        .prediction_exe(prediction_exe)
     );
 
     cache dcache0(
@@ -317,7 +325,30 @@ import cpuIO::*;
 
         .wmask(wmask),
 
-        .control_rvfi(ctrl_rvfi)
+        .control_rvfi(ctrl_rvfi),
+
+        .pc_exe(pc_exe),
+        .bimm_exec(bimm_exec),
+        .branch_target(prediction_target),
+        .branch_prediction(branch_prediction),
+        .exe_fwd_pc_sel(exe_fwd_pc_sel),
+        .prediction_exe(prediction_exe)
+
+    );
+
+    control_buffer control_buffer
+    (
+        .clk(clk),.rst(rst),
+        .sel(ctrl_buffer_sel), 
+        .pc_exe(pc_exe), 
+        .opcode(opcode_exec), 
+        .branch_taken(br_en), 
+        .pc_target(banch_target_exe),
+        .bimm_exe(bimm_exec),
+
+        .pc_fetch(pc_rdata),
+        .prediction(branch_prediction), 
+        .target(prediction_target)
     );
 
     assign imem_address = pc_rdata;

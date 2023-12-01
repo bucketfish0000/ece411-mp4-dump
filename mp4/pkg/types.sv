@@ -10,6 +10,7 @@ typedef enum bit [1:0] {
     pc_plus4  = 2'b00
     ,alu_out  = 2'b01
     ,alu_mod2 = 2'b10
+    ,prediction = 2'b11
 } pcmux_sel_t;
 endpackage
 
@@ -258,6 +259,7 @@ package cpuIO;
         logic [3:0] wmask; //set in exe_mem
         logic [31:0] mem_rdata; //set in mem_wb(from mem)
         logic [31:0] mem_wdata; //set in exe_mem(mdo)
+        logic prediction;
     } rvfi_sigs;
 
     typedef struct {
@@ -273,6 +275,7 @@ package cpuIO;
         logic [31:0] rs1_data;
         logic [31:0] rs2_data;
         logic [4:0] rd_addr;
+        logic prediction;
     } control_read;
     
     typedef struct {

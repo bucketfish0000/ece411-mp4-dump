@@ -59,6 +59,7 @@ import cpuIO::*;
 
     /*---exe signals---*/
     input logic br_en,
+    input logic prediction_exe,
     //...anything else?
 
     /*---mem_stage signals---*/
@@ -99,7 +100,9 @@ import cpuIO::*;
     input control_read cw_read, 
     output control_word ctrl_word,
 
-    output pcmux::pcmux_sel_t pcmux_sel 
+    input logic branch_prediction,
+    output pcmux::pcmux_sel_t pcmux_sel,
+    output logic exe_fwd_pc_sel,ctrl_buffer_sel
 );
 
 logic [4:0] rdy;
@@ -185,10 +188,12 @@ assign stall_mem_wb =
 logic prediction;
 logic br, branch_taken;
 logic jump,jump_taken;
+
+assign prediction = prediction_exe;
 assign br = br_en && (opcode_exec == op_br);
 assign jump = (opcode_exec == op_jal || opcode_exec == op_jalr);
 
-assign prediction = 1'b0; //TODO temporary: this should come from ctrl word of exe
+//assign prediction = 1'b0; //TODO temporary: this should come from ctrl word of exe
 /*
 TODO: case 
 prediction==take - no flush
@@ -229,8 +234,8 @@ always_comb begin : pipeline_regs_logic
         //only not try to fetch when waiting for resp from icache 
         imem_read =((icache_resp) || (stall_if_de && !load_instuct_inserted)) ? 1'b0 : 1'b1; 
         //update pc when imem has responded (can proc)
-        load_pc = ((branch_taken&&br)||(jump&&jump_taken)||(icache_resp && !jump_taken && !stall_if_de)) ? 1'b1 : 1'b0;
-        // load_pc = (icache_resp && (branch_taken)||(jump_taken)||(!stall_if_de)) ? 1'b1 : 1'b0;
+        load_pc = (prediction!=(branch_taken&&br)||prediction!=(jump&&jump_taken)||(icache_resp && !stall_if_de)) ? 1'b1 : 1'b0;
+        //load_pc = (icache_resp && (branch_taken)||(jump_taken)||(!stall_if_de)) ? 1'b1 : 1'b0;
 
         //ppr resets
         // if_de_rst = 1'b0;
@@ -261,11 +266,24 @@ always_comb begin : pipeline_regs_logic
     
     end
 end
+always_ff @(posedge clk) begin: ctrl_buffer_selection
+    ctrl_buffer_sel <= 1'b0;
+    if (de_exe_ld) ctrl_buffer_sel <= 1'b1;
+end
+
+always_comb begin: exe_pc_selection
+    case({prediction_exe,br||jump})
+        2'b00, 2'b11: exe_fwd_pc_sel = 1'b0; //true prediction--should now matter anyways as the pc would not load things from exe
+        2'b01: exe_fwd_pc_sel = 1'b0; //predicted false take--reload alu out into pc
+        2'b10: exe_fwd_pc_sel = 1'b1; //predicted false untake--reload exe_pc+4 into pc
+    endcase
+end
 
 always_comb begin : pc_branch_logics
     pcmux_sel = pcmux::pc_plus4;//default
-    if (br) pcmux_sel = pcmux::alu_out; //branch taken
-    else if (opcode_exec == op_jal) pcmux_sel = pcmux::alu_out; //jal
+    if (branch_prediction) pcmux_sel = pcmux::prediction; //if buffer says take branch
+    else if (prediction_exe != br) pcmux_sel = pcmux::alu_out; //false prediction, reload pc
+    else if (prediction_exe == 0 && opcode_exec == op_jal) pcmux_sel = pcmux::alu_out; //positively-predicted jal already loaded
     else if (opcode_exec == op_jalr) pcmux_sel = pcmux::alu_mod2; //jalr
 end
 
@@ -321,6 +339,7 @@ function void set_def();
     ctrl_word.rvfi.wmask = 4'b0;//done
     ctrl_word.rvfi.mem_rdata = 32'b0;//done
     ctrl_word.rvfi.mem_wdata = 32'b0;//done
+    ctrl_word.rvfi.prediction = cw_read.prediction;
 endfunction
 
 always_comb begin : cpu_cw
