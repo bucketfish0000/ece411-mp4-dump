@@ -7,8 +7,9 @@ module fetch_stage
     input logic load_pc,
 
     input pcmux::pcmux_sel_t pcmux_sel,
-    input rv32i_word exec_fwd_data,
+    input rv32i_word exec_fwd_pc,
     input rv32i_word instr_in,
+    input rv32i_word pc_prediction,
     
     output rv32i_word pc_out,
     // //output rv32i_word pc_prev,
@@ -36,8 +37,9 @@ module fetch_stage
     always_comb begin : pc_mux_logic
         unique case(pcmux_sel)
             pcmux::pc_plus4: pc_in = pc+4;
-            pcmux::alu_out: pc_in = exec_fwd_data;
-            pcmux::alu_mod2: pc_in = {exec_fwd_data[31:1],1'b0};
+            pcmux::alu_out: pc_in = exec_fwd_pc;
+            pcmux::alu_mod2: pc_in = {exec_fwd_pc[31:1],1'b0};
+            pcmux::prediction: pc_in = pc_prediction;
         endcase
     end : pc_mux_logic
 

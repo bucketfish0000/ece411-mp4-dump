@@ -10,6 +10,7 @@ module control_buffer
     input rv32i_opcode opcode, //opcode of the instr in exe. an instr can possibly enter the buffer only if it is br/jmp
     input logic branch_taken, //if exe wants to take the branch or not
     input rv32i_word pc_target,
+    input rv32i_word bimm_exe,
 
     input rv32i_word pc_fetch, //pc of instr in fetch
     output logic prediction, //the prediction bit indicating if we think the instr in location of pc_fetch would be an active branch
@@ -71,7 +72,7 @@ generate
         btb_entry bentry (
             .clk(clk),.rst(rst),
             .update_pc(update_br_pc[i]),.update_history(update_br_history[i]),.branch_taken(branch_taken),
-            .pc_exe(pc_exe),.pc_fetch(pc_fetch),
+            .pc_exe(pc_exe),.pc_fetch(pc_fetch),.target_offset(bimm_exe),
             
             .fetch_pc_hit(br_fetch_hits[i]),.exe_pc_hit(br_exe_hits[i]),
             .branch_prediction(branch_predictions[i]),
@@ -83,8 +84,8 @@ generate
     begin: jtb
         jtb_entry jentry (
             .clk(clk),.rst(rst),
-            .update_pc(update_jp_pc[j]),.branch_taken(branch_taken),
-            .pc_exe(pc_exe),.pc_fetch(pc_fetch),
+            .update_pc(update_jp_pc[j]),
+            .pc_exe(pc_exe),.pc_fetch(pc_fetch),.target(pc_target),
             
             .fetch_pc_hit(jp_fetch_hits[j]),.exe_pc_hit(jp_exe_hits[j]),
             .branch_target(jp_targets[j])
@@ -151,7 +152,7 @@ always_ff @(posedge clk) begin : queue_heads
                 btb_head <= (btb_head + 5'b01);
             end
         end
-        else if (opcode == op_jal || opcode == op_jalr) begin
+        else if (opcode == op_jal) begin
             if ((!jp_exe_hit) && branch_taken) begin
                 jtb_head <= (jtb_head + 4'b01);
             end
@@ -173,7 +174,7 @@ always_comb begin : buffer_operation
                 update_br_pc[int'(btb_head)] = 1'b1;
             end
         end
-        else if (opcode == op_jal || opcode == op_jalr) begin
+        else if (opcode == op_jal) begin
             if ((!jp_exe_hit) && branch_taken) begin
                 update_jp_pc[int'(jtb_head)] = 1'b1;
             end
@@ -205,16 +206,16 @@ module btb_entry
     logic[11:0] offset;
     logic[9:0] branch_hist;
     logic[9:0] prediction_hist;
-    logic[28:0] sig_ext_29;
+    logic[18:0] sig_ext_19;
 
-    always_comb begin : sig_ext_29_logic
-        if(offset[11]) sig_ext_29 = 29'b11111111111111111111111111111;
-        else sig_ext_29 = 29'b00000000000000000000000000000;
+    always_comb begin : sig_ext_19_logic
+        if(offset[11]) sig_ext_19 = 19'b1111111111111111111;
+        else sig_ext_19 = 19'b0000000000000000000;
     end
     
     assign fetch_pc_hit = (pc_fetch==instr_pc);
     assign exe_pc_hit = (pc_exe==instr_pc);
-    assign branch_target = (instr_pc + {sig_ext_29, offset[11:0], 1'b0}); //sext bimm 
+    assign branch_target = (instr_pc + {sig_ext_19, offset[11:0], 1'b0}); //sext bimm 
 
     always_comb begin
         branch_prediction = 1'b0;
@@ -256,26 +257,26 @@ module jtb_entry
 (
     input clk, rst,
     input logic update_pc,
-    input rv32i_word pc_exe,pc_fetch,target_offset,
+    input rv32i_word pc_exe,pc_fetch,target,
     
     output logic fetch_pc_hit, exe_pc_hit,
     output rv32i_word branch_target
 );
     logic[31:0] instr_pc;
-    logic[31:0] offset;
+    logic[31:0] target_pc;
 
     assign fetch_pc_hit = (pc_fetch==instr_pc);
     assign exe_pc_hit = (pc_exe==instr_pc);
-    assign branch_target = (instr_pc + target_offset); 
+    assign branch_target = target_pc; 
 
     always_ff @(posedge clk) begin 
         if (rst) begin
             instr_pc <= 32'b0;
-            offset <= 32'b0;
+            target_pc <= 32'b0;
         end
         else if (update_pc) begin
             instr_pc <= pc_exe;
-            offset <= target_offset;
+            target_pc<= target;
         end
     end
 

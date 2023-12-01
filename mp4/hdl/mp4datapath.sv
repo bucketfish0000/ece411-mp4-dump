@@ -60,7 +60,13 @@ module mp4datapath
     output logic [3:0] mem_byte_enable,
     output logic [3:0] wmask,
 
-    output control_word control_rvfi //for all commits minus jump/branch
+    output control_word control_rvfi, //for all commits minus jump/branch,
+    
+    output rv32i_word pc_exe,bimm_exec,
+    input rv32i_word branch_target,
+    input logic branch_prediction,
+    input logic exe_fwd_pc_sel,
+    output logic prediction_exe
 );
 
 rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb, pc_wdata;
@@ -82,7 +88,7 @@ control_word cw_exec, cw_mem, cw_wb;
 // logic f_d_ready,d_e_ready,e_m_ready,_m_w_ready;
 // logic f_d_valid,d_e_valid,e_m_valid,m_w_valid;
 
-logic [31:0] mem_fwd_data, exe_fwd_data, wb_fwd_data, alu_out_exe, alu_out_mem_wb, rs1_out, rs2_out, rs1_data_decode, rs2_data_decode, mem_rdata;
+logic [31:0] mem_fwd_data, exe_fwd_data, exe_fwd_pc, wb_fwd_data, alu_out_exe, alu_out_mem_wb, rs1_out, rs2_out, rs1_data_decode, rs2_data_decode, mem_rdata;
 
 //yes this looks messed up because the naming conventions don't actually work for my(the correct :) ) implementation
 //it's on purpose don't touch without asking
@@ -99,6 +105,12 @@ rv32i_word instr_fetch, pc_prev;
 //logic load_pc;
 
 assign if_rdy = fetch_ready_o;
+always_comb begin: exe_fwd_pc_mux
+    case(exe_fwd_pc_sel)
+        1'b0: exe_fwd_pc = alu_out_exe;
+        1'b1: exe_fwd_pc = pc_exec+4;
+    endcase
+end
 
 fetch_stage fetch(
     .clk(clk),
@@ -106,19 +118,19 @@ fetch_stage fetch(
     .icache_resp(icache_resp),
     .load_pc(load_pc), 
     .pcmux_sel(pcmux_sel),
-    .exec_fwd_data(alu_out_exe),                                                                       
+    .exec_fwd_pc(exe_fwd_pc),                                                                 
     .instr_in(icache_out),
     .pc_out(pc_fetch),
-    // .pc_prev(pc_prev),
-    //.pc_prev(pc_prev),
     .pc_next(pc_wdata),
+    .pc_prediction(branch_target),
     .instr_out(instr_fetch),
     .ready(fetch_ready_o)
-    );
+);
 
 assign pc_rdata = pc_fetch;
 
 rv32i_word instr_decode, pc_wdata_decode;
+logic prediction_rvfi;
 fet_dec_reg fet_dec_reg(
     .clk(clk),
     .rst(rst),
@@ -126,7 +138,6 @@ fet_dec_reg fet_dec_reg(
     .load(fet_dec_load),
     .sp_ld_commit(sp_ld_commit),
     .ld_commit(ld_commit),
-
     .ready_i(fetch_ready_o),
     .ready_o(decode_ready_i),
     .valid_o(decode_valid_i),
@@ -138,7 +149,10 @@ fet_dec_reg fet_dec_reg(
     .pc_decode(pc_decode),
     .pc_wdata_decode(pc_wdata_decode),
 
-    .commit_order(commit_order_decode_i)
+    .commit_order(commit_order_decode_i),
+    
+    .prediction_in(branch_prediction),
+    .prediction_out(prediction_rvfi)
 );
 
 imm imm_decode;
@@ -153,6 +167,7 @@ decode_stage decode(
     .pc_rdata(pc_decode),
     .pc_wdata(pc_wdata_decode),
     .commit_order(commit_order_decode_i),
+    .prediction(prediction_rvfi),
 
     .imm_data(imm_decode),
 
@@ -187,7 +202,7 @@ dec_exe_reg dec_exe_reg(
 
     .instruct_in_exe(instruct_in_exe)
 );
-assign pc_exec = rvfi_exe.rvfi.pc_rdata;
+assign pc_exe = rvfi_exe.rvfi.pc_rdata;
 //exexute stage
 exe_stage execute(
     .clk(clk), //ins
@@ -202,7 +217,8 @@ exe_stage execute(
     .rs2_out(rs2_out),
     .alu_out(alu_out_exe),
     .br_en(br_en_exe_o),
-
+    .bimm_out(bimm_exec),
+    .prediction_exe(prediction_exe),
 
     .de_exe_valid(exec_valid_i),
     .de_exe_rdy(exec_ready_i),

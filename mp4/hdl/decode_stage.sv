@@ -13,7 +13,7 @@ module decode_stage
     input rv32i_word pc_rdata,
     input rv32i_word pc_wdata,
     input logic [63:0] commit_order,
-
+    input logic prediction,
     output immediates::imm imm_data,
 
     output logic ready_o,
@@ -71,5 +71,6 @@ module decode_stage
     assign cr.rs1_data = rs1_data;
     assign cr.rs2_data = rs2_data;
     assign cr.rd_addr = rd;
+    assign cr.prediction = prediction;
     
 endmodule : decode_stage
