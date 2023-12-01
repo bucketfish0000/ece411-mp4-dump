@@ -102,7 +102,7 @@ import cpuIO::*;
             hzds instruct_in_exe, instruct_in_mem, instruct_in_wb;
             logic imem_cancel;
 
-            logic [31:0] prediction_target, banch_target_exe,pc_exe,bimm_exec;
+            logic [31:0] prediction_target, branch_target_exe,pc_exe,bimm_exec;
             logic branch_prediction,prediction_exe;
             logic exe_fwd_pc_sel,ctrl_buffer_sel;
             logic branch_taken;
@@ -338,8 +338,8 @@ import cpuIO::*;
         .branch_target(prediction_target),
         .branch_prediction(branch_prediction),
         .exe_fwd_pc_sel(exe_fwd_pc_sel),
-        .prediction_exe(prediction_exe)
-
+        .prediction_exe(prediction_exe),
+        .branch_target_exe(branch_target_exe)
     );
 
     control_buffer control_buffer
@@ -349,7 +349,7 @@ import cpuIO::*;
         .pc_exe(pc_exe), 
         .opcode(opcode_exec), 
         .branch_taken(branch_taken), 
-        .pc_target(banch_target_exe),
+        .pc_target(branch_target_exe),
         .bimm_exe(bimm_exec),
 
         .pc_fetch(pc_rdata),
