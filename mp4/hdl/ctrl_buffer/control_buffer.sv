@@ -71,7 +71,7 @@ generate
     begin: btb
         btb_entry bentry (
             .clk(clk),.rst(rst),
-            .update_pc(update_br_pc[i]),.update_history(update_br_history[i]),.branch_taken(branch_taken),
+            .update_pc(update_br_pc[i]),.update_history(update_br_history[i]),.prediction(prediction),.branch_taken(branch_taken),
             .pc_exe(pc_exe),.pc_fetch(pc_fetch),.target_offset(bimm_exe),
             
             .fetch_pc_hit(br_fetch_hits[i]),.exe_pc_hit(br_exe_hits[i]),
