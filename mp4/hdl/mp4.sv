@@ -103,7 +103,7 @@ import cpuIO::*;
             logic [31:0] prediction_target, banch_target_exe,pc_exe,bimm_exec;
             logic branch_prediction,prediction_exe;
             logic exe_fwd_pc_sel,ctrl_buffer_sel;
-
+            logic branch_taken;
     mp4control control(
         .clk(clk),
         .rst(rst),
@@ -163,7 +163,8 @@ import cpuIO::*;
         .pcmux_sel(pcmux_sel),
         .exe_fwd_pc_sel(exe_fwd_pc_sel),
         .ctrl_buffer_sel(ctrl_buffer_sel),
-        .prediction_exe(prediction_exe)
+        .prediction_exe(prediction_exe),
+        .branch_taken_o(branch_taken)
     );
 
     cache dcache0(
@@ -342,7 +343,7 @@ import cpuIO::*;
         .sel(ctrl_buffer_sel), 
         .pc_exe(pc_exe), 
         .opcode(opcode_exec), 
-        .branch_taken(br_en), 
+        .branch_taken(branch_taken), 
         .pc_target(banch_target_exe),
         .bimm_exe(bimm_exec),
 

@@ -102,7 +102,8 @@ import cpuIO::*;
 
     input logic branch_prediction,
     output pcmux::pcmux_sel_t pcmux_sel,
-    output logic exe_fwd_pc_sel,ctrl_buffer_sel
+    output logic exe_fwd_pc_sel,ctrl_buffer_sel,
+    output logic branch_taken_o
 );
 
 logic [4:0] rdy;
@@ -115,6 +116,7 @@ logic stall_if_de, stall_de_exe, stall_exe_mem, stall_mem_wb;
 
 logic load_instuct_inserted;
 control_read true_cw_read;
+
 
 always_ff @(posedge clk, posedge rst) begin
     if(rst) begin
@@ -192,6 +194,7 @@ logic jump,jump_taken;
 assign prediction = prediction_exe;
 assign br = br_en && (opcode_exec == op_br);
 assign jump = (opcode_exec == op_jal || opcode_exec == op_jalr);
+assign branch_taken_o = (branch_taken && br) || (jump && jump_taken);
 
 //assign prediction = 1'b0; //TODO temporary: this should come from ctrl word of exe
 /*

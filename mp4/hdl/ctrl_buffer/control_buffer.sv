@@ -161,6 +161,7 @@ always_ff @(posedge clk) begin : queue_heads
 end
 
 always_comb begin : buffer_operation
+    set_defaults();
     if (rst) begin
         set_defaults();
     end
