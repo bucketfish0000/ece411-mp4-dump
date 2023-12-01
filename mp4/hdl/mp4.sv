@@ -26,7 +26,9 @@ import cpuIO::*;
     output  logic           bmem_write,
     input   logic   [63:0]  bmem_rdata,
     output  logic   [63:0]  bmem_wdata,
-    input   logic           bmem_resp
+    input   logic           bmem_resp,
+
+    output logic mispredict
 );
 /*                             256bit                        32bit word
           64bit              cacheline       -> word adapter    -> cpu datapath fetch
@@ -104,6 +106,9 @@ import cpuIO::*;
             logic branch_prediction,prediction_exe;
             logic exe_fwd_pc_sel,ctrl_buffer_sel;
             logic branch_taken;
+
+        assign mispredict = if_de_rst;//this should work... right? Might be one off in beginning though
+
     mp4control control(
         .clk(clk),
         .rst(rst),

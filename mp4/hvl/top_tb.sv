@@ -13,7 +13,7 @@ module top_tb;
 
     bit rst;
 
-    int timeout = 10000; // in cycles, change according to your needs
+    int timeout = 10000000; // in cycles, change according to your needs
 
     // CP1
     // mem_itf magic_itf_i(.*);
@@ -26,6 +26,10 @@ module top_tb;
 
     mon_itf mon_itf(.*);    
     monitor monitor(.itf(mon_itf));
+
+    logic i_miss, i_hit, d_hit, d_miss, mispredict, stall_all, stall_fe, stall_exe_mem_wb;
+    logic [31:0] i_miss_count, i_hit_count, d_hit_count, d_miss_count, mispredict_count, stall_all_count,
+     stall_fe_count, stall_exe_mem_wb_count;
 
     mp4 dut(
         .clk          (clk),
@@ -50,8 +54,22 @@ module top_tb;
         .bmem_write   (bmem_itf.write),
         .bmem_rdata   (bmem_itf.rdata),
         .bmem_wdata   (bmem_itf.wdata),
-        .bmem_resp    (bmem_itf.resp)
+        .bmem_resp    (bmem_itf.resp),
+
+        .mispredict(mispredict)
     );
+
+    //NOTE: number of mispredicts is half of this count since if_de_rst goes high for two cycles
+    /*  with btb is 1_1f58 mispredicts/flush
+        without.... 1_1f58... but 4 seconds slower?*/
+    always_ff @( posedge clk , posedge rst ) begin : mispredict_counter
+        if(rst) begin
+            mispredict_count <= 32'h0;
+        end
+        else if(mispredict) begin
+            mispredict_count <= mispredict_count + 32'b01;
+        end
+    end
 
     always_comb begin
         mon_itf.valid     = dut.monitor_valid;
