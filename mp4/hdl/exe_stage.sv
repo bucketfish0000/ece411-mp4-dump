@@ -159,6 +159,7 @@ always_comb begin : regfile_ctrl_signals
         rvfi_exe.rvfi.wmask = 4'b0;//done
         rvfi_exe.rvfi.mem_rdata = 32'b0;//done
         rvfi_exe.rvfi.mem_wdata = 32'b0;//done
+        rvfi_exe.rvfi.prediction = 1'b0;
     end
     else begin
         if ((br_en_temp && opcode_exe == op_br) || (opcode_exe == op_jal)) begin
@@ -180,6 +181,7 @@ always_comb begin : regfile_ctrl_signals
             rvfi_exe.rvfi.wmask = ctrl_w.rvfi.wmask;//done
             rvfi_exe.rvfi.mem_rdata = ctrl_w.rvfi.mem_rdata;//done
             rvfi_exe.rvfi.mem_wdata = ctrl_w.rvfi.mem_wdata;//done
+            rvfi_exe.rvfi.prediction = ctrl_w.rvfi.prediction;
         end
         else if((opcode_exe == op_jalr)) begin
             rvfi_exe.rvfi.valid_commit = ctrl_w.rvfi.valid_commit;//done
@@ -200,6 +202,7 @@ always_comb begin : regfile_ctrl_signals
             rvfi_exe.rvfi.wmask = ctrl_w.rvfi.wmask;//done
             rvfi_exe.rvfi.mem_rdata = ctrl_w.rvfi.mem_rdata;//done
             rvfi_exe.rvfi.mem_wdata = ctrl_w.rvfi.mem_wdata;//done
+            rvfi_exe.rvfi.prediction = ctrl_w.rvfi.prediction;
         end
         else begin
             rvfi_exe = ctrl_w;

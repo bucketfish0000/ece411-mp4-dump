@@ -165,6 +165,7 @@ module dec_exe_reg
             cw_data.rvfi.wmask <= 4'b0;//done
             cw_data.rvfi.mem_rdata <= 32'b0;//done
             cw_data.rvfi.mem_wdata <= 32'b0;//done
+            cw_data.rvfi.prediction <= 1'b0;
         end
         else if (load) begin
             imm_data<=imm_in;
@@ -308,6 +309,7 @@ import cpuIO::*;
             cw_data.rvfi.wmask <= 4'b0;//done
             cw_data.rvfi.mem_rdata <= 32'b0;//done
             cw_data.rvfi.mem_wdata <= 32'b0;//done
+            cw_data.rvfi.prediction <= 1'b0;
         end
         else if((exe_mem_ld == 1)) begin
             cw_data.exe <= cw_in.exe;
@@ -328,6 +330,7 @@ import cpuIO::*;
             cw_data.rvfi.wmask <= wmask_temp;//done
             cw_data.rvfi.mem_rdata <= cw_in.rvfi.mem_rdata;//done
             cw_data.rvfi.mem_wdata <= rs2_to_mem;//done
+            cw_data.rvfi.prediction <= cw_in.rvfi.prediction;
         end
     end
 
@@ -641,6 +644,7 @@ module mem_wb_reg
             cw_data.rvfi.wmask <= 4'b0;//done
             cw_data.rvfi.mem_rdata <= 32'b0;//done
             cw_data.rvfi.mem_wdata <= 32'b0;//done
+            cw_data.rvfi.prediction <= 1'b0;
         end
         else if((mem_wb_ld == 1)) begin
             if(cw_data.rvfi.instruction[6:0] == 7'b0000011) begin
@@ -662,6 +666,7 @@ module mem_wb_reg
                 cw_data.rvfi.wmask <= cw_in.rvfi.wmask;//done
                 cw_data.rvfi.mem_rdata <= mem_rdata_D_i;//done
                 cw_data.rvfi.mem_wdata <= cw_in.rvfi.mem_wdata;//done
+                cw_data.rvfi.prediction <= cw_in.rvfi.prediction;
             end
             else begin
                 cw_data.exe <= cw_in.exe;
@@ -682,6 +687,7 @@ module mem_wb_reg
                 cw_data.rvfi.wmask <= cw_in.rvfi.wmask;//done
                 cw_data.rvfi.mem_rdata <= mem_rdata_D_i;//done
                 cw_data.rvfi.mem_wdata <= cw_in.rvfi.mem_wdata;//done
+                cw_data.rvfi.prediction <= cw_in.rvfi.prediction;
             end
         end
     end
