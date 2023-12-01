@@ -194,7 +194,7 @@ logic jump,jump_taken;
 assign prediction = prediction_exe;
 assign br = br_en && (opcode_exec == op_br);
 assign jump = (opcode_exec == op_jal || opcode_exec == op_jalr);
-assign branch_taken_o = (branch_taken && br) || (jump && jump_taken);
+assign branch_taken_o = (br) || (jump);
 
 //assign prediction = 1'b0; //TODO temporary: this should come from ctrl word of exe
 /*
