@@ -99,6 +99,7 @@ assign mem_valid = wb_valid_i;
 assign de_valid = exec_valid_i;
 assign if_valid = decode_valid_i;
 assign opcode_exec = opcode_dec_exe;
+assign pc_exe = pc_exec;
 
 
 rv32i_word instr_fetch, pc_prev;
@@ -202,7 +203,7 @@ dec_exe_reg dec_exe_reg(
 
     .instruct_in_exe(instruct_in_exe)
 );
-assign pc_exe = rvfi_exe.rvfi.pc_rdata;
+assign pc_exec = rvfi_exe.rvfi.pc_rdata;
 //exexute stage
 exe_stage execute(
     .clk(clk), //ins
