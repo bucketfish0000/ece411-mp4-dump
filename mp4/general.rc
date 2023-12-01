@@ -16,7 +16,7 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 95132.812500 306539.062500
+zoom 95132.812500 286419.019397
 cursor 200000.000000
 marker 0.000000
 
@@ -168,7 +168,6 @@ addSignal -h 15 -holdScope rst
 addSignal -h 15 -holdScope load_pc
 addSignal -h 15 -holdScope pc_in[31:0]
 addSignal -h 15 -holdScope pc[31:0]
-addSignal -h 15 -holdScope exec_fwd_data[31:0]
 addSignal -h 15 /top_tb/dut/control/jump_taken
 addSignal -h 15 -holdScope branch_taken
 addGroup "Decode Stage" -e FALSE

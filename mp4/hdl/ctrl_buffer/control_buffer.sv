@@ -108,11 +108,17 @@ function logic[4:0] log2;
 
     logic[31:0] input_copy;
     log2 = 5'b0;
-    
-    input_copy=log_input;
-    while(input_copy[0]==0) begin
-        input_copy = input_copy >>1;
-        log2 +=1;
+
+    if(log_input == 32'b0) begin
+        log2 = 0;
+        return log2;
+    end
+    else begin
+        input_copy=log_input;
+        while(input_copy[0]==0) begin
+            input_copy = input_copy >>1;
+            log2 +=1;
+        end
     end
     return log2;
 endfunction
