@@ -66,7 +66,8 @@ module mp4datapath
     input rv32i_word branch_target,
     input logic branch_prediction,
     input logic exe_fwd_pc_sel,
-    output logic prediction_exe
+    output logic prediction_exe,
+    output rv32i_word branch_target_exe
 );
 
 rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb, pc_wdata;
@@ -89,6 +90,7 @@ control_word cw_exec, cw_mem, cw_wb;
 // logic f_d_valid,d_e_valid,e_m_valid,m_w_valid;
 
 logic [31:0] mem_fwd_data, exe_fwd_data, exe_fwd_pc, wb_fwd_data, alu_out_exe, alu_out_mem_wb, rs1_out, rs2_out, rs1_data_decode, rs2_data_decode, mem_rdata;
+assign branch_target_exe = alu_out_exe;
 
 //yes this looks messed up because the naming conventions don't actually work for my(the correct :) ) implementation
 //it's on purpose don't touch without asking
