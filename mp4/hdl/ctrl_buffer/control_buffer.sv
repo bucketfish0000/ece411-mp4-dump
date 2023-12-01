@@ -62,7 +62,7 @@ assign jp_exe_hit = |jp_exe_hits;
 assign jp_fetch_hit = |jp_fetch_hits;
 
 logic [4:0] btb_head, btb_exe_hit_index, btb_fetch_hit_index;
-logic [3:0] jtb_head, jtb_exe_hit_index, jtb_fetch_hit_index;
+logic [3:0] jtb_head, jtb_fetch_hit_index;
 
 ///generate!
 genvar i,j;
@@ -103,35 +103,54 @@ function void set_defaults();
     update_jp_history = 16'b0;
 endfunction
 
-function logic[4:0] log2;
-    input logic[31:0] log_input;
+function logic[4:0] clogb2;
+   input [31:0] value;
+   case(value)
+    32'h00000001:clogb2=5'b00000;
+    32'h00000002:clogb2=5'b00001;
+    32'h00000004:clogb2=5'b00010;
+    32'h00000008:clogb2=5'b00011;
+    32'h00000010:clogb2=5'b00100;
+    32'h00000200:clogb2=5'b00101;
+    32'h00000040:clogb2=5'b00110;
+    32'h00000080:clogb2=5'b00111;
+    32'h00000100:clogb2=5'b01000;
+    32'h00000200:clogb2=5'b01001;
+    32'h00000400:clogb2=5'b01010;
+    32'h00000800:clogb2=5'b01011;
+    32'h00001000:clogb2=5'b01100;
+    32'h00002000:clogb2=5'b01101;
+    32'h00004000:clogb2=5'b01110;
+    32'h00008000:clogb2=5'b01111;
+    32'h00010000:clogb2=5'b10000;
+    32'h00020000:clogb2=5'b10001;
+    32'h00040000:clogb2=5'b10010;
+    32'h00080000:clogb2=5'b10011;
+    32'h00100000:clogb2=5'b10100;
+    32'h02000000:clogb2=5'b10101;
+    32'h00400000:clogb2=5'b10110;
+    32'h00800000:clogb2=5'b10111;
+    32'h01000000:clogb2=5'b11000;
+    32'h02000000:clogb2=5'b11001;
+    32'h04000000:clogb2=5'b11010;
+    32'h08000000:clogb2=5'b11011;
+    32'h10000000:clogb2=5'b11100;
+    32'h20000000:clogb2=5'b11101;
+    32'h40000000:clogb2=5'b11110;
+    32'h80000000:clogb2=5'b11111;
 
-    logic[31:0] input_copy;
-    log2 = 5'b0;
 
-    if(log_input == 32'b0) begin
-        log2 = 0;
-        return log2;
-    end
-    else begin
-        input_copy=log_input;
-        while(input_copy[0]==0) begin
-            input_copy = input_copy >>1;
-            log2 +=1;
-        end
-    end
-    return log2;
+    default: clogb2=5'b00000;
+   endcase 
 endfunction
 
 always_comb begin : hit_idx_convert
     btb_exe_hit_index = 5'b0;
     btb_fetch_hit_index = 5'b0;
-    jtb_exe_hit_index = 4'b0;
-    jtb_fetch_hit_index = 4'b0;
-    if (br_exe_hit) btb_exe_hit_index = log2(br_exe_hits);
-    if (br_fetch_hit) btb_fetch_hit_index = log2(br_fetch_hits);
-    if (jp_exe_hit) jtb_exe_hit_index = log2({16'b0,jp_exe_hits});
-    if (jp_fetch_hit) jtb_fetch_hit_index = log2({16'b0,jp_fetch_hits});
+    jtb_fetch_hit_index = 5'b0;
+    if (br_exe_hit) btb_exe_hit_index = clogb2(br_exe_hits);
+    if (br_fetch_hit) btb_fetch_hit_index = clogb2(br_fetch_hits);
+    if (jp_fetch_hit) jtb_fetch_hit_index = clogb2({16'b0,jp_fetch_hits});
 end
 
 always_comb begin : fetch_pc_lookup
