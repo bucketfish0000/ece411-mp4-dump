@@ -21,6 +21,8 @@ import immediates::*;
     input logic [31:0] exe_fwd_data,
     input logic [31:0] wb_fwd_data,
     input imm imm_in,
+    input logic exe_fwd_pc_sel,
+    
     
     output logic [31:0] rs1_out,
     output logic [31:0] rs2_out,
@@ -28,15 +30,18 @@ import immediates::*;
     output logic br_en,
     output logic [31:0] bimm_out,
     output logic prediction_exe,
+    output logic false_prediction,
     input logic de_exe_valid,
     input logic de_exe_rdy,
     output logic exe_rdy,
 
     output control_word rvfi_exe
+
 );
-    logic [31:0] rs1_o, rs2_o, alumux1_o, alumux2_o, cmpmux_o;/* multi_low, multi_high, multi_r2, multi_r1, alu_fake;*/
+    logic [31:0] rs1_o, rs2_o, alumux1_o, alumux2_o, cmpmux_o,pc_wdata;/* multi_low, multi_high, multi_r2, multi_r1, alu_fake;*/
     logic [63:0] prev_order;
     logic br_en_temp, exe_rdy_multi;
+    assign false_prediction = (ctrl_w.rvfi.prediction != (br_en_temp)) && (opcode_exe==op_br||opcode_exe==op_jal || opcode_exe==op_jalr);
     cmpmux::cmpmux_sel_t cmp_sel;
     alumux::alumux1_sel_t alumux1_sel;
     alumux::alumux2_sel_t alumux2_sel;
@@ -58,6 +63,14 @@ import immediates::*;
     assign rs1_out = rs1_o;
     assign bimm_out = b_imm;
     assign prediction_exe = ctrl_w.rvfi.prediction;
+
+    always_comb begin: exe_fwd_pc_mux
+    case(exe_fwd_pc_sel)
+        1'b0: pc_wdata = alu_out;
+        1'b1: pc_wdata = ctrl_w.rvfi.pc_rdata+4;
+    endcase
+    end
+
     always_ff @(posedge clk) begin : prev_order_tracker
     if(rst)
         prev_order <= 64'hffffffffffffffff;
@@ -162,7 +175,7 @@ always_comb begin : regfile_ctrl_signals
         rvfi_exe.rvfi.prediction = 1'b0;
     end
     else begin
-        if ((br_en_temp && opcode_exe == op_br) || (opcode_exe == op_jal)) begin
+        if (((opcode_exe == op_br) || (opcode_exe == op_jal))&&false_prediction) begin
             rvfi_exe.rvfi.valid_commit = ctrl_w.rvfi.valid_commit;//done
             rvfi_exe.exe = ctrl_w.exe;
             rvfi_exe.mem = ctrl_w.mem;
@@ -175,7 +188,7 @@ always_comb begin : regfile_ctrl_signals
             rvfi_exe.rvfi.rs2_data = rs2_o; //done
             rvfi_exe.rvfi.rd_wdata = 32'b0;//done
             rvfi_exe.rvfi.pc_rdata = ctrl_w.rvfi.pc_rdata;//done
-            rvfi_exe.rvfi.pc_wdata = alu_out;//done
+            rvfi_exe.rvfi.pc_wdata = pc_wdata;//done
             rvfi_exe.rvfi.mem_addr = ctrl_w.rvfi.mem_addr;//done
             rvfi_exe.rvfi.rmask = ctrl_w.rvfi.rmask;//done
             rvfi_exe.rvfi.wmask = ctrl_w.rvfi.wmask;//done
@@ -196,7 +209,7 @@ always_comb begin : regfile_ctrl_signals
             rvfi_exe.rvfi.rs2_data = rs2_o; //done
             rvfi_exe.rvfi.rd_wdata = 32'b0;//done
             rvfi_exe.rvfi.pc_rdata = ctrl_w.rvfi.pc_rdata;//done
-            rvfi_exe.rvfi.pc_wdata = {alu_out[31:1], 1'b0};//done
+            rvfi_exe.rvfi.pc_wdata = {pc_wdata[31:1], 1'b0};//done
             rvfi_exe.rvfi.mem_addr = ctrl_w.rvfi.mem_addr;//done
             rvfi_exe.rvfi.rmask = ctrl_w.rvfi.rmask;//done
             rvfi_exe.rvfi.wmask = ctrl_w.rvfi.wmask;//done

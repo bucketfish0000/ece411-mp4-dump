@@ -103,7 +103,8 @@ import cpuIO::*;
     input logic branch_prediction,
     output pcmux::pcmux_sel_t pcmux_sel,
     output logic exe_fwd_pc_sel,ctrl_buffer_sel,
-    output logic branch_taken_o
+    output logic branch_taken_o,
+    input logic false_prediction
 );
 
 logic [4:0] rdy;
@@ -187,7 +188,7 @@ assign stall_mem_wb =
     ((rdy[2] == 0) && (vald[2] == 1)) || 
     ((rdy[0] == 0) && (vald[0] == 1)) || ((rdy[1] == 0)&&(vald[1] == 1));
 
-logic prediction;
+logic prediction, prediction_delay;
 logic br, branch_taken;
 logic jump,jump_taken;
 
@@ -204,14 +205,16 @@ prediction = 0, take = 1: flush, new pc is alu_out
 prediction = 1, take = 0: flush, new pc is exe_pc + 4
 */
 
-always_ff @(posedge clk, posedge rst) begin: br_jump_delay
+always_ff @(posedge clk, posedge rst) begin: delay
     if (rst) begin
         branch_taken<=1'b0;
         jump_taken<=1'b0;
+        prediction_delay<=1'b0;
     end
     else if(!(stall_exe_mem || stall_mem_wb)) begin
         branch_taken<= br;
         jump_taken<=jump;
+        prediction_delay<=prediction;
     end
 end
 
@@ -237,7 +240,7 @@ always_comb begin : pipeline_regs_logic
         //only not try to fetch when waiting for resp from icache 
         imem_read =((icache_resp) || (stall_if_de && !load_instuct_inserted)) ? 1'b0 : 1'b1; 
         //update pc when imem has responded (can proc)
-        load_pc = (prediction!=(branch_taken&&br)||prediction!=(jump&&jump_taken)||(icache_resp && !stall_if_de)) ? 1'b1 : 1'b0;
+        load_pc = (prediction!=(br||jump)||(icache_resp && !stall_if_de)) ? 1'b1 : 1'b0;
         //load_pc = (icache_resp && (branch_taken)||(jump_taken)||(!stall_if_de)) ? 1'b1 : 1'b0;
 
         //ppr resets
@@ -255,15 +258,21 @@ always_comb begin : pipeline_regs_logic
         imem_cancel = (jump&&jump_taken) || (br&&branch_taken);
         
         // //ppr rst (flushing control)
-        // //
+        // // 
         // if_de_rst = (branch_taken)? 1'b1 : 1'b0;
         // de_exe_rst = (branch_taken) ? 1'b1 : 1'b0;
         // exe_mem_rst = (mem_rdy && !exe_valid) ? 1'b1 : 1'b0; 
         // mem_wb_rst = 1'b0;
         //ppr rst (flushing control)
         //
-        if_de_rst = (prediction!=((branch_taken&&br)||(jump_taken&&jump))) ? 1'b1 : 1'b0;
-        de_exe_rst = (prediction!=((branch_taken&&br)||(jump_taken&&jump))) ? 1'b1 : 1'b0;
+        if_de_rst = (
+            (prediction==1'b0 && ((branch_taken&&br)||(jump_taken&&jump)) == 1'b1)
+        ||  ((prediction && prediction_delay) && (!br&&!jump)))
+        ? 1'b1 : 1'b0;
+        de_exe_rst = (
+            (prediction==1'b0 && ((branch_taken&&br)||(jump_taken&&jump)) == 1'b1)
+        ||  ((prediction==1'b1 && prediction_delay) && ((!br&&!jump)))
+        ) ? 1'b1 : 1'b0;
         exe_mem_rst = 1'b0; 
         mem_wb_rst = 1'b0;
     

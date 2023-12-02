@@ -67,7 +67,8 @@ module mp4datapath
     input logic branch_prediction,
     input logic exe_fwd_pc_sel,
     output logic prediction_exe,
-    output rv32i_word branch_target_exe
+    output rv32i_word branch_target_exe,
+    output logic false_prediction
 );
 
 rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb, pc_wdata;
@@ -216,12 +217,14 @@ exe_stage execute(
     .exe_fwd_data(exe_fwd_data),
     .wb_fwd_data(wb_fwd_data),
     .imm_in(imm_exec),
+    .exe_fwd_pc_sel(exe_fwd_pc_sel),
     .rs1_out(rs1_out), //outs
     .rs2_out(rs2_out),
     .alu_out(alu_out_exe),
     .br_en(br_en_exe_o),
     .bimm_out(bimm_exec),
     .prediction_exe(prediction_exe),
+    .false_prediction(false_prediction),
 
     .de_exe_valid(exec_valid_i),
     .de_exe_rdy(exec_ready_i),

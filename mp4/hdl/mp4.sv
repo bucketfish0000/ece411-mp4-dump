@@ -106,6 +106,7 @@ import cpuIO::*;
             logic branch_prediction,prediction_exe;
             logic exe_fwd_pc_sel,ctrl_buffer_sel;
             logic branch_taken;
+            logic false_prediction;
 
         assign mispredict = if_de_rst;//this should work... right? Might be one off in beginning though
 
@@ -169,7 +170,8 @@ import cpuIO::*;
         .exe_fwd_pc_sel(exe_fwd_pc_sel),
         .ctrl_buffer_sel(ctrl_buffer_sel),
         .prediction_exe(prediction_exe),
-        .branch_taken_o(branch_taken)
+        .branch_taken_o(branch_taken),
+        .false_prediction(false_prediction)
     );
 
     cache dcache0(
@@ -339,7 +341,8 @@ import cpuIO::*;
         .branch_prediction(branch_prediction),
         .exe_fwd_pc_sel(exe_fwd_pc_sel),
         .prediction_exe(prediction_exe),
-        .branch_target_exe(branch_target_exe)
+        .branch_target_exe(branch_target_exe),
+        .false_prediction(false_prediction)
     );
 
     control_buffer control_buffer
