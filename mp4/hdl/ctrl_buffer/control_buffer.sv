@@ -72,7 +72,7 @@ generate
         btb_entry bentry (
             .clk(clk),.rst(rst),
             .update_pc(update_br_pc[i]),.update_history(update_br_history[i]),.prediction(prediction),.branch_taken(branch_taken),
-            .pc_exe(pc_exe),.pc_fetch(pc_fetch),.target_offset(bimm_exe),
+            .pc_exe(pc_exe),.pc_fetch(pc_fetch),.target_offset(bimm_exe[12:1]),
             
             .fetch_pc_hit(br_fetch_hits[i]),.exe_pc_hit(br_exe_hits[i]),
             .branch_prediction(branch_predictions[i]),
@@ -221,7 +221,8 @@ module btb_entry
 (
     input clk,rst,
     input logic update_pc, update_history, branch_taken, prediction,
-    input rv32i_word pc_exe, pc_fetch, target_offset,
+    input rv32i_word pc_exe, pc_fetch, 
+    input logic [11:0] target_offset,
     
     output logic fetch_pc_hit, exe_pc_hit,
     output logic branch_prediction,
@@ -263,7 +264,7 @@ module btb_entry
         else begin
             if (update_pc) begin
                 instr_pc <= pc_exe;
-                offset <= target_offset[12:1]; //bimm
+                offset <= target_offset; //bimm
                 branch_hist <= 10'b1000000000;
                 prediction_hist <=10'b0;
             end

@@ -13,7 +13,7 @@ module top_tb;
 
     bit rst;
 
-    int timeout = 10000000000000; // in cycles, change according to your needs
+    int timeout = 100000000; // in cycles, change according to your needs
 
     // CP1
     // mem_itf magic_itf_i(.*);
@@ -60,8 +60,8 @@ module top_tb;
     );
 
     //NOTE: number of mispredicts is half of this count since if_de_rst goes high for two cycles
-    /*  with btb is 1_1f58 mispredicts/flush
-        without.... 1_1f58... but 4 seconds slower?*/
+    /*  with btb is 1_6768 mispredicts/flush
+        without.... 2_49f4!!!*/
     always_ff @( posedge clk , posedge rst ) begin : mispredict_counter
         if(rst) begin
             mispredict_count <= 32'h0;
