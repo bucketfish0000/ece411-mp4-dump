@@ -297,7 +297,7 @@ end
 always_comb begin : pc_branch_logics
     pcmux_sel = pcmux::pc_plus4;//default
     if (branch_prediction) pcmux_sel = pcmux::prediction; //if buffer says take branch
-    else if (prediction_exe != br) pcmux_sel = pcmux::alu_out; //false prediction, reload pc
+    else if ((prediction_exe != br) && (opcode_exec == op_br)) pcmux_sel = pcmux::alu_out; //false prediction, reload pc
     else if (prediction_exe == 0 && opcode_exec == op_jal) pcmux_sel = pcmux::alu_out; //positively-predicted jal already loaded
     else if (opcode_exec == op_jalr) pcmux_sel = pcmux::alu_mod2; //jalr
 end

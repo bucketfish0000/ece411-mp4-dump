@@ -111,7 +111,7 @@ function logic[4:0] clogb2;
     32'h00000004:clogb2=5'b00010;
     32'h00000008:clogb2=5'b00011;
     32'h00000010:clogb2=5'b00100;
-    32'h00000200:clogb2=5'b00101;
+    32'h00000020:clogb2=5'b00101;
     32'h00000040:clogb2=5'b00110;
     32'h00000080:clogb2=5'b00111;
     32'h00000100:clogb2=5'b01000;
@@ -127,7 +127,7 @@ function logic[4:0] clogb2;
     32'h00040000:clogb2=5'b10010;
     32'h00080000:clogb2=5'b10011;
     32'h00100000:clogb2=5'b10100;
-    32'h02000000:clogb2=5'b10101;
+    32'h00200000:clogb2=5'b10101;
     32'h00400000:clogb2=5'b10110;
     32'h00800000:clogb2=5'b10111;
     32'h01000000:clogb2=5'b11000;
@@ -248,7 +248,7 @@ module btb_entry
         if (branch_hist >= 10'b1110000000) branch_prediction = 1'b1;
         else if (branch_hist < 10'b0000010000) branch_prediction =  1'b0;
         else begin
-            if (branch_hist ^ prediction_hist >= 10'b1101010000) branch_prediction = ~prediction_hist[9];
+            if ((branch_hist ^ prediction_hist) >= 10'b1101010000) branch_prediction = ~prediction_hist[9];
             else branch_prediction = prediction_hist[9];
         end
     end
