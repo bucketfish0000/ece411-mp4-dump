@@ -25,7 +25,7 @@ guideline:
     1.  the buffer is a queue that keeps track of the 32 most recent br instrs. 
     2.  an instr is added to queue when it is br and is taken. 
     3.  an instr is target of evction when it is the oldest in the queue and something new comes along, i.e. do fifo
-    4.  branch hist reg goes from high to low, i.e. bit 15 is the most recent encounter.
+    4.  branch hist reg goes from high to low, i.e. bit 7 is the most recent encounter.
         therefore, the more times we see it not being taken, the hist reg number becomes smaller.
         an instr is predicted as the following: 
             if (branch-hist >= 11_1000_0000)
@@ -47,27 +47,27 @@ apart from the above, a separate buffer is used for jump targets:
 not histories are needed since jumps are unconditional.
 */
 
-logic [31:0] br_exe_hits, br_fetch_hits;
-logic [31:0] branch_predictions;
-logic [15:0] jp_exe_hits, jp_fetch_hits;
+logic [7:0] br_exe_hits, br_fetch_hits;
+logic [7:0] branch_predictions;
+logic [3:0] jp_exe_hits, jp_fetch_hits;
 
-logic [31:0] update_br_pc, update_br_history;
-logic [15:0] update_jp_pc, update_jp_history;
-rv32i_word [31:0] br_targets;
-rv32i_word [15:0] jp_targets;
+logic [7:0] update_br_pc, update_br_history;
+logic [3:0] update_jp_pc, update_jp_history;
+rv32i_word [7:0] br_targets;
+rv32i_word [3:0] jp_targets;
 logic br_exe_hit, br_fetch_hit,jp_exe_hit, jp_fetch_hit;
 assign br_exe_hit = |br_exe_hits;
 assign br_fetch_hit = |br_fetch_hits;
 assign jp_exe_hit = |jp_exe_hits;
 assign jp_fetch_hit = |jp_fetch_hits;
 
-logic [4:0] btb_head, btb_exe_hit_index, btb_fetch_hit_index;
-logic [3:0] jtb_head, jtb_fetch_hit_index;
+logic [2:0] btb_head, btb_exe_hit_index, btb_fetch_hit_index;
+logic [1:0] jtb_head, jtb_fetch_hit_index;
 
 ///generate!
 genvar i,j;
 generate
-    for (i = 0; i < 32; i++) 
+    for (i = 0; i < 8; i++) 
     begin: btb
         btb_entry bentry (
             .clk(clk),.rst(rst),
@@ -80,7 +80,7 @@ generate
         );
     end
 
-    for (j = 0; j < 16; j++) 
+    for (j = 0; j < 4; j++) 
     begin: jtb
         jtb_entry jentry (
             .clk(clk),.rst(rst),
@@ -97,65 +97,39 @@ endgenerate
 
 
 function void set_defaults();
-    update_br_pc = 32'b0;
-    update_br_history = 32'b0;
-    update_jp_pc = 16'b0;
-    update_jp_history = 16'b0;
+    update_br_pc = 8'b0;
+    update_br_history = 8'b0;
+    update_jp_pc = 4'b0;
+    update_jp_history = 4'b0;
 endfunction
 
-function logic[4:0] clogb2;
-   input [31:0] value;
+function logic[2:0] clogb2;
+   input [8:0] value;
    case(value)
-    32'h00000001:clogb2=5'b00000;
-    32'h00000002:clogb2=5'b00001;
-    32'h00000004:clogb2=5'b00010;
-    32'h00000008:clogb2=5'b00011;
-    32'h00000010:clogb2=5'b00100;
-    32'h00000020:clogb2=5'b00101;
-    32'h00000040:clogb2=5'b00110;
-    32'h00000080:clogb2=5'b00111;
-    32'h00000100:clogb2=5'b01000;
-    32'h00000200:clogb2=5'b01001;
-    32'h00000400:clogb2=5'b01010;
-    32'h00000800:clogb2=5'b01011;
-    32'h00001000:clogb2=5'b01100;
-    32'h00002000:clogb2=5'b01101;
-    32'h00004000:clogb2=5'b01110;
-    32'h00008000:clogb2=5'b01111;
-    32'h00010000:clogb2=5'b10000;
-    32'h00020000:clogb2=5'b10001;
-    32'h00040000:clogb2=5'b10010;
-    32'h00080000:clogb2=5'b10011;
-    32'h00100000:clogb2=5'b10100;
-    32'h00200000:clogb2=5'b10101;
-    32'h00400000:clogb2=5'b10110;
-    32'h00800000:clogb2=5'b10111;
-    32'h01000000:clogb2=5'b11000;
-    32'h02000000:clogb2=5'b11001;
-    32'h04000000:clogb2=5'b11010;
-    32'h08000000:clogb2=5'b11011;
-    32'h10000000:clogb2=5'b11100;
-    32'h20000000:clogb2=5'b11101;
-    32'h40000000:clogb2=5'b11110;
-    32'h80000000:clogb2=5'b11111;
-
-
-    default: clogb2=5'b00000;
+    8'h01:clogb2=3'b000;
+    8'h02:clogb2=3'b001;
+    8'h04:clogb2=3'b010;
+    8'h08:clogb2=3'b011;
+    8'h10:clogb2=3'b100;
+    8'h20:clogb2=3'b101;
+    8'h40:clogb2=3'b110;
+    8'h80:clogb2=3'b111;
+    default: clogb2=5'b000;
    endcase 
 endfunction
 
 always_comb begin : hit_idx_convert
-    btb_exe_hit_index = 5'b0;
-    btb_fetch_hit_index = 5'b0;
-    jtb_fetch_hit_index = 5'b0;
-    if (br_exe_hit) btb_exe_hit_index = clogb2(br_exe_hits);
-    if (br_fetch_hit) btb_fetch_hit_index = clogb2(br_fetch_hits);
-    if (jp_fetch_hit) jtb_fetch_hit_index = clogb2({16'b0,jp_fetch_hits});
+    btb_exe_hit_index = 3'b0;
+    btb_fetch_hit_index = 3'b0;
+    jtb_fetch_hit_index = 3'b0;
+    if (br_exe_hit) btb_exe_hit_index = clogb2({br_exe_hits});
+    if (br_fetch_hit) btb_fetch_hit_index = clogb2({br_fetch_hits});
+    if (jp_fetch_hit) jtb_fetch_hit_index = clogb2({4'b0,jp_fetch_hits});
 end
 
 always_comb begin : fetch_pc_lookup
     prediction = 1'b0;
-    target = 32'hffffffff;//default to invalid
+    target = 8'hff;//default to invalid
     if (br_fetch_hit) begin
         prediction = branch_predictions[btb_fetch_hit_index];
         if (prediction) target = br_targets[btb_fetch_hit_index];
@@ -168,18 +142,18 @@ end
 
 always_ff @(posedge clk) begin : queue_heads
     if (rst) begin
-        btb_head <= 5'b0;
-        jtb_head <= 4'b0;
+        btb_head <= 3'b0;
+        jtb_head <= 2'b0;
         end 
     else if (sel) begin
         if (opcode == op_br) begin
             if (branch_taken) begin
-                btb_head <= (btb_head + 5'b01);
+                btb_head <= (btb_head + 3'b01);
             end
         end
         else if (opcode == op_jal) begin
             if ((!jp_exe_hit) && branch_taken) begin
-                jtb_head <= (jtb_head + 4'b01);
+                jtb_head <= (jtb_head + 2'b01);
             end
         end
     end
