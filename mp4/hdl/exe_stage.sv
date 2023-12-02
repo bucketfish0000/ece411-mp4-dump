@@ -41,7 +41,7 @@ import immediates::*;
     logic [31:0] rs1_o, rs2_o, alumux1_o, alumux2_o, cmpmux_o,pc_wdata;/* multi_low, multi_high, multi_r2, multi_r1, alu_fake;*/
     logic [63:0] prev_order;
     logic br_en_temp, exe_rdy_multi;
-    assign false_prediction = (ctrl_w.rvfi.prediction != (br_en_temp)) && (opcode_exe==op_br||opcode_exe==op_jal || opcode_exe==op_jalr);
+    assign false_prediction = (ctrl_w.rvfi.prediction != (br_en_temp)) && (opcode_exe==op_br||opcode_exe==op_jal) || (opcode_exe==op_jalr);
     cmpmux::cmpmux_sel_t cmp_sel;
     alumux::alumux1_sel_t alumux1_sel;
     alumux::alumux2_sel_t alumux2_sel;

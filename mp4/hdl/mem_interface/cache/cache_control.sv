@@ -91,6 +91,12 @@ begin: state_actions
     set_defaults();
     case(state)
         idle:begin
+            if(mem_cancel) begin
+                cache_resp = 1'b1;
+            end
+            else begin
+                cache_resp = 1'b0;
+            end
         end
         hit_look: begin
             if(mem_cancel) begin
@@ -153,7 +159,7 @@ end
 //state transition
 always_comb
 begin: next_state_logic
-    if(rst || (mem_cancel && (state != idle))) next_state=idle;
+    if(rst || (mem_cancel)) next_state=idle;
     else begin
     case(state)
         idle:begin

@@ -8,10 +8,12 @@ br.s:
     #also didn't test for equal to for signed and unsigned bge
 _start:
 
-lol:
     addi x1, x0, 7  #x1<= x0 + 7 = 0+7 = 7
-    addi x2, x0, 7  #x2<= x0 + 7 = 0+7 = 7
-    blt x0, x1, lol #test success
+    addi x2, x0, 700  #x2<= x0 + 7 = 0+7 = 7
+    lol:
+    addi x1, x1, 7
+    beq x0, x1, halt
+    blt x1, x2, lol #test success
 
 halt:                 # Infinite loop to keep the processor
     beq x0, x0, halt  # from trying to execute the data below.

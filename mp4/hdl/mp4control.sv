@@ -266,13 +266,11 @@ always_comb begin : pipeline_regs_logic
         //ppr rst (flushing control)
         //
         if_de_rst = (
-            (prediction==1'b0 && ((branch_taken&&br)||(jump_taken&&jump)) == 1'b1)
-        ||  ((prediction && prediction_delay) && (!br&&!jump)))
+            (false_prediction&&prediction_delay&&prediction) || (false_prediction&&((br&&branch_taken)||(jump&&jump_taken))))
         ? 1'b1 : 1'b0;
         de_exe_rst = (
-            (prediction==1'b0 && ((branch_taken&&br)||(jump_taken&&jump)) == 1'b1)
-        ||  ((prediction==1'b1 && prediction_delay) && ((!br&&!jump)))
-        ) ? 1'b1 : 1'b0;
+            (false_prediction&&prediction_delay&&prediction) || (false_prediction&&((br&&branch_taken)||(jump&&jump_taken)))) 
+        ? 1'b1 : 1'b0;
 
         sp_ld_commit = (jump&&jump_taken) || (br&&branch_taken) || (false_prediction&&if_de_rst);
         imem_cancel = (jump&&jump_taken) || (br&&branch_taken) || (false_prediction&&if_de_rst);
@@ -296,7 +294,7 @@ end
 
 always_comb begin : pc_branch_logics
     pcmux_sel = pcmux::pc_plus4;//default
-    if (branch_prediction) pcmux_sel = pcmux::prediction; //if buffer says take branch
+    if (branch_prediction && !false_prediction) pcmux_sel = pcmux::prediction; //if buffer says take branch
     else if ((prediction_exe != br) && (opcode_exec == op_br)) pcmux_sel = pcmux::alu_out; //false prediction, reload pc
     else if (prediction_exe == 0 && opcode_exec == op_jal) pcmux_sel = pcmux::alu_out; //positively-predicted jal already loaded
     else if (opcode_exec == op_jalr) pcmux_sel = pcmux::alu_mod2; //jalr
