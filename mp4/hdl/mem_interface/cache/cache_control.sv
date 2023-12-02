@@ -93,6 +93,13 @@ begin: state_actions
         idle:begin
         end
         hit_look: begin
+            if(mem_cancel) begin
+                cache_resp = 1'b1;
+            end
+            else begin
+                cache_resp = 1'b0;
+            end
+
             if (cache_hit) begin
                 //hit: perfom w/r
                 if (ex_read) begin
@@ -146,7 +153,7 @@ end
 //state transition
 always_comb
 begin: next_state_logic
-    if(rst || mem_cancel) next_state=idle;
+    if(rst || (mem_cancel && (state != idle))) next_state=idle;
     else begin
     case(state)
         idle:begin
