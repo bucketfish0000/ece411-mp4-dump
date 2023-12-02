@@ -255,7 +255,7 @@ always_comb begin : pipeline_regs_logic
         exe_mem_ld = (!icache_resp || stall_exe_mem || vald[3]==0) ? 1'b0 : 1'b1;
         mem_wb_ld = (!icache_resp || stall_mem_wb || vald[2]==0) ? 1'b0 : 1'b1;
         // sp_ld_commit = (jump&&jump_taken) || (br&&branch_taken) || (false_prediction&&);
-        imem_cancel = (jump&&jump_taken) || (br&&branch_taken);
+        // imem_cancel = (jump&&jump_taken) || (br&&branch_taken);
         
         // //ppr rst (flushing control)
         // // 
@@ -275,6 +275,7 @@ always_comb begin : pipeline_regs_logic
         ) ? 1'b1 : 1'b0;
 
         sp_ld_commit = (jump&&jump_taken) || (br&&branch_taken) || (false_prediction&&if_de_rst);
+        imem_cancel = (jump&&jump_taken) || (br&&branch_taken) || (false_prediction&&if_de_rst);
         exe_mem_rst = 1'b0; 
         mem_wb_rst = 1'b0;
     
