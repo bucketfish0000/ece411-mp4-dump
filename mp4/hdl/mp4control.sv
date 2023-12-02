@@ -192,7 +192,7 @@ logic prediction, prediction_delay;
 logic br, branch_taken;
 logic jump,jump_taken;
 
-assign prediction = prediction_exe;
+assign prediction = prediction_exe&&(opcode_exec == op_br||opcode_exec == op_jal||opcode_exec == op_jal);
 assign br = br_en && (opcode_exec == op_br);
 assign jump = (opcode_exec == op_jal || opcode_exec == op_jalr);
 assign branch_taken_o = (br) || (jump);
@@ -236,11 +236,11 @@ always_comb begin : pipeline_regs_logic
         mem_wb_rst = 1'b1;
     end
     else begin
-            //imem and pc interactions
+        //imem and pc interactions
         //only not try to fetch when waiting for resp from icache 
         imem_read =((icache_resp) || (stall_if_de && !load_instuct_inserted)) ? 1'b0 : 1'b1; 
         //update pc when imem has responded (can proc)
-        load_pc = (prediction!=(br||jump)||(icache_resp && !stall_if_de)) ? 1'b1 : 1'b0;
+        load_pc = ((prediction!=(br||jump)||(icache_resp && !stall_if_de))) ? 1'b1 : 1'b0;
         //load_pc = (icache_resp && (branch_taken)||(jump_taken)||(!stall_if_de)) ? 1'b1 : 1'b0;
 
         //ppr resets
