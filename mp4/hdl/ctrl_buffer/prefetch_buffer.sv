@@ -28,7 +28,7 @@ module prefetch_buffer(
     logic used;
     logic [31:0] addrs [1:0];
     logic [255:0] cache_lines [1:0];
-    logic hit, miss, pf_miss_resp;
+    logic hit, miss;
 
     assign pf_hit = hit;
     assign pf_miss = miss;
@@ -39,7 +39,6 @@ module prefetch_buffer(
             least_recent_used <= 1'b0;
             addrs[1:0] <= 64'b0;
             cache_lines[1:0] <= 512'b0;
-            pf_miss_resp <= 1'b0;//goes high cycle after reading in cacheline from pmem on miss
         end
         else begin
             if(miss&&pf_write) begin
@@ -47,16 +46,13 @@ module prefetch_buffer(
                     addrs[least_recent_used] <= mem_addr;
                     cache_lines[least_recent_used] <= mem_rdata;
                     least_recent_used <= !least_recent_used;
-                    pf_miss_resp <= 1'b1;
                 end
-                else pf_miss_resp <= 1'b0;
             end
             else if(hit&&(pf_write||pf_read)) begin
                 least_recent_used <= !used;
-                pf_miss_resp <= 1'b0;
             end
             else begin
-                pf_miss_resp <= 1'b0;
+                ;
             end
         end
     end
@@ -80,7 +76,7 @@ module prefetch_buffer(
             end
             else begin
                 miss = 1'b1;
-                if(pf_miss_resp) begin
+                if(pf_ld) begin
                     pf_resp = 1'b1;
                 end
                 else begin
