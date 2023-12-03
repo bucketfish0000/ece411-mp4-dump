@@ -23,9 +23,6 @@ module cache_arbiter
     output logic mem_read, mem_write
 );
 
-logic k;
-assign k = {24'b0, 8'b00100000};
-
 // list of fsm states 
 enum int unsigned { 
     icache, dcache, idle
@@ -95,15 +92,7 @@ always_comb begin : state_actions
             mem_data_w = dcache_data_w; 
         end
         idle: begin
-            mem_addr = pf_pc_addr_i + k;//input from fetch, pc_wdata, plus some offset of how many cachelines ahead we want to fetch
-            pf_addr = mem_addr;
-            pf_write = 1'b1;
-            if(pf_miss) begin
-                mem_read = 1'b1;
-            end
-            else begin
-
-            end
+           ;
         end
         default: ;
     endcase

@@ -68,19 +68,8 @@ module top_tb;
         .stall_all(stall_all),
         .stall_de_exe_mem_wb(stall_de_exe_mem_wb),
         .stall_exe_mem_wb(stall_exe_mem_wb),
-        .stall_mem_wb(stall_mem_wb),
-        .buffer(buffy)
+        .stall_mem_wb(stall_mem_wb)
     );
-
-    always_comb begin : buffy_flaging
-        if(buffy != 512'b0) begin
-            buff_flag = 1'b1;
-        end
-        else begin
-            buff_flag = 1'b0;
-        end
-    end
-
     //  ipc without btb or pre-fetch: .323673
     //  with btb and without pre-fetch: .358626
 

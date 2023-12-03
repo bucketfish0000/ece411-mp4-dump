@@ -37,9 +37,7 @@ import cpuIO::*;
     output logic stall_all,
     output logic stall_de_exe_mem_wb,
     output logic stall_exe_mem_wb,
-    output logic stall_mem_wb,
-
-    output logic [511:0] buffer
+    output logic stall_mem_wb
 );
 /*                             256bit                        32bit word
           64bit              cacheline       -> word adapter    -> cpu datapath fetch
@@ -121,17 +119,6 @@ import cpuIO::*;
             logic [511:0] buffer_check;
 
         assign mispredict = if_de_rst;//this should work... right? Might be one off in beginning though
-
-        always_ff @( posedge clk, posedge rst ) begin : buff_check
-            if(rst) begin
-                buffer_check <= 512'b0;
-            end
-            else if(branch_taken) begin
-                buffer_check <= {480'b0, dmem_address};
-            end
-        end
-
-        assign buffer = buffer_check;
 
     mp4control control(
         .clk(clk),
