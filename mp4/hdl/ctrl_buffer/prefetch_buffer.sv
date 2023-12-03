@@ -1,3 +1,20 @@
+/*
+    General Idea:
+        If imem is reading and is going to miss, but pf_buff has the cacheline it needs, grab from prefetch and write it into cache
+
+        If imem is writing and is going to miss, but pf_buff has the cacheline it needs, grab from prefetch and write to cache, then overwrite
+        THEN pf_buff needs to get rid of that cacheline since it is not up to date
+
+        If imem is writing or reading and going to miss, but pf_buff doesn't have it, imem read from pmem as normal
+
+        If imem is writing or reading and going to hit, ignor pf_buff entirely, BUT if writing and hit and hit in pf_buff, then pf_buff needs
+        to get rid of the cacheline since it isn't up to date
+
+        If imem and dmem are not using pmem, then pf_write high and petition pmem IF miss, then when pf_ld(==pmem_resp) update the buffer. However,
+        if hit then don't petition pmem and change least_recently_used accordingly
+
+*/
+
 module prefetch_buffer(
     input clk,
     input rst,
