@@ -116,7 +116,10 @@ import cpuIO::*;
             logic exe_fwd_pc_sel,ctrl_buffer_sel;
             logic branch_taken;
             logic false_prediction;
-            logic [511:0] buffer_check;
+
+            logic [255:0] pf_data_r, pf_data_w;
+            logic [31:0] pf_addr;
+            logic pf_hit,pf_miss,pf_read,pf_write,pf_ld;
 
         assign mispredict = if_de_rst;//this should work... right? Might be one off in beginning though
 
@@ -271,7 +274,30 @@ import cpuIO::*;
         .mem_addr(cacheline_mem_address),    //out
         .mem_data_w(cacheline_wdata_mem), 
         .mem_read(cacheline_read), 
-        .mem_write(cacheline_write)
+        .mem_write(cacheline_write),
+
+        .pc_rdata(pc_rdata),
+        .pf_data_r(pf_data_r),
+        .pf_hit(pf_hit),
+        .pf_miss(pf_miss),
+        .pf_addr(pf_addr),
+        .pf_read(pf_read),
+        .pf_write(pf_write),
+        .pf_ld(pf_ld),
+        .pf_data_w(pf_data_w)
+    );
+
+    prefetch_buffer pf(
+    .clk(clk),
+    .rst(rst),
+    .mem_addr(pf_addr), //mem_addr, either imem_addr or new pf_addr
+    .pf_read(pf_read), //imem is reading, check for data
+    .pf_write(pf_write), //want to write something into pf_buf
+    .pf_ld(pf_ld), //pmem_resp goes high, load cacheline
+    .mem_rdata(pf_data_w), //data read from pmem
+    .pf_hit(pf_hit), //pf_hits
+    .pf_miss(pf_miss), //pf_misses
+    .pf_mem_rdata(pf_data_r)
     );
 
     //good
