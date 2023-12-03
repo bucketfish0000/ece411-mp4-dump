@@ -17,7 +17,7 @@ import cpuIO::*;
     input clk, //from datapath
     input rst, //from datapath
     input logic exe_mem_valid, //from EXE_MEM pipeline reg
-    input control_word ctrl_w_MEM,//from EXE_MEM pipeline reg
+    input control_word_exe_mem ctrl_w_MEM,//from EXE_MEM pipeline reg
     input logic mem_resp_d, //from data_cache
     output logic mem_r_d, //to data cache
     output logic mem_w_d, //to data cache
