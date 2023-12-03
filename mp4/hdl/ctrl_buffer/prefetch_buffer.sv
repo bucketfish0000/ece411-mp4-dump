@@ -38,7 +38,7 @@ module prefetch_buffer(
         if(rst) begin
             least_recent_used <= 1'b0;
             addrs[1:0] <= 64'b0;
-            cache_lines <= 512'b0;
+            cache_lines[1:0] <= 512'b0;
             pf_miss_resp <= 1'b0;//goes high cycle after reading in cacheline from pmem on miss
         end
         else begin
