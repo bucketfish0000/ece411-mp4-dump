@@ -25,7 +25,10 @@ module cache #(
     output  logic           pmem_write,
     input   logic   [255:0] pmem_rdata,
     output  logic   [255:0] pmem_wdata,
-    input   logic           pmem_resp
+    input   logic           pmem_resp,
+
+    output logic hit,
+    output logic miss
 );
 
     //control inputs
@@ -61,7 +64,10 @@ cache_control control
     .data_wmask_mux(data_wmask_mux),
     .pmem_address_mux(pmem_address_mux),
     .cache_hit(cache_hit),
-    .cache_dirty(cache_dirty)
+    .cache_dirty(cache_dirty),
+
+    .hit(hit),
+    .miss(miss)
 );
 
 cache_datapath datapath

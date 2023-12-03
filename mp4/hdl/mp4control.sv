@@ -104,12 +104,17 @@ import cpuIO::*;
     output pcmux::pcmux_sel_t pcmux_sel,
     output logic exe_fwd_pc_sel,ctrl_buffer_sel,
     output logic branch_taken_o,
-    input logic false_prediction
+    input logic false_prediction,
+
+    output logic stall_fet_dec,
+    output logic stall_all,
+    output logic stall_not_fet,
+    output logic stall_not_fet_dec,
+    output logic stall_not_fet_dec_exe
 );
 
 logic [4:0] rdy;
 logic [4:0] vald;
-logic [85:0] instruct_in_de;
 assign rdy = {if_rdy, de_rdy, exe_rdy, mem_rdy, wb_rdy};
 assign vald = {if_valid, de_valid, exe_valid, mem_valid, wb_valid};
 
@@ -118,6 +123,20 @@ logic stall_if_de, stall_de_exe, stall_exe_mem, stall_mem_wb;
 logic load_instuct_inserted;
 control_read true_cw_read;
 
+assign stall_fet_dec = (!((stall_exe_mem || (icache_resp && !exe_mem_ld)) || (stall_de_exe || (icache_resp && !de_exe_ld)) 
+            || (stall_mem_wb || (icache_resp && ! mem_wb_ld))) && (stall_if_de || (icache_resp && !if_de_ld)));
+
+assign stall_all = ((stall_if_de || (icache_resp && !if_de_ld)) && (stall_de_exe || (icache_resp && !de_exe_ld)) 
+            && ((stall_exe_mem || (icache_resp && !exe_mem_ld)) && (stall_mem_wb || (icache_resp && ! mem_wb_ld))));
+
+assign stall_not_fet = (!(stall_if_de || (icache_resp && !if_de_ld)) && (stall_de_exe || (icache_resp && !de_exe_ld)) 
+            && ((stall_exe_mem || (icache_resp && !exe_mem_ld)) && (stall_mem_wb || (icache_resp && ! mem_wb_ld))));
+
+assign stall_not_fet_dec = (!(stall_if_de || (icache_resp && !if_de_ld)) && !(stall_de_exe || (icache_resp && !de_exe_ld)) 
+            && ((stall_exe_mem || (icache_resp && !exe_mem_ld)) && (stall_mem_wb || (icache_resp && ! mem_wb_ld))));
+
+assign stall_not_fet_dec_exe = (!(stall_if_de || (icache_resp && !if_de_ld)) && !(stall_de_exe || (icache_resp && !de_exe_ld)) 
+            && !((stall_exe_mem || (icache_resp && !exe_mem_ld)) && (stall_mem_wb || (icache_resp && ! mem_wb_ld))));
 
 always_ff @(posedge clk, posedge rst) begin
     if(rst) begin
@@ -135,7 +154,6 @@ always_comb begin
     if(rst) begin
         true_cw_read = cw_read;
         ld_commit = 1'b0;
-        instruct_in_de = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
     end
     else if((load_instuct_inserted == 1)) begin
         true_cw_read.order_commit = cw_read.order_commit;
@@ -150,19 +168,12 @@ always_comb begin
         true_cw_read.rs1_data = 32'b0;
         true_cw_read.rs2_data = 32'b0;
         true_cw_read.rd_addr = 5'b0;
-        instruct_in_de = {5'b0, 5'b0, 5'b0, op_imm, cw_read.order_commit};
         ld_commit = 1'b0; //need to load new commit order bc otherwise wb will see the same commit order twice in a row and not commit it the 
                             //second time, but we want it to commit the instrutction after load
     end
     else begin
         true_cw_read = cw_read;
         ld_commit = 1'b0;
-        if(cw_read.opcode != op_br && cw_read.opcode != op_store) begin
-            instruct_in_de = {cw_read.rd_addr, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
-        end
-        else begin
-            instruct_in_de = {5'b0, cw_read.rs1_addr, cw_read.rs2_addr, cw_read.opcode, cw_read.order_commit};
-        end
     end
 end
 

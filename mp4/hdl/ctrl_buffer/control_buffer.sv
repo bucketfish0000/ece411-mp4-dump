@@ -114,14 +114,14 @@ function logic[2:0] clogb2;
     8'h20:clogb2=3'b101;
     8'h40:clogb2=3'b110;
     8'h80:clogb2=3'b111;
-    default: clogb2=5'b000;
+    default: clogb2=3'b000;
    endcase 
 endfunction
 
 always_comb begin : hit_idx_convert
     btb_exe_hit_index = 3'b0;
     btb_fetch_hit_index = 3'b0;
-    jtb_fetch_hit_index = 3'b0;
+    jtb_fetch_hit_index = 2'b0;
     if (br_exe_hit) btb_exe_hit_index = clogb2({br_exe_hits});
     if (br_fetch_hit) btb_fetch_hit_index = clogb2({br_fetch_hits});
     if (jp_fetch_hit) jtb_fetch_hit_index = clogb2({4'b0,jp_fetch_hits});
@@ -129,7 +129,7 @@ end
 
 always_comb begin : fetch_pc_lookup
     prediction = 1'b0;
-    target = 8'hff;//default to invalid
+    target = 32'hff;//default to invalid
     if (br_fetch_hit) begin
         prediction = branch_predictions[btb_fetch_hit_index];
         if (prediction) target = br_targets[btb_fetch_hit_index];

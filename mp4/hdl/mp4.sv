@@ -28,7 +28,18 @@ import cpuIO::*;
     output  logic   [63:0]  bmem_wdata,
     input   logic           bmem_resp,
 
-    output logic mispredict
+    output logic mispredict,
+    output logic i_hit,
+    output logic i_miss,
+    output logic d_hit,
+    output logic d_miss,
+    output logic stall_if_de,
+    output logic stall_all,
+    output logic stall_de_exe_mem_wb,
+    output logic stall_exe_mem_wb,
+    output logic stall_mem_wb,
+
+    output logic [511:0] buffer
 );
 /*                             256bit                        32bit word
           64bit              cacheline       -> word adapter    -> cpu datapath fetch
@@ -107,8 +118,20 @@ import cpuIO::*;
             logic exe_fwd_pc_sel,ctrl_buffer_sel;
             logic branch_taken;
             logic false_prediction;
+            logic [511:0] buffer_check;
 
         assign mispredict = if_de_rst;//this should work... right? Might be one off in beginning though
+
+        always_ff @( posedge clk, posedge rst ) begin : buff_check
+            if(rst) begin
+                buffer_check <= 512'b0;
+            end
+            else if(branch_taken) begin
+                buffer_check <= {480'b0, dmem_address};
+            end
+        end
+
+        assign buffer = buffer_check;
 
     mp4control control(
         .clk(clk),
@@ -171,7 +194,13 @@ import cpuIO::*;
         .ctrl_buffer_sel(ctrl_buffer_sel),
         .prediction_exe(prediction_exe),
         .branch_taken_o(branch_taken),
-        .false_prediction(false_prediction)
+        .false_prediction(false_prediction),
+
+        .stall_fet_dec(stall_if_de),
+        .stall_all(stall_all),
+        .stall_not_fet(stall_de_exe_mem_wb),
+        .stall_not_fet_dec(stall_exe_mem_wb),
+        .stall_not_fet_dec_exe(stall_mem_wb)
     );
 
     cache dcache0(
@@ -190,7 +219,10 @@ import cpuIO::*;
         .pmem_write(arbiter_cacheline_dmem_write), 
         .pmem_rdata(arbiter_dmem_cacheline_rdata), 
         .pmem_wdata(arbiter_dmem_cacheline_wdata), 
-        .pmem_resp(arbiter_dmem_resp)
+        .pmem_resp(arbiter_dmem_resp),
+
+        .hit(d_hit),
+        .miss(d_miss)
     );
 
     //icache arbiter_imem_resp goes high, but imem_resp never goes high
@@ -210,7 +242,10 @@ import cpuIO::*;
         .pmem_write(), 
         .pmem_rdata(arbiter_imem_cacheline_rdata), 
         .pmem_wdata(), 
-        .pmem_resp(arbiter_imem_resp)
+        .pmem_resp(arbiter_imem_resp),
+
+        .hit(i_hit),
+        .miss(i_miss)
     );
 
     cacheline_adaptor cacheline_adaptor(

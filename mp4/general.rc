@@ -2,7 +2,7 @@ Magic 271485
 Revision Verdi_R-2020.12-SP1-1
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 25 900 256 169 65
+viewPort 0 25 1707 276 169 65
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
@@ -16,16 +16,16 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 95132.812500 286419.019397
-cursor 200000.000000
+zoom 23127428900.519341 23127611571.355301
+cursor 23127460000.000000
 marker 0.000000
 
 ; user define markers
 ; userMarker time_pos marker_name color linestyle
 ; visible top row signal index
-top 55
+top 14
 ; marker line index
-markerPos 53
+markerPos 21
 
 ; event list
 ; addEvent event_name event_expression
@@ -47,6 +47,7 @@ curSTATUS ByChange
 
 addGroup "G1" -e FALSE
 activeDirFile "" "/home/bak7/mp4_git/fa23_ece411_fish/mp4/sim/dump.fsdb"
+addSignal -h 15 /top_tb/mispredict_count[31:0]
 addSignal -h 15 /top_tb/dut/control/load_pc
 addSignal -h 15 -holdScope clk
 addSignal -h 15 -holdScope rst
@@ -59,8 +60,14 @@ addSignal -h 15 -UNSIGNED -holdScope cw_read.opcode[6:0]
 addSignal -h 15 -holdScope load_instuct_inserted
 addSignal -h 15 -holdScope true_cw_read.instruction[31:0]
 addSignal -h 15 -holdScope if_de_rst
-addGroup "G2" -e FALSE
-addSignal -h 15 /top_tb/dut/control/de_exe_ld
+addGroup "G2"
+addSignal -h 15 /top_tb/mispredict_count[31:0]
+addSignal -h 15 -holdScope i_hit_count[31:0]
+addSignal -h 15 -holdScope i_miss_count[31:0]
+addSignal -h 15 -holdScope d_hit_count[31:0]
+addSignal -h 15 -holdScope d_miss_count[31:0]
+addSignal -h 15 -holdScope stall_fe_count[31:0]
+addSignal -h 15 -holdScope stall_all_count[31:0]
 addGroup "Dmem" -e FALSE
 addSignal -h 15 /top_tb/dut/dmem_address[31:0]
 addSignal -h 15 /top_tb/dut/datapath/memory/clk
@@ -89,7 +96,7 @@ addSignal -h 15 -holdScope instruct_in_wb.rd_addr[4:0]
 addSignal -h 15 -holdScope instruct_in_wb.rs1_addr[4:0]
 addSignal -h 15 -holdScope instruct_in_wb.rs2_addr[4:0]
 addSignal -h 15 -holdScope instruct_in_wb.commit_order[63:0]
-addGroup "CTRL"
+addGroup "CTRL" -e FALSE
 addSignal -h 15 /top_tb/dut/control/clk
 addSignal -h 15 -holdScope rst
 addSignal -h 15 -UNSIGNED -holdScope true_cw_read.opcode[6:0]
@@ -117,6 +124,7 @@ addSignal -h 15 -holdScope de_exe_rst
 addSignal -h 15 -holdScope exe_mem_rst
 addSignal -h 15 -holdScope mem_wb_rst
 addSignal -h 15 -holdScope stall_if_de
+addSignal -h 15 -holdScope stall_de_exe
 addSignal -h 15 -holdScope stall_exe_mem
 addSignal -h 15 -holdScope stall_mem_wb
 addSignal -h 15 -holdScope icache_resp
@@ -153,7 +161,7 @@ addSignal -h 15 /top_tb/dut/datapath/mem_wb_register/cw_in.rvfi.pc_rdata[31:0]
 addSignal -h 15 -holdScope cw_in.rvfi.pc_wdata[31:0]
 addSignal -h 15 -holdScope rst
 addSignal -h 15 -holdScope mem_wb_ld
-addGroup "dec_exe"
+addGroup "dec_exe" -e FALSE
 addSignal -h 15 /top_tb/dut/datapath/dec_exe_reg/cw_data.rvfi.instruction[31:0]
 addSignal -h 15 -UNSIGNED -HEX /top_tb/dut/control/cw_read.instruction[31:0]
 addSignal -h 15 /top_tb/dut/datapath/dec_exe_reg/load
@@ -175,7 +183,7 @@ addSignal -h 15 /top_tb/dut/datapath/decode/cr.instruction[31:0]
 addSignal -h 15 /top_tb/dut/datapath/dec_exe_reg/cw_in.rvfi.order_commit[63:0]
 addSignal -h 15 -holdScope cw_in.rvfi.instruction[31:0]
 addSignal -h 15 -UNSIGNED /top_tb/dut/datapath/decode/opcode[6:0]
-addGroup "exe stage"
+addGroup "exe stage" -e FALSE
 addSignal -h 15 /top_tb/dut/datapath/fet_dec_reg/order_counter[63:0]
 addSignal -h 15 -holdScope load
 addSignal -h 15 /top_tb/dut/datapath/execute/alumux1_o[31:0]
@@ -206,7 +214,7 @@ addSignal -h 15 -holdScope wb_fwd_data_o[31:0]
 addGroup "G14" -e FALSE
 addSignal -h 15 -UNSIGNED /top_tb/dut/control/cw_read.opcode[6:0]
 addSignal -h 15 -holdScope cw_read.rd_addr[4:0]
-addGroup "if_de_reg"
+addGroup "if_de_reg" -e FALSE
 addSignal -h 15 /top_tb/dut/control/imem_read
 addSignal -h 15 /top_tb/dut/datapath/fet_dec_reg/rst
 addSignal -h 15 -holdScope if_de_rst
@@ -228,6 +236,14 @@ addSignal -h 15 -holdScope pmem_resp
 addSignal -h 15 -UNSIGNED /top_tb/dut/icache0/control/state[1:0]
 addSignal -h 15 -holdScope cache_hit
 addGroup "G19"
+addSignal -h 15 /top_tb/dut/icache0/clk
+addSignal -h 15 -holdScope rst
+addSignal -h 15 -holdScope mem_address[31:0]
+addSignal -h 15 -holdScope mem_read
+addSignal -h 15 -holdScope mem_cancel
+addSignal -h 15 -holdScope mem_resp
+addSignal -h 15 -holdScope cache_hit
+addGroup "G20"
 
 ; getSignalForm Scope Hierarchy Status
 ; active file of getSignalForm
