@@ -86,7 +86,7 @@ import cpuIO::*;
             logic   [4:0]   monitor_rs2_addr, rs2_address;
             logic   [31:0]  monitor_rs1_rdata, rs1_rdata;
             logic   [31:0]  monitor_rs2_rdata, rs2_rdata;
-            logic   [4:0]   monitor_rd_addr, rd_addr;
+            logic   [4:0]   monitor_rd_addr, rd_addr, rd_sel;
             logic   [31:0]  monitor_rd_wdata, rd_wdata;
             logic   [31:0]  monitor_pc_rdata, pc_rdata;
             logic   [31:0]  monitor_pc_wdata, pc_wdata;
@@ -106,7 +106,8 @@ import cpuIO::*;
             logic [31:0] cacheline_mem_byte_enable;
             control_read ctrl_rd;
             logic load_pc;
-            control_word cw_control, ctrl_rvfi;
+            control_word_de_exe cw_control;
+            rvfi_sigs ctrl_rvfi;
             rv32i_opcode opcode_exec;
             hzds instruct_in_exe, instruct_in_mem, instruct_in_wb;
             logic imem_cancel;
@@ -116,7 +117,6 @@ import cpuIO::*;
             logic exe_fwd_pc_sel,ctrl_buffer_sel;
             logic branch_taken;
             logic false_prediction;
-            logic [511:0] buffer_check;
 
         assign mispredict = if_de_rst;//this should work... right? Might be one off in beginning though
 
@@ -356,6 +356,7 @@ import cpuIO::*;
         .wmask(wmask),
 
         .control_rvfi(ctrl_rvfi),
+        .rd_sel(rd_sel),
 
         .pc_exe(pc_exe),
         .bimm_exec(bimm_exec),
@@ -393,21 +394,21 @@ import cpuIO::*;
     // Fill this out
     // Only use hierarchical references here for verification
     // **DO NOT** use hierarchical references in the actual design!
-    assign monitor_valid     = ctrl_rvfi.rvfi.valid_commit; //???
-    assign monitor_order     = ctrl_rvfi.rvfi.order_commit; //???
-    assign monitor_inst      = ctrl_rvfi.rvfi.instruction; //???
-    assign monitor_rs1_addr  = ctrl_rvfi.rvfi.rs1_addr;
-    assign monitor_rs2_addr  = ctrl_rvfi.rvfi.rs2_addr;
-    assign monitor_rs1_rdata = ctrl_rvfi.rvfi.rs1_data;
-    assign monitor_rs2_rdata = ctrl_rvfi.rvfi.rs2_data;
-    assign monitor_rd_addr   = ctrl_rvfi.wb.rd_sel;
-    assign monitor_rd_wdata  = ctrl_rvfi.rvfi.rd_wdata;
-    assign monitor_pc_rdata  = ctrl_rvfi.rvfi.pc_rdata;
-    assign monitor_pc_wdata  = ctrl_rvfi.rvfi.pc_wdata;
-    assign monitor_mem_addr  = ctrl_rvfi.rvfi.mem_addr;
-    assign monitor_mem_rmask = ctrl_rvfi.rvfi.rmask;
-    assign monitor_mem_wmask = ctrl_rvfi.rvfi.wmask;
-    assign monitor_mem_rdata = ctrl_rvfi.rvfi.mem_rdata;
-    assign monitor_mem_wdata = ctrl_rvfi.rvfi.mem_wdata;
+    assign monitor_valid     = ctrl_rvfi.valid_commit; //???
+    assign monitor_order     = ctrl_rvfi.order_commit; //???
+    assign monitor_inst      = ctrl_rvfi.instruction; //???
+    assign monitor_rs1_addr  = ctrl_rvfi.rs1_addr;
+    assign monitor_rs2_addr  = ctrl_rvfi.rs2_addr;
+    assign monitor_rs1_rdata = ctrl_rvfi.rs1_data;
+    assign monitor_rs2_rdata = ctrl_rvfi.rs2_data;
+    assign monitor_rd_addr   = rd_sel;
+    assign monitor_rd_wdata  = ctrl_rvfi.rd_wdata;
+    assign monitor_pc_rdata  = ctrl_rvfi.pc_rdata;
+    assign monitor_pc_wdata  = ctrl_rvfi.pc_wdata;
+    assign monitor_mem_addr  = ctrl_rvfi.mem_addr;
+    assign monitor_mem_rmask = ctrl_rvfi.rmask;
+    assign monitor_mem_wmask = ctrl_rvfi.wmask;
+    assign monitor_mem_rdata = ctrl_rvfi.mem_rdata;
+    assign monitor_mem_wdata = ctrl_rvfi.mem_wdata;
 
 endmodule : mp4

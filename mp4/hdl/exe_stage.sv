@@ -15,7 +15,7 @@ import immediates::*;
 (
     input clk, 
     input logic rst,
-    input control_word ctrl_w,
+    input control_word_de_exe ctrl_w,
     input rv32i_opcode opcode_exe,
     input logic [31:0] mem_fwd_data,
     input logic [31:0] exe_fwd_data,
@@ -35,7 +35,7 @@ import immediates::*;
     input logic de_exe_rdy,
     output logic exe_rdy,
 
-    output control_word rvfi_exe
+    output control_word_exe_mem rvfi_exe
 
 );
     logic [31:0] rs1_o, rs2_o, alumux1_o, alumux2_o, cmpmux_o,pc_wdata;/* multi_low, multi_high, multi_r2, multi_r1, alu_fake;*/
@@ -136,18 +136,6 @@ logic [31:0] pc_temp;
 always_comb begin : regfile_ctrl_signals
 
     if(rst || !((de_exe_rdy == 1) && (de_exe_valid == 1))) begin
-        rvfi_exe.exe.cmp_sel = cmpmux::rs2_out;
-        rvfi_exe.exe.alumux1_sel = alumux::rs1_out;
-        rvfi_exe.exe.alumux2_sel = alumux::i_imm;
-        rvfi_exe.exe.rs1_sel = rs1mux::rs1_data;
-        rvfi_exe.exe.rs2_sel = rs2mux::rs2_data;
-        rvfi_exe.exe.cmpop = beq;
-        rvfi_exe.exe.aluop = alu_add;
-        rvfi_exe.exe.exefwdmux_sel = exefwdmux::alu_out;
-        rvfi_exe.exe.rs1signunsignmux_sel = rs1signunsignmux::sign;
-        rvfi_exe.exe.rs2signunsignmux_sel = rs2signunsignmux::sign;
-        rvfi_exe.exe.multihighlowmux_sel = multihighlowmux::low;
-        rvfi_exe.exe.divremquotmux_sel = divremquotmux::quotient;
         rvfi_exe.mem.mem_read_d = 1'b0;
         rvfi_exe.mem.mem_write_d = 1'b0;
         rvfi_exe.mem.store_funct3 = sb;
@@ -177,7 +165,6 @@ always_comb begin : regfile_ctrl_signals
     else begin
         if (((opcode_exe == op_br) || (opcode_exe == op_jal))&&false_prediction) begin
             rvfi_exe.rvfi.valid_commit = ctrl_w.rvfi.valid_commit;//done
-            rvfi_exe.exe = ctrl_w.exe;
             rvfi_exe.mem = ctrl_w.mem;
             rvfi_exe.wb = ctrl_w.wb;
             rvfi_exe.rvfi.order_commit = ctrl_w.rvfi.order_commit;//done
@@ -198,7 +185,6 @@ always_comb begin : regfile_ctrl_signals
         end
         else if((opcode_exe == op_jalr)) begin
             rvfi_exe.rvfi.valid_commit = ctrl_w.rvfi.valid_commit;//done
-            rvfi_exe.exe = ctrl_w.exe;
             rvfi_exe.mem = ctrl_w.mem;
             rvfi_exe.wb = ctrl_w.wb;
             rvfi_exe.rvfi.order_commit = ctrl_w.rvfi.order_commit;//done
@@ -218,7 +204,9 @@ always_comb begin : regfile_ctrl_signals
             rvfi_exe.rvfi.prediction = ctrl_w.rvfi.prediction;
         end
         else begin
-            rvfi_exe = ctrl_w;
+            rvfi_exe.mem = ctrl_w.mem;
+            rvfi_exe.wb = ctrl_w.wb;
+            rvfi_exe.rvfi = ctrl_w.rvfi;
         end
     end
 end

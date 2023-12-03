@@ -98,7 +98,7 @@ import cpuIO::*;
 
     /*---cpu_cw---*/
     input control_read cw_read, 
-    output control_word ctrl_word,
+    output control_word_de_exe ctrl_word,
 
     input logic branch_prediction,
     output pcmux::pcmux_sel_t pcmux_sel,

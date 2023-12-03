@@ -283,7 +283,19 @@ package cpuIO;
         cw_mem mem;
         cw_writeback wb;
         rvfi_sigs rvfi;
-    } control_word;
+    } control_word_de_exe;
+
+    typedef struct {
+        cw_mem mem;
+        cw_writeback wb;
+        rvfi_sigs rvfi;
+    } control_word_exe_mem;
+
+    typedef struct {
+        logic mem_write_d;
+        cw_writeback wb;
+        rvfi_sigs rvfi;
+    } control_word_mem_wb;
 
 endpackage : cpuIO
 

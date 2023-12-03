@@ -28,7 +28,7 @@ module mp4datapath
     input logic sp_ld_commit,
     input logic ld_commit,
 
-    input control_word cw_dec,
+    input control_word_de_exe cw_dec,
 
     output control_read cr,
 
@@ -60,8 +60,9 @@ module mp4datapath
     output logic [3:0] mem_byte_enable,
     output logic [3:0] wmask,
 
-    output control_word control_rvfi, //for all commits minus jump/branch,
-    
+    output rvfi_sigs control_rvfi, //for all commits minus jump/branch,
+    output logic [4:0] rd_sel,
+
     output rv32i_word pc_exe,bimm_exec,
     input rv32i_word branch_target,
     input logic branch_prediction,
@@ -73,7 +74,9 @@ module mp4datapath
 
 rv32i_word pc_fetch, pc_decode, pc_exec, pc_mem, pc_wb, pc_wdata;
 rv32i_word regfilemux_out;
-control_word rvfi_ctrl_temp, rvfi_exe;
+rvfi_sigs rvfi_ctrl_temp;
+logic [4:0] wb_rd_sel;
+assign rd_sel = wb_rd_sel;
 assign control_rvfi = rvfi_ctrl_temp;
 
 logic  br_en_exe_o, br_en_exe_mem_o, br_en_mem_wb_o;
@@ -85,7 +88,9 @@ logic fetch_valid_o, decode_valid_o;
 logic load_reg_wb;
 logic [63:0] commit_order_decode_i;
 rv32i_opcode opcode_dec_exe;
-control_word cw_exec, cw_mem, cw_wb;
+control_word_de_exe cw_exec;
+control_word_exe_mem cw_mem, rvfi_exe;
+control_word_mem_wb cw_wb;
 
 // logic f_d_ready,d_e_ready,e_m_ready,_m_w_ready;
 // logic f_d_valid,d_e_valid,e_m_valid,m_w_valid;
@@ -165,7 +170,7 @@ decode_stage decode(
     .clk(clk),.rst(rst),
     .reg_load(load_reg_wb),
     .rd_data(regfilemux_out),
-    .rd_sel(rvfi_ctrl_temp.wb.rd_sel),
+    .rd_sel(wb_rd_sel),
 
     .instruction(instr_decode),
     .pc_rdata(pc_decode),
@@ -261,6 +266,7 @@ exe_mem_reg exe_mem_register(
     .mem_byte_enable(mem_byte_enable), //to data cache
 
     .cw_in(rvfi_exe),
+    .exefwdmux_sel(cw_exec.exe.exefwdmux_sel),
     .cw_out(cw_mem),
 
     .wmask(wmask),
@@ -279,6 +285,14 @@ mem_stage memory(
     .mem_w_d(mem_w_d), //to data cache
     .mem_rdy(mem_ready_o) //to ctrl / MEM_WB reg
 );
+
+control_word_mem_wb mem_wb_cw;
+
+always_comb begin
+    mem_wb_cw.mem_write_d = cw_mem.mem.mem_write_d;
+    mem_wb_cw.wb = cw_mem.wb;
+    mem_wb_cw.rvfi = cw_mem.rvfi;
+end
 
 rv32i_word u_imm_wb;
 //mem_wb_reg
@@ -299,7 +313,8 @@ mem_wb_reg mem_wb_register(
     .alu_out_o(alu_out_mem_wb),
     .br_en_o(br_en_mem_wb_o),
 
-    .cw_in(cw_mem),
+    .cw_in(mem_wb_cw),
+    .memfwdmux_sel(cw_mem.mem.memfwdmux_sel),
     .cw_out(cw_wb),
 
     .instruct_in_wb(instruct_in_wb)
@@ -319,7 +334,8 @@ wb_stage writeback(
     .load_reg(load_reg_wb),
 
     .cw_in(cw_wb),
-    .cw_out_rvfi(rvfi_ctrl_temp)
+    .cw_out_rvfi(rvfi_ctrl_temp),
+    .rd_sel(wb_rd_sel)
 );
 
 assign wb_valid = wb_valid_i;

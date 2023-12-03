@@ -107,15 +107,15 @@ module dec_exe_reg
     input rv32i_opcode opcode_dec,
     output rv32i_opcode opcode_dec_exe,
 
-    input control_word cw_in,
-    output control_word cw_out,
+    input control_word_de_exe cw_in,
+    output control_word_de_exe cw_out,
 
     output hzds instruct_in_exe
 );
 
     immediates::imm imm_data;
     logic ready;
-    control_word cw_data;
+    control_word_de_exe cw_data;
     rv32i_opcode opcode_data;
     always_ff @(posedge clk)
     begin
@@ -235,8 +235,9 @@ import cpuIO::*;
     output logic [31:0] mem_wdata_d, //to data cache
     output logic [3:0] mem_byte_enable, //to data cache
 
-    input control_word cw_in,
-    output control_word cw_out,
+    input control_word_exe_mem cw_in,
+    input exefwdmux::exefwdmux_sel_t exefwdmux_sel,
+    output control_word_exe_mem cw_out,
 
     output logic [3:0] wmask,
 
@@ -244,7 +245,7 @@ import cpuIO::*;
 );
 
     logic [31:0] fwd_temp;
-    control_word cw_data;
+    control_word_exe_mem cw_data;
     logic[31:0] rs2_to_mem;
 
     logic [31:0] marmux_o, mem_addr;
@@ -252,7 +253,7 @@ import cpuIO::*;
     logic [3:0] rmask, wmask_temp;
 
     always_comb begin : exe_fwd_mux
-        unique case(cw_in.exe.exefwdmux_sel)
+        unique case(exefwdmux_sel)
             exefwdmux::alu_out: fwd_temp = alu_out_i;
             exefwdmux::br_en_zext: fwd_temp = {31'b0, br_en_i};
             exefwdmux::u_imm: fwd_temp = u_imm_i;
@@ -273,18 +274,6 @@ import cpuIO::*;
     //control word reg 
      always_ff @ (posedge clk, posedge rst) begin : cw_register
         if(rst)begin
-            cw_data.exe.cmp_sel <= cmpmux::rs2_out;
-            cw_data.exe.alumux1_sel <= alumux::rs1_out;
-            cw_data.exe.alumux2_sel <= alumux::i_imm;
-            cw_data.exe.rs1_sel <= rs1mux::rs1_data;
-            cw_data.exe.rs2_sel <= rs2mux::rs2_data;
-            cw_data.exe.cmpop <= beq;
-            cw_data.exe.aluop <= alu_add;
-            cw_data.exe.exefwdmux_sel <= exefwdmux::alu_out;
-            cw_data.exe.rs1signunsignmux_sel <= rs1signunsignmux::sign;
-            cw_data.exe.rs2signunsignmux_sel <= rs2signunsignmux::sign;
-            cw_data.exe.multihighlowmux_sel <= multihighlowmux::low;
-            cw_data.exe.divremquotmux_sel <= divremquotmux::quotient;
             cw_data.mem.mem_read_d <= 1'b0;
             cw_data.mem.mem_write_d <= 1'b0;
             cw_data.mem.store_funct3 <= sb;
@@ -312,7 +301,6 @@ import cpuIO::*;
             cw_data.rvfi.prediction <= 1'b0;
         end
         else if((exe_mem_ld == 1)) begin
-            cw_data.exe <= cw_in.exe;
             cw_data.mem <= cw_in.mem;
             cw_data.wb <= cw_in.wb;
             cw_data.rvfi.valid_commit <= cw_in.rvfi.valid_commit;//done
@@ -502,13 +490,14 @@ module mem_wb_reg
     output logic [31:0] alu_out_o, //aka exe_fwd_data
     output logic br_en_o,
 
-    input control_word cw_in,
-    output control_word cw_out,
+    input control_word_mem_wb cw_in,
+    input memfwdmux::memfwdmux_sel_t memfwdmux_sel,
+    output control_word_mem_wb cw_out,
 
     output hzds instruct_in_wb
 );
     logic [31:0] alu_out_r, u_imm_r, mem_rdata_r, memfwdmux_o, mem_fwd_data_r, whole_byte, whole_half, true_mem_i;
-    control_word cw_data;
+    control_word_mem_wb cw_data;
     logic br_en_r, valid_r, ready_r;
     logic [7:0] byte_in;
     logic [15:0] half_in;
@@ -567,7 +556,7 @@ module mem_wb_reg
     end
 
     always_comb begin : memfwdmux
-        unique case(cw_in.mem.memfwdmux_sel)
+        unique case(memfwdmux_sel)
             memfwdmux::mem_fwd_data: memfwdmux_o = true_mem_i;
             memfwdmux::exe_fwd_data: memfwdmux_o = alu_out_i;
             memfwdmux::pc_plus_4: memfwdmux_o = cw_in.rvfi.pc_rdata + 4;
@@ -608,24 +597,7 @@ module mem_wb_reg
     //control word for WB 
     always_ff @ (posedge clk, posedge rst) begin : cw_register
         if(rst)begin
-            cw_data.exe.cmp_sel <= cmpmux::rs2_out;
-            cw_data.exe.alumux1_sel <= alumux::rs1_out;
-            cw_data.exe.alumux2_sel <= alumux::i_imm;
-            cw_data.exe.rs1_sel <= rs1mux::rs1_data;
-            cw_data.exe.rs2_sel <= rs2mux::rs2_data;
-            cw_data.exe.cmpop <= beq;
-            cw_data.exe.aluop <= alu_add;
-            cw_data.exe.exefwdmux_sel <= exefwdmux::alu_out;
-            cw_data.exe.rs1signunsignmux_sel <= rs1signunsignmux::sign;
-            cw_data.exe.rs2signunsignmux_sel <= rs2signunsignmux::sign;
-            cw_data.exe.multihighlowmux_sel <= multihighlowmux::low;
-            cw_data.exe.divremquotmux_sel <= divremquotmux::quotient;
-            cw_data.mem.mem_read_d <= 1'b0;
-            cw_data.mem.mem_write_d <= 1'b0;
-            cw_data.mem.store_funct3 <= sb;
-            cw_data.mem.load_funct3 <= lb;
-            cw_data.mem.mar_sel <= marmux::pc_out;
-            cw_data.mem.memfwdmux_sel <= memfwdmux::mem_fwd_data;
+            cw_data.mem_write_d <= 1'b0;
             cw_data.wb.ld_reg <= 1'b0;
             cw_data.wb.regfilemux_sel <= regfilemux::alu_out;
             cw_data.wb.rd_sel <= 5'b00000;
@@ -648,8 +620,7 @@ module mem_wb_reg
         end
         else if((mem_wb_ld == 1)) begin
             if(cw_data.rvfi.instruction[6:0] == 7'b0000011) begin
-                cw_data.exe <= cw_in.exe;
-                cw_data.mem <= cw_in.mem;
+                cw_data.mem_write_d <= cw_in.mem_write_d;
                 cw_data.wb <= cw_in.wb;
                 cw_data.rvfi.valid_commit <= cw_in.rvfi.valid_commit;//done
                 cw_data.rvfi.order_commit <= cw_in.rvfi.order_commit;//done
@@ -669,8 +640,7 @@ module mem_wb_reg
                 cw_data.rvfi.prediction <= cw_in.rvfi.prediction;
             end
             else begin
-                cw_data.exe <= cw_in.exe;
-                cw_data.mem <= cw_in.mem;
+                cw_data.mem_write_d <= cw_in.mem_write_d;
                 cw_data.wb <= cw_in.wb;
                 cw_data.rvfi.valid_commit <= cw_in.rvfi.valid_commit;//done
                 cw_data.rvfi.order_commit <= cw_in.rvfi.order_commit;//done
