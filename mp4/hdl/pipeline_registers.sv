@@ -35,11 +35,11 @@ module fet_dec_reg
     begin
         if (rst || if_de_rst)
         begin
-            ready<='0;
+            ready<=1'b0;
             instr<=0;
             pc_r<=0;
             pc_w<=0;
-            prediction <= 0;
+            prediction <= 1'b0;
         end
         else if (load)
         begin

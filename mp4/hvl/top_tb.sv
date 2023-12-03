@@ -27,9 +27,12 @@ module top_tb;
     mon_itf mon_itf(.*);    
     monitor monitor(.itf(mon_itf));
 
-    logic i_miss, i_hit, d_hit, d_miss, mispredict, stall_all, stall_fe, stall_exe_mem_wb;
+    logic i_miss, i_hit, d_hit, d_miss, mispredict, stall_all, stall_fe, stall_de_exe_mem_wb, stall_exe_mem_wb, stall_mem_wb;
     logic [31:0] i_miss_count, i_hit_count, d_hit_count, d_miss_count, mispredict_count, stall_all_count,
-     stall_fe_count, stall_exe_mem_wb_count;
+     stall_fe_count, stall_de_exe_mem_wb_count, stall_exe_mem_wb_count, stall_mem_wb_count;
+
+    logic buff_flag;
+     logic [511:0] buffy;
 
     mp4 dut(
         .clk          (clk),
@@ -56,18 +59,140 @@ module top_tb;
         .bmem_wdata   (bmem_itf.wdata),
         .bmem_resp    (bmem_itf.resp),
 
-        .mispredict(mispredict)
+        .mispredict(mispredict),
+        .i_hit(i_hit),
+        .i_miss(i_miss),
+        .d_hit(d_hit),
+        .d_miss(d_miss), 
+        .stall_if_de(stall_fe),
+        .stall_all(stall_all),
+        .stall_de_exe_mem_wb(stall_de_exe_mem_wb),
+        .stall_exe_mem_wb(stall_exe_mem_wb),
+        .stall_mem_wb(stall_mem_wb),
+        .buffer(buffy)
     );
 
+    always_comb begin : buffy_flaging
+        if(buffy != 512'b0) begin
+            buff_flag = 1'b1;
+        end
+        else begin
+            buff_flag = 1'b0;
+        end
+    end
+
+    //  ipc without btb or pre-fetch: .323673
+    //  with btb and without pre-fetch: .358626
+
+
     //NOTE: number of mispredicts is half of this count since if_de_rst goes high for two cycles
-    /*  with btb is 1_6768 mispredicts/flush
-        without.... 2_49f4!!!*/
+    /*  with btb and without prefetch is 1_7106 mispredicts/flush
+        without btb or prefetch 2_49f4*/
     always_ff @( posedge clk , posedge rst ) begin : mispredict_counter
         if(rst) begin
             mispredict_count <= 32'h0;
         end
         else if(mispredict) begin
             mispredict_count <= mispredict_count + 32'b01;
+        end
+    end
+
+    //without prefetch or btb:  e_b391
+    //with btb and without prefetch: c_bef0
+    always_ff @( posedge clk, posedge rst ) begin : i_hit_counter
+        if(rst) begin
+            i_hit_count <= 32'h0;
+        end
+        else if(i_hit) begin
+            i_hit_count <= i_hit_count + 32'b01;
+        end
+    end
+
+    //without prefetch or btb:  4c1
+    //with btb and without prefetch: 4c2
+    always_ff @( posedge clk, posedge rst ) begin : i_miss_counter
+        if(rst) begin
+            i_miss_count <= 32'h0;
+        end
+        else if(i_miss) begin
+            i_miss_count <= i_miss_count + 32'b01;
+        end
+    end
+
+    //without prefetch or btb:  1_20d0
+    //with btb and without prefetch: 1_20d0
+    always_ff @( posedge clk, posedge rst ) begin : d_hit_counter
+        if(rst) begin
+            d_hit_count <= 32'h0;
+        end
+        else if(d_hit) begin
+            d_hit_count <= d_hit_count + 32'b01;
+        end
+    end
+
+    //without prefetch or btb:  87
+    //with btb and without prefetch: 87
+    always_ff @( posedge clk, posedge rst ) begin : d_miss_counter
+        if(rst) begin
+            d_miss_count <= 32'h0;
+        end
+        else if(d_miss) begin
+            d_miss_count <= d_miss_count + 32'b01;
+        end
+    end
+
+    //without prefetch or btb:  1_e01f
+    //with btb and without prefetch: 1_db25
+    always_ff @( posedge clk, posedge rst ) begin : stall_fe_counter
+        if(rst) begin
+            stall_fe_count <= 32'h0;
+        end
+        else if(stall_fe) begin
+            stall_fe_count <= stall_fe_count + 32'b01;
+        end
+    end
+
+    //without prefetch or btb:  1_292e
+    //with btb and without prefetch: 1_292e
+    always_ff @( posedge clk, posedge rst ) begin : stall_all_counter
+        if(rst) begin
+            stall_all_count <= 32'h0;
+        end
+        else if(stall_all) begin
+            stall_all_count <= stall_all_count + 32'b01;
+        end
+    end
+
+    //without prefetch or btb:  1
+    //with btb and without prefetch: 1
+    always_ff @( posedge clk, posedge rst ) begin : stall_de_exe_mem_wb_counter
+        if(rst) begin
+            stall_de_exe_mem_wb_count <= 32'h0;
+        end
+        else if(stall_de_exe_mem_wb) begin
+            stall_de_exe_mem_wb_count <= stall_de_exe_mem_wb_count + 32'b01;
+        end
+    end
+
+    //without prefetch or btb:  1
+    //with btb and without prefetch: 1
+    always_ff @( posedge clk, posedge rst ) begin : stall_exe_mem_wb_counter
+        if(rst) begin
+            stall_exe_mem_wb_count <= 32'h0;
+        end
+        else if(stall_exe_mem_wb) begin
+            stall_exe_mem_wb_count <= stall_exe_mem_wb_count + 32'b01;
+        end
+    end
+
+    //without prefetch or btb:  1d_e6a1
+    //with btb and without prefetch: 1b_5b24
+    always_ff @( posedge clk, posedge rst ) begin : stall_mem_wb_counter
+        if(rst) begin
+            stall_mem_wb_count <= 32'h0;
+        end
+        else if(stall_mem_wb) begin
+            stall_mem_wb_count <= stall_mem_wb_count + 32'b01;
         end
     end
 

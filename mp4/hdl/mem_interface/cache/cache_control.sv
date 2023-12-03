@@ -27,7 +27,10 @@ module cache_control (
 
     //ctrl input
     input logic cache_hit,
-    input logic cache_dirty
+    input logic cache_dirty,
+
+    output logic hit,
+    output logic miss
 );
 
 //vars 
@@ -159,6 +162,8 @@ end
 //state transition
 always_comb
 begin: next_state_logic
+    hit = 1'b0;
+    miss = 1'b0;
     if(rst || (mem_cancel)) next_state=idle;
     else begin
     case(state)
@@ -168,12 +173,16 @@ begin: next_state_logic
         end
         hit_look: begin
             if (!cache_hit) begin
+                miss = 1'b1;
                 if (cache_dirty) begin
                     next_state = write_back;
                 end
                 else next_state = allocate;
             end
-            else next_state = idle;
+            else begin
+                hit = 1'b1;
+                next_state = idle;
+            end
         end
         write_back: begin
             if (~pmem_resp) next_state = write_back;
