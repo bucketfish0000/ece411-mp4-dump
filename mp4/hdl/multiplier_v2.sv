@@ -282,7 +282,7 @@ always_ff @( posedge clk) begin
 end
 
 always_comb begin : done_logic
-    if(count == 3'b0101 && !new_instruction) begin
+    if(count == 3'b101 && !new_instruction) begin
         done = 1'b1;
     end
     else begin
