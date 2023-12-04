@@ -84,7 +84,7 @@ function void set_defaults();
     icache_resp = 1'b0;
     dcache_resp = 1'b0;
     //pf_addr by default is always the next cacheline from pc, except when icache requests
-    pf_addr = {pc_rdata[31:7], ({pc_rdata[6:5], 5'b0} + 7'b0100000)};
+    pf_addr = {pc_rdata[31:7], ({pc_rdata[6:5], 5'b0} + 7'b0000000)};
     pf_data_w = 256'b0;
     pf_read = 1'b0;
     pf_write = 1'b0;

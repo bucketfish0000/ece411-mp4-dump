@@ -49,12 +49,12 @@ not histories are needed since jumps are unconditional.
 
 logic [7:0] br_exe_hits, br_fetch_hits;
 logic [7:0] branch_predictions;
-logic [3:0] jp_exe_hits, jp_fetch_hits;
+logic [1:0] jp_exe_hits, jp_fetch_hits;
 
 logic [7:0] update_br_pc, update_br_history;
-logic [3:0] update_jp_pc, update_jp_history;
+logic [1:0] update_jp_pc, update_jp_history;
 rv32i_word [7:0] br_targets;
-rv32i_word [3:0] jp_targets;
+rv32i_word [1:0] jp_targets;
 logic br_exe_hit, br_fetch_hit,jp_exe_hit, jp_fetch_hit;
 assign br_exe_hit = |br_exe_hits;
 assign br_fetch_hit = |br_fetch_hits;
@@ -62,7 +62,7 @@ assign jp_exe_hit = |jp_exe_hits;
 assign jp_fetch_hit = |jp_fetch_hits;
 
 logic [2:0] btb_head, btb_exe_hit_index, btb_fetch_hit_index;
-logic [1:0] jtb_head, jtb_fetch_hit_index;
+logic jtb_head, jtb_fetch_hit_index;
 
 ///generate!
 genvar i,j;
@@ -80,7 +80,7 @@ generate
         );
     end
 
-    for (j = 0; j < 4; j++) 
+    for (j = 0; j < 2; j++) 
     begin: jtb
         jtb_entry jentry (
             .clk(clk),.rst(rst),
@@ -99,8 +99,8 @@ endgenerate
 function void set_defaults();
     update_br_pc = 8'b0;
     update_br_history = 8'b0;
-    update_jp_pc = 4'b0;
-    update_jp_history = 4'b0;
+    update_jp_pc = 2'b0;
+    update_jp_history = 2'b0;
 endfunction
 
 function logic[2:0] clogb2;
@@ -124,7 +124,7 @@ always_comb begin : hit_idx_convert
     jtb_fetch_hit_index = 2'b0;
     if (br_exe_hit) btb_exe_hit_index = clogb2({br_exe_hits});
     if (br_fetch_hit) btb_fetch_hit_index = clogb2({br_fetch_hits});
-    if (jp_fetch_hit) jtb_fetch_hit_index = clogb2({4'b0,jp_fetch_hits});
+    if (jp_fetch_hit) jtb_fetch_hit_index = jp_fetch_hits;
 end
 
 always_comb begin : fetch_pc_lookup
@@ -208,8 +208,7 @@ module btb_entry
     logic[9:0] branch_hist;
     logic[9:0] prediction_hist;
     logic[18:0] sig_ext_19;
-idth (8) does not match selector (value) width (9).[Hierarchy: ':mp4:control_buffer@control_buffer']
-[C4]     [CB]       W263                                         Warning         /home/bak7/mp
+    
     always_comb begin : sig_ext_19_logic
         if(offset[11]) sig_ext_19 = 19'b1111111111111111111;
         else sig_ext_19 = 19'b0000000000000000000;
