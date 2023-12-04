@@ -19,6 +19,7 @@ module prefetch_buffer(
     input logic pf_write, //want to write something into pf_buf
     input logic pf_ld, //pmem_resp goes high, load cacheline
     input logic [255:0] mem_rdata, //data read from pmem
+    output logic pf_resp,
     output logic pf_hit, //pf_hits
     output logic pf_miss, //pf_misses
     output logic [255:0] pf_mem_rdata
@@ -36,8 +37,8 @@ module prefetch_buffer(
     always_ff @( posedge clk, posedge rst ) begin
         if(rst) begin
             volatile <= 1'b0;
-            addrs[0] <= 32'b0;
-            addrs[1] <= 32'b0;
+            addrs[0] <= 32'hf;
+            addrs[1] <= 32'hf;
             cache_lines[0] <= 256'b0;
             cache_lines[1] <= 256'b0;
         end
@@ -58,21 +59,58 @@ module prefetch_buffer(
         end
     end
 
+    // always_comb begin
+    //     hit = 1'b0;
+    //     miss = 1'b0;
+    //     hit_num = 1'b0;
+    //     pf_resp = 1'b1;
+
+    //     if((mem_addr == addrs[0])) begin
+    //         hit = 1'b1;
+    //         hit_num = 1'b0;
+    //     end
+    //     else if((mem_addr == addrs[1])) begin
+    //         hit = 1'b1;
+    //         hit_num = 1'b1;
+    //         pf_resp = 1'b1;
+    //     end
+    //     else begin
+    //         miss = 1'b1;
+    //         pf_resp = pf_ld;
+    //     end
+
+    // end
+
+    
     always_comb begin
         hit = 1'b0;
         miss = 1'b0;
         hit_num = 1'b0;
+        pf_resp = 1'b0;
 
-        if((mem_addr == addrs[0])) begin
-            hit = 1'b1;
-            hit_num = 1'b0;
-        end
-        else if((mem_addr == addrs[1])) begin
-            hit = 1'b1;
-            hit_num = 1'b1;
+        if((pf_write || pf_read)) begin
+            if((mem_addr == addrs[0])) begin
+                hit = 1'b1;
+                pf_resp = 1'b1;
+                hit_num = 1'b0;
+            end
+            else if((mem_addr == addrs[1])) begin
+                hit = 1'b1;
+                pf_resp = 1'b1;
+                hit_num = 1'b1;
+            end
+            else begin
+                miss = 1'b1;
+                if(pf_ld) begin
+                    pf_resp = 1'b1;
+                end
+                else begin
+                    pf_resp = 1'b0;
+                end
+            end
         end
         else begin
-            miss = 1'b1;
+            //do nothing
         end
 
     end

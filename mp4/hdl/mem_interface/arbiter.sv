@@ -18,7 +18,7 @@ module cache_arbiter
 
     input rv32i_word pc_rdata,
     input rv32i_cache_types::rv32i_cacheline pf_data_r,
-    input logic pf_hit,pf_miss,
+    input logic pf_hit,pf_miss, pf_resp,
     output rv32i_word pf_addr,
     output logic pf_read, pf_write,pf_ld,
     output rv32i_cache_types::rv32i_cacheline pf_data_w,
@@ -84,12 +84,32 @@ function void set_defaults();
     icache_resp = 1'b0;
     dcache_resp = 1'b0;
     //pf_addr by default is always the next cacheline from pc, except when icache requests
-    pf_addr = {pc_rdata[31:5],5'b0} + {26'b0, 6'b100000};
+    pf_addr = {pc_rdata[31:5],5'b0} + {25'b0, 7'b0100000};
     pf_data_w = 256'b0;
     pf_read = 1'b0;
     pf_write = 1'b0;
     pf_ld = 1'b0;
 endfunction
+
+logic pf_writing_flag;
+logic [31:0] pf_true_addr;
+
+always_ff @( posedge clk, posedge reset ) begin
+    if(reset) begin
+        pf_true_addr <= 32'b0;
+        pf_writing_flag <= 1'b0;
+    end
+    else begin
+        if(pf_write && pf_miss && !pf_writing_flag) begin
+            pf_writing_flag <= 1'b1;
+            pf_true_addr <= pf_addr;
+        end
+
+        if(pf_write && pf_miss && pf_resp) begin
+            pf_writing_flag <= 1'b0;
+        end
+    end
+end
 
 always_comb begin : state_actions
     set_defaults(); 
@@ -126,7 +146,14 @@ always_comb begin : state_actions
             pf_ld = mem_resp;
             pf_data_w = mem_data_r;
 
-            mem_addr = pf_addr;
+            if((!pf_writing_flag)) begin
+                mem_addr = pf_addr;
+            end
+            else begin
+                mem_addr = pf_true_addr;
+                pf_addr = pf_true_addr;
+            end
+
             if(pf_miss) begin
                 mem_read = 1'b1;
             end
