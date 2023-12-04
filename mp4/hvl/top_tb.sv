@@ -187,7 +187,7 @@ module top_tb;
     end
 
     //without prefetch or btb:  1d_e6a1
-    //with btb and without prefetch: 1b_5b24
+    //with btb and without prefetch: 42b
     always_ff @( posedge clk, posedge rst ) begin : pf_used_counter
         if(rst) begin
             pf_used_count <= 32'h0;
