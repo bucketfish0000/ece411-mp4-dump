@@ -8,12 +8,11 @@ import rv32i_types::*;
 );
 
 always_comb begin
-    rv32i_word diff=comp1-comp2;
     unique case(cmpop)
-        beq: br_en = (diff==32'b0);
-        bne: br_en = (diff!=32'b0);
-        blt: br_en = (diff[31]==1'b1);
-        bge: br_en = (diff[31]==1'b0);
+        beq: br_en = (comp1==comp2);
+        bne: br_en = (comp1!=comp2);
+        blt: br_en = ($signed(comp1) < $signed(comp2));
+        bge: br_en = ($signed(comp1) >= $signed(comp2));
         bltu: br_en = (comp1 < comp2);
         bgeu: br_en = (comp1 >= comp2);
         default:br_en = 1'b0;
