@@ -271,7 +271,7 @@ import cpuIO::*;
         .dcache_data_w(arbiter_dmem_cacheline_wdata), 
         .dcache_resp(arbiter_dmem_resp), 
         
-        .mem_data_r(cacheline_rdata_mem),    //in           // interface with cacheline adapter 
+        .mem_data_r(cacheline_rdata_mem),    //in           
         .mem_resp(cacheline_resp), 
         .mem_addr(cacheline_mem_address),    //out
         .mem_data_w(cacheline_wdata_mem), 
