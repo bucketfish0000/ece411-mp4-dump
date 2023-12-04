@@ -34,6 +34,7 @@ module mp4datapath
 
     output rv32i_opcode opcode_exec,
     output rv32i_word pc_rdata,
+    output rv32i_word pc_w,
 
     output hzds instruct_in_exe,
     output hzds instruct_in_mem,
@@ -137,6 +138,7 @@ fetch_stage fetch(
 );
 
 assign pc_rdata = pc_fetch;
+assign pc_w = pc_wdata;
 
 rv32i_word instr_decode, pc_wdata_decode;
 logic prediction_rvfi;

@@ -120,7 +120,7 @@ import cpuIO::*;
             logic false_prediction;
 
             logic [255:0] pf_data_r, pf_data_w;
-            logic [31:0] pf_addr;
+            logic [31:0] pf_addr, pc_wdata;
             logic pf_hit,pf_miss,pf_read,pf_write,pf_ld;
 
         assign mispredict = if_de_rst;//this should work... right? Might be one off in beginning though
@@ -278,7 +278,7 @@ import cpuIO::*;
         .mem_read(cacheline_read), 
         .mem_write(cacheline_write),
 
-        .pc_rdata(pc_rdata),
+        .pc_rdata(pc_wdata),
         .pf_data_r(pf_data_r),
         .pf_hit(pf_hit),
         .pf_miss(pf_miss),
@@ -359,6 +359,7 @@ import cpuIO::*;
 
         .opcode_exec(opcode_exec),
         .pc_rdata(pc_rdata),
+        .pc_w(pc_wdata),
 
         .instruct_in_exe(instruct_in_exe),
         .instruct_in_mem(instruct_in_mem),
