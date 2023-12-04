@@ -349,7 +349,7 @@ function void set_def();
     ctrl_word.wb.regfilemux_sel = regfilemux::alu_out;
     ctrl_word.wb.rd_sel = 5'b00000;
     ctrl_word.rvfi.valid_commit = 1'b0;//done
-    ctrl_word.rvfi.order_commit = 64'b0;//done
+    ctrl_word.rvfi.order_commit = 32'b0;//done
     ctrl_word.rvfi.instruction = 32'b0;//done
     ctrl_word.rvfi.rs1_addr = 5'b0; //done
     ctrl_word.rvfi.rs2_addr = 5'b0; //dome

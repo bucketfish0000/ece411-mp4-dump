@@ -39,7 +39,7 @@ import immediates::*;
 
 );
     logic [31:0] rs1_o, rs2_o, alumux1_o, alumux2_o, cmpmux_o,pc_wdata;/* multi_low, multi_high, multi_r2, multi_r1, alu_fake;*/
-    logic [63:0] prev_order;
+    logic [31:0] prev_order;
     logic br_en_temp, exe_rdy_multi;
     assign false_prediction = (ctrl_w.rvfi.prediction != (br_en_temp)) && (opcode_exe==op_br||opcode_exe==op_jal) || (opcode_exe==op_jalr);
     cmpmux::cmpmux_sel_t cmp_sel;
@@ -73,7 +73,7 @@ import immediates::*;
 
     always_ff @(posedge clk) begin : prev_order_tracker
     if(rst)
-        prev_order <= 64'hffffffffffffffff;
+        prev_order <= 32'hffffffff;
     else
         prev_order <= ctrl_w.rvfi.order_commit;
     end
@@ -146,7 +146,7 @@ always_comb begin : regfile_ctrl_signals
         rvfi_exe.wb.regfilemux_sel = regfilemux::alu_out;
         rvfi_exe.wb.rd_sel = 5'b00000;
         rvfi_exe.rvfi.valid_commit = 1'b0;//done
-        rvfi_exe.rvfi.order_commit = 64'b0;//done
+        rvfi_exe.rvfi.order_commit = 32'b0;//done
         rvfi_exe.rvfi.instruction = 32'b0;//done
         rvfi_exe.rvfi.rs1_addr = 5'b0; //done
         rvfi_exe.rvfi.rs2_addr = 5'b0; //dome

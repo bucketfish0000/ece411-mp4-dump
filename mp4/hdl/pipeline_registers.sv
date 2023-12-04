@@ -21,14 +21,14 @@ module fet_dec_reg
     output rv32i_word pc_decode,
     output rv32i_word pc_wdata_decode,
 
-    output logic [63:0] commit_order,
+    output logic [31:0] commit_order,
     input logic prediction_in,
     output logic prediction_out
 );
 
     logic ready;
     logic[31:0] instr,pc_r, pc_w;
-    logic [63:0] order_counter;
+    logic [31:0] order_counter;
     logic prediction;
 
     always_ff @(posedge clk)
@@ -53,15 +53,15 @@ module fet_dec_reg
     
     always_ff @( posedge clk, posedge rst ) begin : counter_reg
         if(rst)
-            order_counter <= 64'hffffffffffffffff;
+            order_counter <= 32'hffffffff;
         else if((load||ld_commit) && !if_de_rst)
-            order_counter <= order_counter + 64'b01;
+            order_counter <= order_counter + 32'b01;
         else if(if_de_rst && sp_ld_commit) begin
             //min 4800 clk cycle, 1.28e+04 power draw, shaves 5.5 seconds off of 10000 cycle time
-            order_counter <= order_counter - 64'b01;
+            // order_counter <= order_counter - 64'b01;
             //if we cheat we can get to clock cycle of 4400, maybe a bit lower. Assumes that only bottom 24 bits will be used
             //saves like 5.5 seconds in coremark im vs 4800 clk cycle, but 1.38e+04 power draw
-            // order_counter <= {40'h0, order_counter[23:0] - 24'b01};
+            order_counter <= order_counter[31:0] - 32'b01;
         end
     end
 
@@ -151,7 +151,7 @@ module dec_exe_reg
             cw_data.wb.regfilemux_sel <= regfilemux::alu_out;
             cw_data.wb.rd_sel <= 5'b00000;
             cw_data.rvfi.valid_commit <= 1'b0;//done
-            cw_data.rvfi.order_commit <= 64'b0;//done
+            cw_data.rvfi.order_commit <= 32'b0;//done
             cw_data.rvfi.instruction <= 32'b0;//done
             cw_data.rvfi.rs1_addr <= 5'b0; //done
             cw_data.rvfi.rs2_addr <= 5'b0; //dome
@@ -284,7 +284,7 @@ import cpuIO::*;
             cw_data.wb.regfilemux_sel <= regfilemux::alu_out;
             cw_data.wb.rd_sel <= 5'b00000;
             cw_data.rvfi.valid_commit <= 1'b0;//done
-            cw_data.rvfi.order_commit <= 64'b0;//done
+            cw_data.rvfi.order_commit <= 32'b0;//done
             cw_data.rvfi.instruction <= 32'b0;//done
             cw_data.rvfi.rs1_addr <= 5'b0; //done
             cw_data.rvfi.rs2_addr <= 5'b0; //dome
@@ -602,7 +602,7 @@ module mem_wb_reg
             cw_data.wb.regfilemux_sel <= regfilemux::alu_out;
             cw_data.wb.rd_sel <= 5'b00000;
             cw_data.rvfi.valid_commit <= 1'b0;//done
-            cw_data.rvfi.order_commit <= 64'b0;//done
+            cw_data.rvfi.order_commit <= 32'b0;//done
             cw_data.rvfi.instruction <= 32'b0;//done
             cw_data.rvfi.rs1_addr <= 5'b0; //done
             cw_data.rvfi.rs2_addr <= 5'b0; //dome

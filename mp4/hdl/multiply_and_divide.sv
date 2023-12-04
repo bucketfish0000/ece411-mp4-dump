@@ -100,23 +100,11 @@ module multiply_and_divide(
         .done(done_div)
     );
 
-    always_comb begin
-        if(start_div && rs2_i == 0) begin
-            div_error = 1'b1;
-            div_zero = 1'b1;
-            overflow = 1'b0;
-        end
-        else if ((start_div) && ((rs1_i == 32'h80000000) && (rs2_i == 32'hffffffff) && (rs1signunsignmux_sel == rs1signunsignmux::sign))) begin
-            div_error = 1'b1;
-            div_zero = 1'b0;
-            overflow = 1'b1;
-        end
-        else begin  
-            div_error = 1'b0;
-            div_zero = 1'b0;
-            overflow = 1'b0;
-        end
+    assign div_error = (div_zero || overflow);
+    assign div_zero = (start_div && rs2_i == 0);
+    assign overflow = ((start_div) && ((rs1_i == 32'h80000000) && (rs2_i == 32'hffffffff) && (rs1signunsignmux_sel == rs1signunsignmux::sign)));
 
+    always_comb begin
         if(start_multi && done_multi) begin
             true_o = multi_o;
             done = 1'b1;
@@ -127,17 +115,9 @@ module multiply_and_divide(
                 true_o = div_o;
             end
             else begin
-                case ({rs1signunsignmux_sel, divremquotmux_sel, overflow, div_zero})
-                    4'b0001: true_o = 32'hffffffff;//qoutient and div_zero and signed
-                    4'b0010: true_o = true_rs1;//quotient and overflow and signed
-                    4'b0101: true_o = true_rs1;//remainder and div_zero and signed
-                    4'b0110: true_o = 32'b0;//remainder and overflow and signed
-                    4'b1001: true_o = 32'hffffffff;//qoutient and div_zero and unsigned
-                    4'b1010: true_o = 32'h69696969;//quotient and overflow and unsigned
-                    4'b1101: true_o = true_rs1;//remainder and div_zero and unsigned
-                    4'b1110: true_o = 32'h69696969;//remainder and overflow and unsigned
-                    default: true_o = 32'h000ba115;
-                endcase
+                if(!divremquotmux_sel && div_zero) true_o = 32'hffffffff;
+                else if((divremquotmux_sel && div_zero) || (!divremquotmux_sel && !rs1signunsignmux_sel && overflow)) true_o = true_rs1;
+                else true_o = 32'b0;
             end
         end
         else begin

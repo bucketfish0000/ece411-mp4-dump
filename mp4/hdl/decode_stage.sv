@@ -12,7 +12,7 @@ module decode_stage
     input rv32i_word instruction,
     input rv32i_word pc_rdata,
     input rv32i_word pc_wdata,
-    input logic [63:0] commit_order,
+    input logic [31:0] commit_order,
     input logic prediction,
     output immediates::imm imm_data,
 
@@ -26,10 +26,6 @@ module decode_stage
     logic [2:0] func3;
     logic [6:0] func7;
     assign ready_o = 1'b1;
-
-
-
-    //logic [63:0] order_commit;
 
     //decode logic 
     //begin decode_logic

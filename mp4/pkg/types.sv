@@ -244,7 +244,7 @@ package cpuIO;
 
     typedef struct {
         logic valid_commit; //set in ctrl
-        logic [63:0] order_commit; //set in ctrl(from fe_de)
+        logic [31:0] order_commit; //set in ctrl(from fe_de)
         logic [31:0] instruction; //set in ctrl(from fe_de?)
         logic [4:0] rs1_addr;  //set in ctrl(from decode)
         logic [4:0] rs2_addr;  //set in ctrl(from decode)
@@ -266,7 +266,7 @@ package cpuIO;
         rv32i_opcode opcode;
         logic [2:0] func3;
         logic [6:0] func7;
-        logic [63:0] order_commit;
+        logic [31:0] order_commit;
         logic [31:0] instruction;
         logic [31:0] pc_rdata;
         logic [31:0] pc_wdata;
@@ -306,7 +306,7 @@ package hazards;
         logic [4:0] rd_addr;
         logic [4:0] rs1_addr;
         logic [4:0] rs2_addr;
-        logic [63:0] commit_order;
+        logic [31:0] commit_order;
     } hzds;
 endpackage : hazards
 
