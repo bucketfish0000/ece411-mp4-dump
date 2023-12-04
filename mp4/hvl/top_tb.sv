@@ -13,7 +13,7 @@ module top_tb;
 
     bit rst;
 
-    int timeout = 100000000000; // in cycles, change according to your needs
+    int timeout = 10000000; // in cycles, change according to your needs
 
     // CP1
     // mem_itf magic_itf_i(.*);
@@ -27,8 +27,8 @@ module top_tb;
     mon_itf mon_itf(.*);    
     monitor monitor(.itf(mon_itf));
 
-    logic i_miss, i_hit, d_hit, d_miss, mispredict, stall_all, stall_fe, stall_de_exe_mem_wb, stall_exe_mem_wb, stall_mem_wb;
-    logic [31:0] i_miss_count, i_hit_count, d_hit_count, d_miss_count, mispredict_count, stall_all_count,
+    logic i_miss, i_hit, d_hit, d_miss, mispredict, stall_all, stall_fe, stall_de_exe_mem_wb, stall_exe_mem_wb, stall_mem_wb, pf_used;
+    logic [31:0] i_miss_count, i_hit_count, d_hit_count, d_miss_count, mispredict_count, stall_all_count, pf_used_count,
      stall_fe_count, stall_de_exe_mem_wb_count, stall_exe_mem_wb_count, stall_mem_wb_count;
 
     logic buff_flag;
@@ -68,10 +68,11 @@ module top_tb;
         .stall_all(stall_all),
         .stall_de_exe_mem_wb(stall_de_exe_mem_wb),
         .stall_exe_mem_wb(stall_exe_mem_wb),
-        .stall_mem_wb(stall_mem_wb)
+        .stall_mem_wb(stall_mem_wb),
+        .pf_used(pf_used)
     );
     //  ipc without btb or pre-fetch: .323673
-    //  with btb and without pre-fetch: .358626
+    //  with btb and without pre-fetch: .358626, with prefetch .358482
 
 
     //NOTE: number of mispredicts is half of this count since if_de_rst goes high for two cycles
@@ -182,6 +183,17 @@ module top_tb;
         end
         else if(stall_mem_wb) begin
             stall_mem_wb_count <= stall_mem_wb_count + 32'b01;
+        end
+    end
+
+    //without prefetch or btb:  1d_e6a1
+    //with btb and without prefetch: 1b_5b24
+    always_ff @( posedge clk, posedge rst ) begin : pf_used_counter
+        if(rst) begin
+            pf_used_count <= 32'h0;
+        end
+        else if(pf_used) begin
+            pf_used_count <= pf_used_count + 32'b01;
         end
     end
 

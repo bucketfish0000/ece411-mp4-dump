@@ -2,7 +2,7 @@ Magic 271485
 Revision Verdi_R-2020.12-SP1-1
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 25 1707 276 169 65
+viewPort 0 25 1707 320 169 65
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
@@ -16,16 +16,16 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 23127428900.519341 23127611571.355301
-cursor 23127460000.000000
+zoom 52567443.000835 52697305.050281
+cursor 54980000.000000
 marker 0.000000
 
 ; user define markers
 ; userMarker time_pos marker_name color linestyle
 ; visible top row signal index
-top 14
+top 179
 ; marker line index
-markerPos 21
+markerPos 200
 
 ; event list
 ; addEvent event_name event_expression
@@ -60,7 +60,7 @@ addSignal -h 15 -UNSIGNED -holdScope cw_read.opcode[6:0]
 addSignal -h 15 -holdScope load_instuct_inserted
 addSignal -h 15 -holdScope true_cw_read.instruction[31:0]
 addSignal -h 15 -holdScope if_de_rst
-addGroup "G2"
+addGroup "G2" -e FALSE
 addSignal -h 15 /top_tb/mispredict_count[31:0]
 addSignal -h 15 -holdScope i_hit_count[31:0]
 addSignal -h 15 -holdScope i_miss_count[31:0]
@@ -79,24 +79,16 @@ addSignal -expanded -h 15 -holdScope dmem_wdata[31:0]
 addGroup "Writeback" -e FALSE
 addSignal -h 15 /top_tb/clk
 addSignal -h 15 /top_tb/dut/datapath/writeback/load_reg
-addSignal -h 15 -holdScope cw_out_rvfi.rvfi.instruction[31:0]
-addSignal -h 15 -holdScope cw_out_rvfi.rvfi.order_commit[63:0]
 addSignal -h 15 -holdScope prev_order[63:0]
-addSignal -h 15 -holdScope cw_out_rvfi.rvfi.valid_commit
-addSignal -h 15 -holdScope cw_out_rvfi.rvfi.rs1_addr[4:0]
-addSignal -h 15 -holdScope cw_out_rvfi.rvfi.rs2_addr[4:0]
-addSignal -h 15 -holdScope cw_out_rvfi.wb.rd_sel[4:0]
 addSignal -h 15 -holdScope regfilemux_out[31:0]
 addSignal -h 15 -holdScope mem_wb_valid
-addSignal -h 15 -holdScope cw_out_rvfi.rvfi.pc_rdata[31:0]
-addSignal -h 15 -holdScope cw_out_rvfi.rvfi.pc_wdata[31:0]
 addSignal -expanded -h 15 /top_tb/dut/datapath/mem_wb_register/instruct_in_wb
 addSignal -h 15 -UNSIGNED -holdScope instruct_in_wb.opcode[6:0]
 addSignal -h 15 -holdScope instruct_in_wb.rd_addr[4:0]
 addSignal -h 15 -holdScope instruct_in_wb.rs1_addr[4:0]
 addSignal -h 15 -holdScope instruct_in_wb.rs2_addr[4:0]
 addSignal -h 15 -holdScope instruct_in_wb.commit_order[63:0]
-addGroup "CTRL" -e FALSE
+addGroup "CTRL"
 addSignal -h 15 /top_tb/dut/control/clk
 addSignal -h 15 -holdScope rst
 addSignal -h 15 -UNSIGNED -holdScope true_cw_read.opcode[6:0]
@@ -128,7 +120,7 @@ addSignal -h 15 -holdScope stall_de_exe
 addSignal -h 15 -holdScope stall_exe_mem
 addSignal -h 15 -holdScope stall_mem_wb
 addSignal -h 15 -holdScope icache_resp
-addGroup "Imem" -e FALSE
+addGroup "Imem"
 addSignal -h 15 /top_tb/dut/datapath/memory/clk
 addSignal -h 15 /top_tb/dut/imem_address[31:0]
 addSignal -h 15 -holdScope imem_read
@@ -154,8 +146,6 @@ addSignal -h 15 /top_tb/dut/icache0/datapath/clk
 addSignal -h 15 /top_tb/dut/dmem_resp
 addSignal -h 15 /top_tb/dut/datapath/memory/mem_resp_flag
 addSignal -h 15 -holdScope mem_ready
-addSignal -h 15 /top_tb/dut/datapath/mem_wb_register/cw_data.mem.mem_write_d
-addSignal -h 15 -holdScope cw_in.mem
 addGroup "mem_wb" -e FALSE
 addSignal -h 15 /top_tb/dut/datapath/mem_wb_register/cw_in.rvfi.pc_rdata[31:0]
 addSignal -h 15 -holdScope cw_in.rvfi.pc_wdata[31:0]
@@ -235,7 +225,7 @@ addSignal -h 15 /top_tb/dut/icache0/mem_resp
 addSignal -h 15 -holdScope pmem_resp
 addSignal -h 15 -UNSIGNED /top_tb/dut/icache0/control/state[1:0]
 addSignal -h 15 -holdScope cache_hit
-addGroup "G19"
+addGroup "G19" -e FALSE
 addSignal -h 15 /top_tb/dut/icache0/clk
 addSignal -h 15 -holdScope rst
 addSignal -h 15 -holdScope mem_address[31:0]
@@ -244,6 +234,28 @@ addSignal -h 15 -holdScope mem_cancel
 addSignal -h 15 -holdScope mem_resp
 addSignal -h 15 -holdScope cache_hit
 addGroup "G20"
+addSignal -h 15 /top_tb/dut/cache_arbiter/pc_rdata[31:0]
+addSignal -h 15 -holdScope pf_data_r[255:0]
+addSignal -h 15 -holdScope pf_hit
+addSignal -h 15 -holdScope pf_read
+addSignal -h 15 -holdScope pf_miss
+addSignal -h 15 -holdScope pf_addr[31:0]
+addSignal -h 15 -holdScope mem_addr[31:0]
+addSignal -h 15 -holdScope mem_read
+addSignal -h 15 /top_tb/dut/control/imem_cancel
+addSignal -h 15 -holdScope imem_read
+addSignal -h 15 -holdScope icache_resp
+addSignal -h 15 /top_tb/dut/cache_arbiter/pf_write
+addSignal -h 15 -holdScope icache_read
+addSignal -h 15 -holdScope pf_ld
+addSignal -h 15 -holdScope pf_data_w[255:0]
+addSignal -h 15 -holdScope icache_addr[31:0]
+addSignal -h 15 -holdScope icache_read
+addSignal -h 15 -holdScope clk
+addSignal -h 15 -holdScope icache_data[255:0]
+addSignal -h 15 -holdScope icache_resp
+addSignal -h 15 -UNSIGNED -holdScope state[1:0]
+addGroup "G21"
 
 ; getSignalForm Scope Hierarchy Status
 ; active file of getSignalForm

@@ -37,7 +37,8 @@ import cpuIO::*;
     output logic stall_all,
     output logic stall_de_exe_mem_wb,
     output logic stall_exe_mem_wb,
-    output logic stall_mem_wb
+    output logic stall_mem_wb,
+    output logic pf_used
 );
 /*                             256bit                        32bit word
           64bit              cacheline       -> word adapter    -> cpu datapath fetch
@@ -100,7 +101,7 @@ import cpuIO::*;
             logic if_valid, de_valid, exe_valid, mem_valid, wb_valid;
             logic if_de_ld, de_exe_ld, exe_mem_ld, mem_wb_ld, sp_ld_commit, ld_commit;
             logic if_de_rst, de_exe_rst, exe_mem_rst, mem_wb_rst;
-            logic mem_r_d, mem_w_d;
+            logic mem_r_d, mem_w_d, pf_resp;
             logic br_en;
             logic [3:0] mem_byte_enable; 
             logic [31:0] cacheline_mem_byte_enable;
@@ -281,12 +282,15 @@ import cpuIO::*;
         .pf_data_r(pf_data_r),
         .pf_hit(pf_hit),
         .pf_miss(pf_miss),
+        .pf_resp(pf_resp),
         .pf_addr(pf_addr),
         .pf_read(pf_read),
         .pf_write(pf_write),
         .pf_ld(pf_ld),
         .pf_data_w(pf_data_w)
     );
+
+    assign pf_used = pf_read && pf_hit;
 
     prefetch_buffer pf(
     .clk(clk),
@@ -296,6 +300,7 @@ import cpuIO::*;
     .pf_write(pf_write), //want to write something into pf_buf
     .pf_ld(pf_ld), //pmem_resp goes high, load cacheline
     .mem_rdata(pf_data_w), //data read from pmem
+    .pf_resp(pf_resp),
     .pf_hit(pf_hit), //pf_hits
     .pf_miss(pf_miss), //pf_misses
     .pf_mem_rdata(pf_data_r)
