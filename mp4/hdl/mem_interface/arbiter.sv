@@ -84,7 +84,7 @@ function void set_defaults();
     icache_resp = 1'b0;
     dcache_resp = 1'b0;
     //pf_addr by default is always the next cacheline from pc, except when icache requests
-    pf_addr = {pc_rdata[31:8]+1'b1,8'b0};
+    pf_addr = {pc_rdata[31:5],5'b0} + {26'b0, 6'b100000};
     pf_data_w = 256'b0;
     pf_read = 1'b0;
     pf_write = 1'b0;
@@ -96,8 +96,8 @@ always_comb begin : state_actions
     case(state)
         icache: begin 
             pf_addr = icache_addr;
+            pf_read = icache_read;
             if (pf_hit) begin
-                pf_read = 1'b1;
                 icache_resp = 1'b1;
                 icache_data = pf_data_r;
             end else begin
@@ -127,7 +127,12 @@ always_comb begin : state_actions
             pf_data_w = mem_data_r;
 
             mem_addr = pf_addr;
-            mem_read = 1'b1;
+            if(pf_miss) begin
+                mem_read = 1'b1;
+            end
+            else begin
+                mem_read = 1'b0;
+            end
         end
         default: ;
     endcase
@@ -164,11 +169,11 @@ always_comb begin: next_state_logic
             idle: begin
                 if(icache_read) next_states = icache; 
                 else if(~icache_read && (dcache_read || dcache_write)) next_states = dcache;  
-                else if(pf_miss) next_states = prefetch;
+                else if(!icache_read && !(dcache_read || dcache_write)) next_states = prefetch;
                 else next_states = idle;
             end
             prefetch: begin
-                if (mem_resp) next_states = idle;
+                if (mem_resp||pf_hit) next_states = idle;
                 else next_states = prefetch;
             end
             default: next_states = idle;
