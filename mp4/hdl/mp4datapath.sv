@@ -87,7 +87,7 @@ logic decode_valid_i,exec_valid_i,mem_valid_i,wb_valid_i;
 logic fetch_ready_o, decode_ready_o, exec_ready_o, mem_ready_o, wb_ready_o;
 logic fetch_valid_o, decode_valid_o;
 logic load_reg_wb;
-logic [63:0] commit_order_decode_i;
+logic [31:0] commit_order_decode_i;
 rv32i_opcode opcode_dec_exe;
 control_word_de_exe cw_exec;
 control_word_exe_mem cw_mem, rvfi_exe;

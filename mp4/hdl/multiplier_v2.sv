@@ -143,61 +143,65 @@ generate
     end
 endgenerate 
 
-logic [3:0] count;
+logic [2:0] count;
 
 always_ff @( posedge clk) begin
     if(rst) begin
-        count <= 4'b0;
+        count <= 3'b0;
         ult_result.lay_1_struct.lay_1_result <= 1024'b0;
     end
     else if(start) begin
         case(count)
-            4'b0000: begin//lay6
-                count <= count + 4'b01;
-                for(logic [2:0] i5 = 3'b0; i5 < 3'b100; i5 = i5 + 3'b001) begin //which lay 2
-                    for(logic [2:0] j5 = 3'b0; j5 < 3'b100; j5 = j5 + 3'b001) begin //which lay 3
-                        for(logic [2:0] k5 = 3'b0; k5 < 3'b100; k5 = k5 + 3'b001) begin //which lay 4
-                            for(logic [2:0] l5 = 3'b0; l5 < 3'b100; l5 = l5 + 3'b001) begin //which z fro lay 3
-                                ult_result.lay_6_struct.lay_6_result[i5][j5][k5][l5][0] <= lay_5_nums[i5][j5][k5][l5][0][0] & lay_5_nums[i5][j5][k5][l5][0][1];
+            // 4'b0000: begin//lay6
+            //     count <= count + 4'b01;
+            //     for(logic [2:0] i5 = 3'b0; i5 < 3'b100; i5 = i5 + 3'b001) begin //which lay 2
+            //         for(logic [2:0] j5 = 3'b0; j5 < 3'b100; j5 = j5 + 3'b001) begin //which lay 3
+            //             for(logic [2:0] k5 = 3'b0; k5 < 3'b100; k5 = k5 + 3'b001) begin //which lay 4
+            //                 for(logic [2:0] l5 = 3'b0; l5 < 3'b100; l5 = l5 + 3'b001) begin //which z fro lay 3
+            //                     ult_result.lay_6_struct.lay_6_result[i5][j5][k5][l5][0] <= lay_5_nums[i5][j5][k5][l5][0][0] & lay_5_nums[i5][j5][k5][l5][0][1];
 
-                                ult_result.lay_6_struct.lay_6_result[i5][j5][k5][l5][1] <= lay_5_nums[i5][j5][k5][l5][1][0] & lay_5_nums[i5][j5][k5][l5][1][1];
+            //                     ult_result.lay_6_struct.lay_6_result[i5][j5][k5][l5][1] <= lay_5_nums[i5][j5][k5][l5][1][0] & lay_5_nums[i5][j5][k5][l5][1][1];
 
-                                ult_result.lay_6_struct.lay_6_result[i5][j5][k5][l5][2] <= lay_5_nums[i5][j5][k5][l5][2][0] & lay_5_nums[i5][j5][k5][l5][2][1];
+            //                     ult_result.lay_6_struct.lay_6_result[i5][j5][k5][l5][2] <= lay_5_nums[i5][j5][k5][l5][2][0] & lay_5_nums[i5][j5][k5][l5][2][1];
 
-                                ult_result.lay_6_struct.lay_6_result[i5][j5][k5][l5][3] <= lay_5_nums[i5][j5][k5][l5][3][0] & lay_5_nums[i5][j5][k5][l5][3][1];
-                            end
-                        end
-                    end
-                end
-            end
+            //                     ult_result.lay_6_struct.lay_6_result[i5][j5][k5][l5][3] <= lay_5_nums[i5][j5][k5][l5][3][0] & lay_5_nums[i5][j5][k5][l5][3][1];
+            //                 end
+            //             end
+            //         end
+            //     end
+            // end
 
-            4'b0001: begin //lay5
-                count <= count + 4'b01;
+            3'b000: begin //lay5
+                count <= count + 3'b01;
                 for(logic [2:0] i7 = 3'b0; i7 < 3'b100; i7 = i7 + 3'b001) begin //which lay 2
                     for(logic [2:0] j7 = 3'b0; j7 < 3'b100; j7 = j7 + 3'b001) begin //which lay 3
                         for(logic [2:0] k7 = 3'b0; k7 < 3'b100; k7 = k7 + 3'b001) begin //which lay 4
-                            ult_result.lay_5_struct.lay_5_result[i7][j7][k7][0] <= {3'b0, ult_result.lay_6_struct.lay_6_result[i7][j7][k7][0][0]} + 
-                                    {({2'b0, ult_result.lay_6_struct.lay_6_result[i7][j7][k7][0][1]} + {2'b0, ult_result.lay_6_struct.lay_6_result[i7][j7][k7][0][2]}), 1'b0} + 
-                                        {1'b0, ult_result.lay_6_struct.lay_6_result[i7][j7][k7][0][3], 2'b0};
+                            ult_result.lay_5_struct.lay_5_result[i7][j7][k7][0] <= {3'b0, (lay_5_nums[i7][j7][k7][0][0][0] & lay_5_nums[i7][j7][k7][0][0][1])} + 
+                                    {({2'b0, (lay_5_nums[i7][j7][k7][0][1][0] & lay_5_nums[i7][j7][k7][0][1][1])} + 
+                                        {2'b0, (lay_5_nums[i7][j7][k7][0][2][0] & lay_5_nums[i7][j7][k7][0][2][1])}), 1'b0} + 
+                                            {1'b0, (lay_5_nums[i7][j7][k7][0][3][0] & lay_5_nums[i7][j7][k7][0][3][1]), 2'b0};
 
-                            ult_result.lay_5_struct.lay_5_result[i7][j7][k7][1] <= {3'b0, ult_result.lay_6_struct.lay_6_result[i7][j7][k7][1][0]} + 
-                                    {({2'b0, ult_result.lay_6_struct.lay_6_result[i7][j7][k7][1][1]} + {2'b0, ult_result.lay_6_struct.lay_6_result[i7][j7][k7][1][2]}), 1'b0} + 
-                                        {1'b0, ult_result.lay_6_struct.lay_6_result[i7][j7][k7][1][3], 2'b0};
+                            ult_result.lay_5_struct.lay_5_result[i7][j7][k7][1] <= {3'b0, (lay_5_nums[i7][j7][k7][1][0][0] & lay_5_nums[i7][j7][k7][1][0][1])} + 
+                                    {({2'b0, (lay_5_nums[i7][j7][k7][1][1][0] & lay_5_nums[i7][j7][k7][1][1][1])} + 
+                                        {2'b0, (lay_5_nums[i7][j7][k7][1][2][0] & lay_5_nums[i7][j7][k7][1][2][1])}), 1'b0} + 
+                                            {1'b0, (lay_5_nums[i7][j7][k7][1][3][0] & lay_5_nums[i7][j7][k7][1][3][1]), 2'b0};
 
-                            ult_result.lay_5_struct.lay_5_result[i7][j7][k7][2] <= {3'b0, ult_result.lay_6_struct.lay_6_result[i7][j7][k7][2][0]} + 
-                                    {({2'b0, ult_result.lay_6_struct.lay_6_result[i7][j7][k7][2][1]} + {2'b0, ult_result.lay_6_struct.lay_6_result[i7][j7][k7][2][2]}), 1'b0} + 
-                                        {1'b0, ult_result.lay_6_struct.lay_6_result[i7][j7][k7][2][3], 2'b0};
+                            ult_result.lay_5_struct.lay_5_result[i7][j7][k7][2] <= {3'b0, (lay_5_nums[i7][j7][k7][2][0][0] & lay_5_nums[i7][j7][k7][2][0][1])} + 
+                                    {({2'b0, (lay_5_nums[i7][j7][k7][2][1][0] & lay_5_nums[i7][j7][k7][2][1][1])} + 
+                                        {2'b0, (lay_5_nums[i7][j7][k7][2][2][0] & lay_5_nums[i7][j7][k7][2][2][1])}), 1'b0} + 
+                                            {1'b0, (lay_5_nums[i7][j7][k7][2][3][0] & lay_5_nums[i7][j7][k7][2][3][1]), 2'b0};
 
-                            ult_result.lay_5_struct.lay_5_result[i7][j7][k7][3] <= {3'b0, ult_result.lay_6_struct.lay_6_result[i7][j7][k7][3][0]} + 
-                                    {({2'b0, ult_result.lay_6_struct.lay_6_result[i7][j7][k7][3][1]} + {2'b0, ult_result.lay_6_struct.lay_6_result[i7][j7][k7][3][2]}), 1'b0} + 
-                                        {1'b0, ult_result.lay_6_struct.lay_6_result[i7][j7][k7][3][3], 2'b0};
+                            ult_result.lay_5_struct.lay_5_result[i7][j7][k7][3] <= {3'b0, (lay_5_nums[i7][j7][k7][3][0][0] & lay_5_nums[i7][j7][k7][3][0][1])} + 
+                                    {({2'b0, (lay_5_nums[i7][j7][k7][3][1][0] & lay_5_nums[i7][j7][k7][3][1][1])} + 
+                                        {2'b0, (lay_5_nums[i7][j7][k7][3][2][0] & lay_5_nums[i7][j7][k7][3][2][1])}), 1'b0} + 
+                                            {1'b0, (lay_5_nums[i7][j7][k7][3][3][0] & lay_5_nums[i7][j7][k7][3][3][1]), 2'b0};
                         end
                     end
                 end
             end
 
-            4'b0010: begin //lay4
-                count <= count + 4'b01;
+            3'b001: begin //lay4
+                count <= count + 3'b01;
                 for(logic [2:0] i9 = 3'b0; i9 < 3'b100; i9 = i9 + 3'b001) begin //which lay 2
                     for(logic [2:0] j9 = 3'b0; j9 < 3'b100; j9 = j9 + 3'b001) begin //which lay 3
                         ult_result.lay_4_struct.lay_4_result[0][i9][j9][0] <= {4'b0, ult_result.lay_5_struct.lay_5_result[i9][j9][0][0]} + 
@@ -219,8 +223,8 @@ always_ff @( posedge clk) begin
                 end
             end
             
-            4'b0011: begin //lay3
-                count <= count + 4'b01;
+            3'b010: begin //lay3
+                count <= count + 3'b01;
                 for(logic [2:0] i11 = 3'b0; i11 < 3'b100; i11 = i11 + 3'b001) begin //which lay 2
                     ult_result.lay_3_struct.lay_3_result[0][i11][0] <= {8'b0, ult_result.lay_4_struct.lay_4_result[0][i11][0][0]} + 
                             {({4'b0, ult_result.lay_4_struct.lay_4_result[0][i11][0][1]} + {4'b0, ult_result.lay_4_struct.lay_4_result[0][i11][0][2]}), 4'b0} + 
@@ -240,8 +244,8 @@ always_ff @( posedge clk) begin
                 end
             end
              
-            4'b0100: begin //lay2
-                count <= count + 4'b01;
+            3'b011: begin //lay2
+                count <= count + 3'b01;
                 ult_result.lay_2_struct.lay_2_result[0][0] <= {16'b0, ult_result.lay_3_struct.lay_3_result[0][0][0]} + 
                         {({8'b0, ult_result.lay_3_struct.lay_3_result[0][0][1]} + {8'b0, ult_result.lay_3_struct.lay_3_result[0][0][2]}), 8'b0} + 
                             {ult_result.lay_3_struct.lay_3_result[0][0][3], 16'b0};
@@ -259,16 +263,16 @@ always_ff @( posedge clk) begin
                             {ult_result.lay_3_struct.lay_3_result[0][3][3], 16'b0};
             end
 
-            4'b0101: begin //lay1
-                count <= count + 4'b01;
+            3'b100: begin //lay1
+                count <= count + 3'b01;
                 ult_result.lay_1_struct.lay_1_result[0] <= {32'b0, ult_result.lay_2_struct.lay_2_result[0][0]} + 
                     {({16'b0, ult_result.lay_2_struct.lay_2_result[0][1]} + {16'b0, ult_result.lay_2_struct.lay_2_result[0][2]}), 16'b0} + 
                         {ult_result.lay_2_struct.lay_2_result[0][3], 32'b0};
             end
 
-            4'b0110: begin
+            3'b101: begin
                 if(new_instruction) begin
-                    count <= 4'b0;
+                    count <= 3'b0;
                     ult_result.lay_1_struct.lay_1_result <= 1024'b0;
                 end
             end
@@ -278,7 +282,7 @@ always_ff @( posedge clk) begin
 end
 
 always_comb begin : done_logic
-    if(count == 4'b0110 && !new_instruction) begin
+    if(count == 3'b0101 && !new_instruction) begin
         done = 1'b1;
     end
     else begin

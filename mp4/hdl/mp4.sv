@@ -120,7 +120,7 @@ import cpuIO::*;
             logic false_prediction;
 
             logic [255:0] pf_data_r, pf_data_w;
-            logic [31:0] pf_addr, pc_wdata;
+            logic [31:0] pf_addr;
             logic pf_hit,pf_miss,pf_read,pf_write,pf_ld;
 
         assign mispredict = if_de_rst;//this should work... right? Might be one off in beginning though
@@ -428,7 +428,7 @@ import cpuIO::*;
     // Only use hierarchical references here for verification
     // **DO NOT** use hierarchical references in the actual design!
     assign monitor_valid     = ctrl_rvfi.valid_commit; //???
-    assign monitor_order     = ctrl_rvfi.order_commit; //???
+    assign monitor_order     = {32'b0, ctrl_rvfi.order_commit}; //???
     assign monitor_inst      = ctrl_rvfi.instruction; //???
     assign monitor_rs1_addr  = ctrl_rvfi.rs1_addr;
     assign monitor_rs2_addr  = ctrl_rvfi.rs2_addr;

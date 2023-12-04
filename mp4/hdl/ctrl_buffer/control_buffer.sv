@@ -208,7 +208,8 @@ module btb_entry
     logic[9:0] branch_hist;
     logic[9:0] prediction_hist;
     logic[18:0] sig_ext_19;
-
+idth (8) does not match selector (value) width (9).[Hierarchy: ':mp4:control_buffer@control_buffer']
+[C4]     [CB]       W263                                         Warning         /home/bak7/mp
     always_comb begin : sig_ext_19_logic
         if(offset[11]) sig_ext_19 = 19'b1111111111111111111;
         else sig_ext_19 = 19'b0000000000000000000;
