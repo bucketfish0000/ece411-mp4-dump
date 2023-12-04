@@ -104,8 +104,7 @@ always_ff @( posedge clk, posedge reset ) begin
             pf_writing_flag <= 1'b1;
             pf_true_addr <= pf_addr;
         end
-
-        if(pf_write && pf_miss && pf_resp) begin
+        else if(pf_write && pf_miss && pf_resp) begin
             pf_writing_flag <= 1'b0;
         end
     end
