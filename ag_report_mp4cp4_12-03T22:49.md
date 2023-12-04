@@ -1,5 +1,5 @@
 # AG Report MP4CP4 2023-12-03T22:49:10-06:00 
-Report generated at 2023-12-03T23:50:41-06:00, using commit ``230a875d7fe1202b178277377baeca5500260863``
+Report generated at 2023-12-04T00:50:36-06:00, using commit ``230a875d7fe1202b178277377baeca5500260863``
 
 Autograder Run ID: acba8db0-f611-45e8-a769-d1a29a288848
 
@@ -11,9 +11,9 @@ Autograder Job ID: 78ba6cff-8752-4ff7-95ab-ba4f2bbc0369
 
  ``` 
  mkdir -p sim
-cd sim && vcs /tmp/dut/pkg/types.sv /tmp/dut/hdl/mem_interface/mem_word_adaptor.sv /tmp/dut/hdl/mem_interface/cacheline_adaptor.sv /tmp/dut/hdl/mem_interface/arbiter.sv /tmp/dut/hdl/mem_interface/cache/valid.sv /tmp/dut/hdl/mem_interface/cache/ff_array.sv /tmp/dut/hdl/mem_interface/cache/dirty.sv /tmp/dut/hdl/mem_interface/cache/cache_datapath.sv /tmp/dut/hdl/mem_interface/cache/cache_control.sv /tmp/dut/hdl/mem_interface/cache/cache.sv /tmp/dut/hdl/mem_interface/cache/PLRU.sv /tmp/dut/hdl/ctrl_buffer/prefetch_buffer.sv /tmp/dut/hdl/ctrl_buffer/control_buffer.sv /tmp/dut/hdl/wb_stage.sv /tmp/dut/hdl/shift_reg.sv /tmp/dut/hdl/sext_half.sv /tmp/dut/hdl/sext_byte.sv /tmp/dut/hdl/register.sv /tmp/dut/hdl/regfile.sv /tmp/dut/hdl/pipeline_registers.sv /tmp/dut/hdl/multiply_and_divide.sv /tmp/dut/hdl/multiplier_v2.sv /tmp/dut/hdl/multiplier.sv /tmp/dut/hdl/mp4control.sv /tmp/dut/hdl/mem_stage.sv /tmp/dut/hdl/mem_data_out.sv /tmp/dut/hdl/mar.sv /tmp/dut/hdl/hazard_queue.sv /tmp/dut/hdl/fetch_stage.sv /tmp/dut/hdl/exe_stage.sv /tmp/dut/hdl/divider_slow.sv /tmp/dut/hdl/div_compare.sv /tmp/dut/hdl/decode_stage.sv /tmp/dut/hdl/counter.sv /tmp/dut/hdl/cmp.sv /tmp/dut/hdl/alu.sv /tmp/dut/hdl/mp4datapath.sv /tmp/dut/hdl/mp4.sv /tmp/dut/hvl/top_tb.sv /tmp/dut/hvl/rvfimon.v /tmp/dut/hvl/monitor.sv /tmp/dut/hvl/mon_itf.sv /tmp/dut/hvl/burst_memory.sv /tmp/dut/hvl/bmem_itf.sv /tmp/dut/sram/output/mp3_tag_array/mp3_tag_array.v /tmp/dut/sram/output/mp3_data_array/mp3_data_array.v -full64 -lca -sverilog +lint=all,noNS -timescale=1ns/1ns -debug_acc+all -kdb -fsdb -suppress=LCA_FEATURES_ENABLED -licqueue -msg_config=../vcs_warn.config -l compile.log -top top_tb -o top_tb
+cd sim && vcs /tmp/dut/pkg/types.sv /tmp/dut/hdl/mem_interface/mem_word_adaptor.sv /tmp/dut/hdl/mem_interface/cacheline_adaptor.sv /tmp/dut/hdl/mem_interface/arbiter.sv /tmp/dut/hdl/mem_interface/cache/valid.sv /tmp/dut/hdl/mem_interface/cache/ff_array.sv /tmp/dut/hdl/mem_interface/cache/dirty.sv /tmp/dut/hdl/mem_interface/cache/cache_datapath.sv /tmp/dut/hdl/mem_interface/cache/cache_control.sv /tmp/dut/hdl/mem_interface/cache/cache.sv /tmp/dut/hdl/mem_interface/cache/PLRU.sv /tmp/dut/hdl/ctrl_buffer/prefetch_buffer.sv /tmp/dut/hdl/ctrl_buffer/control_buffer.sv /tmp/dut/hdl/wb_stage.sv /tmp/dut/hdl/shift_reg.sv /tmp/dut/hdl/sext_half.sv /tmp/dut/hdl/sext_byte.sv /tmp/dut/hdl/register.sv /tmp/dut/hdl/regfile.sv /tmp/dut/hdl/pipeline_registers.sv /tmp/dut/hdl/multiply_and_divide.sv /tmp/dut/hdl/multiplier_v2.sv /tmp/dut/hdl/multiplier.sv /tmp/dut/hdl/mp4control.sv /tmp/dut/hdl/mem_stage.sv /tmp/dut/hdl/mem_data_out.sv /tmp/dut/hdl/mar.sv /tmp/dut/hdl/hazard_queue.sv /tmp/dut/hdl/fetch_stage.sv /tmp/dut/hdl/exe_stage.sv /tmp/dut/hdl/divider_slow.sv /tmp/dut/hdl/div_compare.sv /tmp/dut/hdl/decode_stage.sv /tmp/dut/hdl/counter.sv /tmp/dut/hdl/cmp.sv /tmp/dut/hdl/alu.sv /tmp/dut/hdl/mp4datapath.sv /tmp/dut/hdl/mp4.sv /tmp/dut/hvl/top_tb.sv /tmp/dut/hvl/rvfimon.v /tmp/dut/hvl/monitor.sv /tmp/dut/hvl/mon_itf.sv /tmp/dut/hvl/burst_memory.sv /tmp/dut/hvl/bmem_itf.sv /tmp/dut/sram/output/mp3_data_array/mp3_data_array.v /tmp/dut/sram/output/mp3_tag_array/mp3_tag_array.v -full64 -lca -sverilog +lint=all,noNS -timescale=1ns/1ns -debug_acc+all -kdb -fsdb -suppress=LCA_FEATURES_ENABLED -licqueue -msg_config=../vcs_warn.config -l compile.log -top top_tb -o top_tb
                          Chronologic VCS (TM)
-      Version R-2020.12-SP1-1_Full64 -- Sun Dec  3 23:52:17 2023
+      Version R-2020.12-SP1-1_Full64 -- Mon Dec  4 00:52:11 2023
 
                     Copyright (c) 1991 - 2021 Synopsys, Inc.
    This software and the associated documentation are proprietary to Synopsys,
@@ -65,8 +65,8 @@ Parsing design file '/tmp/dut/hvl/monitor.sv'
 Parsing design file '/tmp/dut/hvl/mon_itf.sv'
 Parsing design file '/tmp/dut/hvl/burst_memory.sv'
 Parsing design file '/tmp/dut/hvl/bmem_itf.sv'
-Parsing design file '/tmp/dut/sram/output/mp3_tag_array/mp3_tag_array.v'
 Parsing design file '/tmp/dut/sram/output/mp3_data_array/mp3_data_array.v'
+Parsing design file '/tmp/dut/sram/output/mp3_tag_array/mp3_tag_array.v'
 Top Level Modules:
        top_tb
 TimeScale is 1 ps / 1 ps
@@ -171,14 +171,14 @@ recompiling module mp3_data_array
 All of 85 modules done
 make[1]: Entering directory '/tmp/dut/sim/csrc'
 make[1]: Leaving directory '/tmp/dut/sim/csrc'
-/srv/software/Synopsys-2021_x86_64/vcs-mx/O-2018.09-SP2-3/bin/vcs: line 31361: 107658 Segmentation fault      (core dumped) ${TOOL_HOME}/bin/cfs_ident_exec -f ${XML_INPUT_EXE} -o "${fsearchDir}/idents_tapi.xml" -o_SrcFile "${dirSrcFiles}/src_files_c" ${all_dyn_libs} > tapi_xml_writer.log
+/srv/software/Synopsys-2021_x86_64/vcs-mx/O-2018.09-SP2-3/bin/vcs: line 31361: 126144 Segmentation fault      (core dumped) ${TOOL_HOME}/bin/cfs_ident_exec -f ${XML_INPUT_EXE} -o "${fsearchDir}/idents_tapi.xml" -o_SrcFile "${dirSrcFiles}/src_files_c" ${all_dyn_libs} > tapi_xml_writer.log
 make[1]: Entering directory '/tmp/dut/sim/csrc'
 rm -f _cuarc*.so _csrc*.so pre_vcsobj_*.so share_vcsobj_*.so
 if [ -x ../top_tb ]; then chmod a-x ../top_tb; fi
-g++  -o ../top_tb      -rdynamic  -Wl,-rpath='$ORIGIN'/top_tb.daidir -Wl,-rpath=./top_tb.daidir -Wl,-rpath=/srv/software/Synopsys-2021_x86_64/vcs/R-2020.12-SP1-1/linux64/lib -L/srv/software/Synopsys-2021_x86_64/vcs/R-2020.12-SP1-1/linux64/lib  -Wl,-rpath-link=./  /usr/lib64/libnuma.so.1   objs/amcQw_d.o   _107502_archive_1.so  SIM_l.o      rmapats_mop.o rmapats.o rmar.o rmar_nd.o  rmar_llvm_0_1.o rmar_llvm_0_0.o           -lvirsim -lerrorinf -lsnpsmalloc -lvfs    -lvcsnew -lsimprofile -luclinative /srv/software/Synopsys-2021_x86_64/vcs/R-2020.12-SP1-1/linux64/lib/vcs_tls.o   -Wl,-whole-archive  -lvcsucli    -Wl,-no-whole-archive        _vcs_pli_stub_.o   /srv/software/Synopsys-2021_x86_64/vcs/R-2020.12-SP1-1/linux64/lib/vcs_save_restore_new.o /srv/software/Synopsys-2021_x86_64/verdi/R-2020.12-SP1-1/share/PLI/VCS/LINUX64/pli.a -ldl  -lc -lm -lpthread -ldl 
+g++  -o ../top_tb      -rdynamic  -Wl,-rpath='$ORIGIN'/top_tb.daidir -Wl,-rpath=./top_tb.daidir -Wl,-rpath=/srv/software/Synopsys-2021_x86_64/vcs/R-2020.12-SP1-1/linux64/lib -L/srv/software/Synopsys-2021_x86_64/vcs/R-2020.12-SP1-1/linux64/lib  -Wl,-rpath-link=./  /usr/lib64/libnuma.so.1   objs/amcQw_d.o   _125988_archive_1.so  SIM_l.o      rmapats_mop.o rmapats.o rmar.o rmar_nd.o  rmar_llvm_0_1.o rmar_llvm_0_0.o           -lvirsim -lerrorinf -lsnpsmalloc -lvfs    -lvcsnew -lsimprofile -luclinative /srv/software/Synopsys-2021_x86_64/vcs/R-2020.12-SP1-1/linux64/lib/vcs_tls.o   -Wl,-whole-archive  -lvcsucli    -Wl,-no-whole-archive        _vcs_pli_stub_.o   /srv/software/Synopsys-2021_x86_64/vcs/R-2020.12-SP1-1/linux64/lib/vcs_save_restore_new.o /srv/software/Synopsys-2021_x86_64/verdi/R-2020.12-SP1-1/share/PLI/VCS/LINUX64/pli.a -ldl  -lc -lm -lpthread -ldl 
 ../top_tb up to date
 make[1]: Leaving directory '/tmp/dut/sim/csrc'
-CPU time: 3.342 seconds to compile + .498 seconds to elab + .340 seconds to link
+CPU time: 3.349 seconds to compile + .502 seconds to elab + .336 seconds to link
 Verdi KDB elaboration done and the database successfully generated: 0 error(s), 0 warning(s)
 
 [0;33mCompile finished with warnings:[0m
@@ -288,13 +288,13 @@ dw_foundation.sldb
 set target_library [getenv STD_CELL_LIB]
 /srv/ece411ag/freepdk-45nm/stdcells.db
 set sram_library [getenv SRAM_LIB]
-/tmp/dut/synth/../sram/output/mp3_tag_array/mp3_tag_array_TT_1p0V_25C_lib.db /tmp/dut/synth/../sram/output/mp3_data_array/mp3_data_array_TT_1p0V_25C_lib.db
+/tmp/dut/synth/../sram/output/mp3_data_array/mp3_data_array_TT_1p0V_25C_lib.db /tmp/dut/synth/../sram/output/mp3_tag_array/mp3_tag_array_TT_1p0V_25C_lib.db
 if {$sram_library eq ""} {
    set link_library [list "*" $target_library $synthetic_library]
 } else {
    set link_library [list "*" $target_library $synthetic_library $sram_library]
 }
-* /srv/ece411ag/freepdk-45nm/stdcells.db dw_foundation.sldb {/tmp/dut/synth/../sram/output/mp3_tag_array/mp3_tag_array_TT_1p0V_25C_lib.db /tmp/dut/synth/../sram/output/mp3_data_array/mp3_data_array_TT_1p0V_25C_lib.db}
+* /srv/ece411ag/freepdk-45nm/stdcells.db dw_foundation.sldb {/tmp/dut/synth/../sram/output/mp3_data_array/mp3_data_array_TT_1p0V_25C_lib.db /tmp/dut/synth/../sram/output/mp3_tag_array/mp3_tag_array_TT_1p0V_25C_lib.db}
 set design_clock_pin clk
 clk
 set design_reset_pin rst
@@ -426,13 +426,13 @@ Running PRESTO HDLC
 Compiling source file /tmp/dut/synth/../hdl/mp4.sv
 Presto compilation completed successfully.
 elaborate $design_toplevel
-Loading db file '/tmp/dut/sram/output/mp3_tag_array/mp3_tag_array_TT_1p0V_25C_lib.db'
 Loading db file '/tmp/dut/sram/output/mp3_data_array/mp3_data_array_TT_1p0V_25C_lib.db'
+Loading db file '/tmp/dut/sram/output/mp3_tag_array/mp3_tag_array_TT_1p0V_25C_lib.db'
 Loading db file '/srv/software/Synopsys-2021_x86_64/syn/R-2020.09-SP4/libraries/syn/gtech.db'
 Loading db file '/srv/software/Synopsys-2021_x86_64/syn/R-2020.09-SP4/libraries/syn/standard.sldb'
   Loading link library 'NangateOpenCellLibrary'
-  Loading link library 'mp3_tag_array_TT_1p0V_25C_lib'
   Loading link library 'mp3_data_array_TT_1p0V_25C_lib'
+  Loading link library 'mp3_tag_array_TT_1p0V_25C_lib'
   Loading link library 'gtech'
 Running PRESTO HDLC
 Presto compilation completed successfully. (mp4)
@@ -1301,7 +1301,7 @@ check_design
 ****************************************
 check_design summary:
 Version:     R-2020.09-SP4
-Date:        Sun Dec  3 23:52:30 2023
+Date:        Mon Dec  4 00:52:24 2023
 ****************************************
 
                    Name                                            Total
@@ -1342,10 +1342,10 @@ link
                               /srv/ece411ag/freepdk-45nm/stdcells.db
   dw_foundation.sldb (library)
                               /srv/software/Synopsys-2021_x86_64/syn/R-2020.09-SP4/libraries/syn/dw_foundation.sldb
-  mp3_tag_array_TT_1p0V_25C_lib (library)
-                              /tmp/dut/sram/output/mp3_tag_array/mp3_tag_array_TT_1p0V_25C_lib.db
   mp3_data_array_TT_1p0V_25C_lib (library)
                               /tmp/dut/sram/output/mp3_data_array/mp3_data_array_TT_1p0V_25C_lib.db
+  mp3_tag_array_TT_1p0V_25C_lib (library)
+                              /tmp/dut/sram/output/mp3_tag_array/mp3_tag_array_TT_1p0V_25C_lib.db
 
 1
 compile_ultra -gate_clock -retime
@@ -1736,13 +1736,13 @@ Information: Ungrouping hierarchy datapath/execute/alu_logic/multi_div 'multiply
    ELAPSED            WORST NEG   SETUP    DESIGN                              LEAKAGE   MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT            POWER      COST    
   --------- --------- --------- --------- --------- ------------------------- --------- -----------
-    0:01:56  162382.4      0.00       0.0    5878.8                           2533898.2500      0.00  
-    0:01:58  162143.5      0.00       0.0    5912.2                           2527689.0000      0.00  
+    0:01:55  162382.4      0.00       0.0    5878.8                           2533898.2500      0.00  
+    0:01:57  162143.5      0.00       0.0    5912.2                           2527689.0000      0.00  
 
   Beginning Constant Register Removal
   -----------------------------------
-    0:02:01  162150.9      0.00       0.0    5912.2                           2528743.7500      0.00  
-    0:02:03  162150.2      0.00       0.0    5912.2                           2528726.2500      0.00  
+    0:02:00  162150.9      0.00       0.0    5912.2                           2528743.7500      0.00  
+    0:02:02  162150.2      0.00       0.0    5912.2                           2528726.2500      0.00  
 
   Beginning Global Optimizations
   ------------------------------
@@ -1785,37 +1785,37 @@ Information: Ungrouping hierarchy datapath/execute/alu_logic/multi_div 'multiply
 
   Beginning Delay Optimization
   ----------------------------
-    0:02:16  135148.8      0.00       0.0    4995.0                           1114738.6250      0.00  
-    0:02:16  135148.8      0.00       0.0    4995.0                           1114738.6250      0.00  
-    0:02:16  135148.8      0.00       0.0    4995.0                           1114738.6250      0.00  
-    0:02:17  135147.2      0.00       0.0    4995.0                           1114697.3750      0.00  
-    0:02:20  135053.3      0.00       0.0    4972.3                           1112321.1250      0.00  
-    0:02:22  135051.9      0.00       0.0    4965.8                           1112286.3750      0.00  
+    0:02:15  135148.8      0.00       0.0    4995.0                           1114738.6250      0.00  
+    0:02:15  135148.8      0.00       0.0    4995.0                           1114738.6250      0.00  
+    0:02:15  135148.8      0.00       0.0    4995.0                           1114738.6250      0.00  
+    0:02:15  135147.2      0.00       0.0    4995.0                           1114697.3750      0.00  
+    0:02:19  135053.3      0.00       0.0    4972.3                           1112321.1250      0.00  
+    0:02:21  135051.9      0.00       0.0    4965.8                           1112286.3750      0.00  
 
   Beginning WLM Backend Optimization
   --------------------------------------
-    0:02:32  134618.1      0.00       0.0    4896.1                           1096520.5000      0.00  
-    0:02:32  134618.1      0.00       0.0    4896.1                           1096520.5000      0.00  
-    0:02:32  134618.1      0.00       0.0    4896.1                           1096520.5000      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:30  134618.1      0.00       0.0    4896.1                           1096520.5000      0.00  
+    0:02:30  134618.1      0.00       0.0    4896.1                           1096520.5000      0.00  
+    0:02:30  134618.1      0.00       0.0    4896.1                           1096520.5000      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
 
 
   Beginning Design Rule Fixing  (max_transition)  (max_fanout)  (max_capacitance)
@@ -1825,13 +1825,13 @@ Information: Ungrouping hierarchy datapath/execute/alu_logic/multi_div 'multiply
    ELAPSED            WORST NEG   SETUP    DESIGN                              LEAKAGE   MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT            POWER      COST    
   --------- --------- --------- --------- --------- ------------------------- --------- -----------
-    0:02:34  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
+    0:02:33  134586.2      0.00       0.0    4893.7                           1091426.3750      0.00  
   Global Optimization (Phase 32)
   Global Optimization (Phase 33)
   Global Optimization (Phase 34)
-    0:02:36  135124.3      0.00       0.0    3379.9 dcache0/datapath/tag_o[0][1] 1110344.6250      0.00  
-    0:02:36  135155.1      0.00       0.0    3129.5                           1110608.3750      0.00  
-    0:02:36  135155.1      0.00       0.0    3129.5                           1110608.3750      0.00  
+    0:02:35  135124.3      0.00       0.0    3379.9 dcache0/datapath/tag_o[0][1] 1110344.6250      0.00  
+    0:02:35  135155.1      0.00       0.0    3129.5                           1110608.3750      0.00  
+    0:02:35  135155.1      0.00       0.0    3129.5                           1110608.3750      0.00  
 
 
   Beginning Leakage Power Optimization  (max_leakage_power 0)
@@ -1841,7 +1841,7 @@ Information: Ungrouping hierarchy datapath/execute/alu_logic/multi_div 'multiply
    ELAPSED            WORST NEG   SETUP    DESIGN                              LEAKAGE   MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT            POWER      COST    
   --------- --------- --------- --------- --------- ------------------------- --------- -----------
-    0:02:36  135155.1      0.00       0.0    3129.5                           1110608.3750      0.00  
+    0:02:35  135155.1      0.00       0.0    3129.5                           1110608.3750      0.00  
   Global Optimization (Phase 35)
   Global Optimization (Phase 36)
   Global Optimization (Phase 37)
@@ -1869,49 +1869,49 @@ Information: Complementing port 'mem_byte_enable[1]' in design 'mp4datapath'.
 	 The new name of the port is 'mem_byte_enable[1]_BAR'. (OPT-319)
 Information: Complementing port 'mem_byte_enable[0]' in design 'mp4datapath'.
 	 The new name of the port is 'mem_byte_enable[0]_BAR'. (OPT-319)
-    0:02:42  135039.2      0.00       0.0    2988.1                           1105226.1250      0.00  
-    0:02:42  135039.2      0.00       0.0    2988.1                           1105226.1250      0.00  
-    0:02:42  135039.2      0.00       0.0    2988.1                           1105226.1250      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
-    0:02:43  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:41  135039.2      0.00       0.0    2988.1                           1105226.1250      0.00  
+    0:02:41  135039.2      0.00       0.0    2988.1                           1105226.1250      0.00  
+    0:02:41  135039.2      0.00       0.0    2988.1                           1105226.1250      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
+    0:02:42  135003.0      0.00       0.0    2990.7                           1103166.7500      0.00  
 
                                   TOTAL                                                            
    ELAPSED            WORST NEG   SETUP    DESIGN                              LEAKAGE   MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT            POWER      COST    
   --------- --------- --------- --------- --------- ------------------------- --------- -----------
-    0:02:45  134995.0      0.00       0.0    2990.7                           1103048.5000      0.00  
-    0:02:47  134760.4      0.00       0.0    3019.4                           1095741.7500      0.00  
-    0:02:47  134760.4      0.00       0.0    3019.4                           1095741.7500      0.00  
-    0:02:47  134760.4      0.00       0.0    3019.4                           1095741.7500      0.00  
-    0:02:49  134760.1      0.00       0.0    3022.4                           1095649.3750      0.00  
-    0:02:52  134816.0      0.00       0.0    2938.4 icache0/datapath/data_o[0][237] 1096434.3750      0.00  
-    0:02:53  135103.8      0.00       0.0    2801.4                           1107892.0000      0.00  
-    0:02:53  135103.8      0.00       0.0    2801.4                           1107892.0000      0.00  
-    0:02:53  135103.8      0.00       0.0    2801.4                           1107892.0000      0.00  
-    0:02:53  135103.8      0.00       0.0    2801.4                           1107892.0000      0.00  
-    0:02:53  135103.8      0.00       0.0    2801.4                           1107892.0000      0.00  
-    0:02:53  135103.8      0.00       0.0    2801.4                           1107892.0000      0.00  
-    0:02:55  135003.3      0.00       0.0    2807.2                           1102767.1250      0.00  
+    0:02:44  134995.0      0.00       0.0    2990.7                           1103048.5000      0.00  
+    0:02:46  134760.4      0.00       0.0    3019.4                           1095741.7500      0.00  
+    0:02:46  134760.4      0.00       0.0    3019.4                           1095741.7500      0.00  
+    0:02:46  134760.4      0.00       0.0    3019.4                           1095741.7500      0.00  
+    0:02:48  134760.1      0.00       0.0    3022.4                           1095649.3750      0.00  
+    0:02:51  134816.0      0.00       0.0    2938.4 icache0/datapath/data_o[0][237] 1096434.3750      0.00  
+    0:02:52  135103.8      0.00       0.0    2801.4                           1107892.0000      0.00  
+    0:02:52  135103.8      0.00       0.0    2801.4                           1107892.0000      0.00  
+    0:02:52  135103.8      0.00       0.0    2801.4                           1107892.0000      0.00  
+    0:02:52  135103.8      0.00       0.0    2801.4                           1107892.0000      0.00  
+    0:02:52  135103.8      0.00       0.0    2801.4                           1107892.0000      0.00  
+    0:02:52  135103.8      0.00       0.0    2801.4                           1107892.0000      0.00  
+    0:02:53  135003.3      0.00       0.0    2807.2                           1102767.1250      0.00  
 Loading db file '/srv/ece411ag/freepdk-45nm/stdcells.db'
-Loading db file '/tmp/dut/sram/output/mp3_tag_array/mp3_tag_array_TT_1p0V_25C_lib.db'
 Loading db file '/tmp/dut/sram/output/mp3_data_array/mp3_data_array_TT_1p0V_25C_lib.db'
+Loading db file '/tmp/dut/sram/output/mp3_tag_array/mp3_tag_array_TT_1p0V_25C_lib.db'
 
 
 Note: Symbol # after min delay cost means estimated hold TNS across all active scenarios 
@@ -1938,7 +1938,7 @@ exit
 
 Memory usage for this session 285 Mbytes.
 Memory usage for this session including child processes 285 Mbytes.
-CPU usage for this session 181 seconds ( 0.05 hours ).
+CPU usage for this session 179 seconds ( 0.05 hours ).
 Elapsed time for this session 191 seconds ( 0.05 hours ).
 
 Thank you...
