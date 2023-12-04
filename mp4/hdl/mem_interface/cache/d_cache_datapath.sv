@@ -1,4 +1,4 @@
-module cache_datapath #(
+module d_cache_datapath #(
             parameter       s_offset = 5,
             parameter       s_index  = 4,
             parameter       s_tag    = 32 - s_offset - s_index,
@@ -210,4 +210,4 @@ always_comb begin
     data_out = data_o[dout_sel];
 end
 
-endmodule : cache_datapath
+endmodule : d_cache_datapath

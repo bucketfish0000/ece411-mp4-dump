@@ -115,6 +115,7 @@ always_comb begin : regfilemux_sel
             
             regfile_data = mem_data_out;
         end
+        default: regfile_data = 32'b0;
     endcase
 
     if(cw_in.mem_write_d) begin

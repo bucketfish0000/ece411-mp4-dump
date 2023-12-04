@@ -195,7 +195,7 @@ import cpuIO::*;
         .stall_not_fet_dec_exe(stall_mem_wb)
     );
 
-    cache dcache0(
+    d_cache dcache0(
         .clk(clk), .rst(rst),
         .mem_address(dmem_address), //cpu datapath 
         .mem_read(dmem_read), 
@@ -218,7 +218,7 @@ import cpuIO::*;
     );
 
     //icache arbiter_imem_resp goes high, but imem_resp never goes high
-    cache icache0(
+    i_cache icache0(
         .clk(clk), .rst(rst),
         .mem_address(imem_address),  // cpu datapath 
         .mem_read(imem_read), 
@@ -278,7 +278,7 @@ import cpuIO::*;
         .mem_read(cacheline_read), 
         .mem_write(cacheline_write),
 
-        .pc_rdata(pc_wdata),
+        .pc_rdata(ctrl_rvfi.pc_wdata),
         .pf_data_r(pf_data_r),
         .pf_hit(pf_hit),
         .pf_miss(pf_miss),

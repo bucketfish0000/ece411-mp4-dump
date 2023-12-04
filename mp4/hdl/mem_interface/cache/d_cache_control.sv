@@ -1,4 +1,4 @@
-module cache_control (
+module d_cache_control (
     input clk,
     input rst,
 
@@ -196,4 +196,4 @@ begin: next_state_logic
     endcase
     end
 end:next_state_logic
-endmodule : cache_control
+endmodule : d_cache_control
