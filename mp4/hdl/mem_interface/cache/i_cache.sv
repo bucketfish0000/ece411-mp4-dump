@@ -1,4 +1,4 @@
-module cache #(
+module i_cache #(
             parameter       s_offset = 5,
             parameter       s_index  = 4,
             parameter       s_tag    = 32 - s_offset - s_index,
@@ -45,32 +45,25 @@ module cache #(
     logic pmem_address_mux;
     logic data_wmask_mux;
     //assign plru_rf= plru_update;
-cache_control control
+i_cache_control control
 (   .clk(clk),.rst(rst), 
     .cpu_read(mem_read),.cpu_write(mem_write),
     .mem_cancel(mem_cancel),
     .cache_resp(mem_resp),
     .pmem_resp(pmem_resp),
     .mem_read(pmem_read),
-    .mem_write(pmem_write),
-    .dirty_op(dirty_op), 
+    .mem_write(pmem_write), 
     .valid_op(valid_op), 
     .plru_update(plru_update),
     .dataweb_mux(dataweb_mux),
     .tagweb_mux(tagweb_mux),
-    .datain_mux(datain_mux),
-    .dataout_sel_mux(dataout_sel_mux),
-    .dirty_way_mux(dirty_way_mux),
-    .data_wmask_mux(data_wmask_mux),
-    .pmem_address_mux(pmem_address_mux),
     .cache_hit(cache_hit),
-    .cache_dirty(cache_dirty),
 
     .hit(hit),
     .miss(miss)
 );
 
-cache_datapath datapath
+i_cache_datapath datapath
 (
     .clk(clk), .rst(rst),
     .address(mem_address), .wmask(mem_byte_enable),
@@ -81,20 +74,13 @@ cache_datapath datapath
     .mem_data_write(pmem_wdata),
     .pmem_address(pmem_address),
 
-    .dirty_op(dirty_op), 
     .valid_op(valid_op), 
     .plru_update(plru_update),
 
     .dataweb_mux(dataweb_mux),
     .tagweb_mux(tagweb_mux),
-    .datain_mux(datain_mux),
-    .dataout_sel_mux(dataout_sel_mux),
-    .dirty_way_mux(dirty_way_mux),
-    .pmem_address_mux(pmem_address_mux),
-    .data_wmask_mux(data_wmask_mux),
 
-    .cache_hit(cache_hit),
-    .cache_dirty(cache_dirty)
+    .cache_hit(cache_hit)
 );
 
-endmodule : cache
+endmodule : i_cache
