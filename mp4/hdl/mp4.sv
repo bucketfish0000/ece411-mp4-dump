@@ -278,7 +278,7 @@ import cpuIO::*;
         .mem_read(cacheline_read), 
         .mem_write(cacheline_write),
 
-        .pc_rdata(ctrl_rvfi.pc_wdata),
+        .pc_rdata(pc_wdata),
         .pf_data_r(pf_data_r),
         .pf_hit(pf_hit),
         .pf_miss(pf_miss),
