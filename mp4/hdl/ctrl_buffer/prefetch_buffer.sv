@@ -43,8 +43,8 @@ module prefetch_buffer(
         end
         else begin
             if(miss&&pf_write) begin
+                addrs[volatile] <= mem_addr;
                 if(pf_ld) begin
-                    addrs[volatile] <= mem_addr;
                     cache_lines[volatile] <= mem_rdata;
                     volatile <= !volatile;
                 end
