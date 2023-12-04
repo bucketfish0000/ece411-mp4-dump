@@ -72,7 +72,7 @@ module top_tb;
         .pf_used(pf_used)
     );
     //  ipc without btb or pre-fetch: .323673
-    //  with btb and without pre-fetch: .358626, with prefetch .358482
+    //  with btb and without pre-fetch: .358626, with prefetch . 0.359140
 
 
     //NOTE: number of mispredicts is half of this count since if_de_rst goes high for two cycles
