@@ -24,6 +24,7 @@ module prefetch_buffer(
     output logic pf_miss, //pf_misses
     output logic [255:0] pf_mem_rdata
 );
+    logic addr1_cmp, addr0_cmp;
     logic volatile;
     logic hit_num;
     logic [31:0] addrs [1:0];
@@ -81,37 +82,33 @@ module prefetch_buffer(
 
     // end
 
+    assign addr0_cmp = (mem_addr == addrs[0]);
+    assign addr1_cmp = (mem_addr == addrs[1]);
     
     always_comb begin
-        hit = 1'b0;
-        miss = 1'b0;
-        hit_num = 1'b0;
-        pf_resp = 1'b0;
-
-        if((pf_write || pf_read)) begin
-            if((mem_addr == addrs[0])) begin
+        // if((pf_write || pf_read)) begin
+            if(addr0_cmp) begin
                 hit = 1'b1;
                 pf_resp = 1'b1;
                 hit_num = 1'b0;
+                miss = 1'b0;
             end
-            else if((mem_addr == addrs[1])) begin
+            else if(addr1_cmp) begin
                 hit = 1'b1;
                 pf_resp = 1'b1;
                 hit_num = 1'b1;
+                miss = 1'b0;
             end
             else begin
+                hit_num = 1'b0;
+                hit = 1'b0;
                 miss = 1'b1;
-                if(pf_ld) begin
-                    pf_resp = 1'b1;
-                end
-                else begin
-                    pf_resp = 1'b0;
-                end
+                pf_resp = pf_ld;
             end
-        end
-        else begin
-            //do nothing
-        end
+        // end
+        // else begin
+        //     //do nothing
+        // end
 
     end
 

@@ -119,7 +119,8 @@ always_comb begin : state_actions
             if (pf_hit) begin
                 icache_resp = 1'b1;
                 icache_data = pf_data_r;
-            end else begin
+            end 
+            else begin
                 icache_resp = mem_resp; 
                 icache_data = mem_data_r;
                 mem_addr = icache_addr; 
