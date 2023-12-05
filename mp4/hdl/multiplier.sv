@@ -141,8 +141,8 @@ module multiplier(
     // endfunction
 
     logic [31:0] kara_16_0, kara_16_1_0, kara_16_1_1, kara_16_2;
-    logic [63:0] kara_32;
-    logic [1:0] count;
+    // logic [63:0] kara_32;
+    logic count;
 
     always_ff @ (posedge clk, posedge rst) begin
         if(rst) begin
@@ -150,11 +150,11 @@ module multiplier(
             kara_16_1_0 <= 32'b0;
             kara_16_1_1 <= 32'b0;
             kara_16_2 <= 32'b0;
-            kara_32 <= 64'b0;
+            // kara_32 <= 64'b0;
             rd_low <= 32'b0;
             rd_high <= 32'b0;
             done <= 1'b0;
-            count <= 2'b0;
+            count <= 1'b0;
         end
         else begin
             if(new_instruction) begin
@@ -162,13 +162,13 @@ module multiplier(
                 kara_16_1_0 <= 32'b0;
                 kara_16_1_1 <= 32'b0;
                 kara_16_2 <= 32'b0;
-                kara_32 <= 64'b0;
+                // kara_32 <= 64'b0;
                 rd_low <= 32'b0;
                 rd_high <= 32'b0;
                 done <= 1'b0;
-                count <= 2'b0;
+                count <= 1'b0;
             end
-            else if((count == 2'b00) && (start)) begin
+            else if((count == 1'b0) && (start)) begin
                 kara_16_0 <= {32'h0, karatsuba_16(rs1[15:0], rs2[15:0])};
                 kara_16_2 <= {32'h0, karatsuba_16(rs1[31:16], rs1[31:16])};
                 kara_16_1_0 <= {32'h0, karatsuba_16(rs1[31:16], rs2[15:0])};
@@ -176,23 +176,25 @@ module multiplier(
                 rd_low <= 32'b0;
                 rd_high <= 32'b0;
                 done <= 1'b0;
-                count <= count + 2'b01;
+                count <= count + 1'b1;
             end
-            else if((count == 2'b01) && (start)) begin
-                kara_32 <= ({32'b0, kara_16_2}<<7'b0100000) + (({32'b0, kara_16_1_1}+{32'b0, kara_16_1_0})<<7'b0010000) + {32'b0, kara_16_0};
-                rd_low <= 32'b0;
-                rd_high <= 32'b0;
-                done <= 1'b0;
-                count <= count + 2'b01;
-            end
-            else if((count == 2'b10) && (start)) begin
-                rd_low <= kara_32[31:0];
-                rd_high <= kara_32[63:32];
+            else if((count == 1'b1) && (start)) begin
+                // kara_32 <= (({32'b0, kara_16_2}<<7'b0100000) + (({32'b0, kara_16_1_1}+{32'b0, kara_16_1_0})<<7'b0010000) + {32'b0, kara_16_0});
+                // rd_low <= (({32'b0, kara_16_2}<<7'b0100000) + (({32'b0, kara_16_1_1}+{32'b0, kara_16_1_0})<<7'b0010000) + {32'b0, kara_16_0});
+                {rd_high, rd_low} <= (({32'b0, kara_16_2}<<7'b0100000) + (({32'b0, kara_16_1_1}+{32'b0, kara_16_1_0})<<7'b0010000) + {32'b0, kara_16_0});
                 done <= 1'b1;
                 if(new_instruction) begin
                     count <= 2'b0;
                 end
             end
+            // else if((count == 2'b10) && (start)) begin
+            //     rd_low <= kara_32[31:0];
+            //     rd_high <= kara_32[63:32];
+            //     done <= 1'b1;
+            //     if(new_instruction) begin
+            //         count <= 2'b0;
+            //     end
+            // end
         end
     end
 
