@@ -1,5 +1,5 @@
 # AG Report MP4CP4 2023-12-04T23:59:59-06:00 
-Report generated at 2023-12-05T02:40:23-06:00, using commit ``4e12e4ad756bf9d2fada341fe7c356f3845f0a7d``
+Report generated at 2023-12-05T04:03:44-06:00, using commit ``4e12e4ad756bf9d2fada341fe7c356f3845f0a7d``
 
 Autograder Run ID: 211e7554-8818-4d42-a7b8-92b9073d2fd5
 
@@ -13,7 +13,7 @@ Autograder Job ID: 3cb9fa3f-2c40-4c68-9e77-29f72096eca4
  mkdir -p sim
 cd sim && vcs /tmp/dut/pkg/types.sv /tmp/dut/hdl/mem_interface/mem_word_adaptor.sv /tmp/dut/hdl/mem_interface/cacheline_adaptor.sv /tmp/dut/hdl/mem_interface/arbiter.sv /tmp/dut/hdl/mem_interface/cache/i_cache_datapath.sv /tmp/dut/hdl/mem_interface/cache/i_cache_control.sv /tmp/dut/hdl/mem_interface/cache/i_cache.sv /tmp/dut/hdl/mem_interface/cache/valid.sv /tmp/dut/hdl/mem_interface/cache/ff_array.sv /tmp/dut/hdl/mem_interface/cache/dirty.sv /tmp/dut/hdl/mem_interface/cache/d_cache_datapath.sv /tmp/dut/hdl/mem_interface/cache/d_cache_control.sv /tmp/dut/hdl/mem_interface/cache/d_cache.sv /tmp/dut/hdl/mem_interface/cache/PLRU.sv /tmp/dut/hdl/ctrl_buffer/prefetch_buffer.sv /tmp/dut/hdl/ctrl_buffer/control_buffer.sv /tmp/dut/hdl/wb_stage.sv /tmp/dut/hdl/shift_reg.sv /tmp/dut/hdl/sext_half.sv /tmp/dut/hdl/sext_byte.sv /tmp/dut/hdl/register.sv /tmp/dut/hdl/regfile.sv /tmp/dut/hdl/pipeline_registers.sv /tmp/dut/hdl/multiply_and_divide.sv /tmp/dut/hdl/multiplier_v2.sv /tmp/dut/hdl/multiplier.sv /tmp/dut/hdl/mp4datapath.sv /tmp/dut/hdl/mp4control.sv /tmp/dut/hdl/mp4.sv /tmp/dut/hdl/mem_stage.sv /tmp/dut/hdl/mem_data_out.sv /tmp/dut/hdl/mar.sv /tmp/dut/hdl/hazard_queue.sv /tmp/dut/hdl/fetch_stage.sv /tmp/dut/hdl/exe_stage.sv /tmp/dut/hdl/divider_slow.sv /tmp/dut/hdl/div_compare.sv /tmp/dut/hdl/decode_stage.sv /tmp/dut/hdl/counter.sv /tmp/dut/hdl/cmp.sv /tmp/dut/hdl/alu.sv /tmp/dut/hvl/top_tb.sv /tmp/dut/hvl/rvfimon.v /tmp/dut/hvl/monitor.sv /tmp/dut/hvl/mon_itf.sv /tmp/dut/hvl/burst_memory.sv /tmp/dut/hvl/bmem_itf.sv /tmp/dut/sram/output/mp3_tag_array/mp3_tag_array.v /tmp/dut/sram/output/mp3_data_array/mp3_data_array.v -full64 -lca -sverilog +lint=all,noNS -timescale=1ns/1ns -debug_acc+all -kdb -fsdb -suppress=LCA_FEATURES_ENABLED -licqueue -msg_config=../vcs_warn.config -l compile.log -top top_tb -o top_tb
                          Chronologic VCS (TM)
-      Version R-2020.12-SP1-1_Full64 -- Tue Dec  5 02:41:59 2023
+      Version R-2020.12-SP1-1_Full64 -- Tue Dec  5 04:05:20 2023
 
                     Copyright (c) 1991 - 2021 Synopsys, Inc.
    This software and the associated documentation are proprietary to Synopsys,
@@ -241,14 +241,14 @@ recompiling module mp3_data_array
 All of 86 modules done
 make[1]: Entering directory '/tmp/dut/sim/csrc'
 make[1]: Leaving directory '/tmp/dut/sim/csrc'
-/srv/software/Synopsys-2021_x86_64/vcs-mx/O-2018.09-SP2-3/bin/vcs: line 31361: 29083 Segmentation fault      (core dumped) ${TOOL_HOME}/bin/cfs_ident_exec -f ${XML_INPUT_EXE} -o "${fsearchDir}/idents_tapi.xml" -o_SrcFile "${dirSrcFiles}/src_files_c" ${all_dyn_libs} > tapi_xml_writer.log
+/srv/software/Synopsys-2021_x86_64/vcs-mx/O-2018.09-SP2-3/bin/vcs: line 31361: 44780 Segmentation fault      (core dumped) ${TOOL_HOME}/bin/cfs_ident_exec -f ${XML_INPUT_EXE} -o "${fsearchDir}/idents_tapi.xml" -o_SrcFile "${dirSrcFiles}/src_files_c" ${all_dyn_libs} > tapi_xml_writer.log
 make[1]: Entering directory '/tmp/dut/sim/csrc'
 rm -f _cuarc*.so _csrc*.so pre_vcsobj_*.so share_vcsobj_*.so
 if [ -x ../top_tb ]; then chmod a-x ../top_tb; fi
-g++  -o ../top_tb      -rdynamic  -Wl,-rpath='$ORIGIN'/top_tb.daidir -Wl,-rpath=./top_tb.daidir -Wl,-rpath=/srv/software/Synopsys-2021_x86_64/vcs/R-2020.12-SP1-1/linux64/lib -L/srv/software/Synopsys-2021_x86_64/vcs/R-2020.12-SP1-1/linux64/lib  -Wl,-rpath-link=./  /usr/lib64/libnuma.so.1   objs/amcQw_d.o   _28927_archive_1.so  SIM_l.o      rmapats_mop.o rmapats.o rmar.o rmar_nd.o  rmar_llvm_0_1.o rmar_llvm_0_0.o           -lvirsim -lerrorinf -lsnpsmalloc -lvfs    -lvcsnew -lsimprofile -luclinative /srv/software/Synopsys-2021_x86_64/vcs/R-2020.12-SP1-1/linux64/lib/vcs_tls.o   -Wl,-whole-archive  -lvcsucli    -Wl,-no-whole-archive        _vcs_pli_stub_.o   /srv/software/Synopsys-2021_x86_64/vcs/R-2020.12-SP1-1/linux64/lib/vcs_save_restore_new.o /srv/software/Synopsys-2021_x86_64/verdi/R-2020.12-SP1-1/share/PLI/VCS/LINUX64/pli.a -ldl  -lc -lm -lpthread -ldl 
+g++  -o ../top_tb      -rdynamic  -Wl,-rpath='$ORIGIN'/top_tb.daidir -Wl,-rpath=./top_tb.daidir -Wl,-rpath=/srv/software/Synopsys-2021_x86_64/vcs/R-2020.12-SP1-1/linux64/lib -L/srv/software/Synopsys-2021_x86_64/vcs/R-2020.12-SP1-1/linux64/lib  -Wl,-rpath-link=./  /usr/lib64/libnuma.so.1   objs/amcQw_d.o   _44624_archive_1.so  SIM_l.o      rmapats_mop.o rmapats.o rmar.o rmar_nd.o  rmar_llvm_0_1.o rmar_llvm_0_0.o           -lvirsim -lerrorinf -lsnpsmalloc -lvfs    -lvcsnew -lsimprofile -luclinative /srv/software/Synopsys-2021_x86_64/vcs/R-2020.12-SP1-1/linux64/lib/vcs_tls.o   -Wl,-whole-archive  -lvcsucli    -Wl,-no-whole-archive        _vcs_pli_stub_.o   /srv/software/Synopsys-2021_x86_64/vcs/R-2020.12-SP1-1/linux64/lib/vcs_save_restore_new.o /srv/software/Synopsys-2021_x86_64/verdi/R-2020.12-SP1-1/share/PLI/VCS/LINUX64/pli.a -ldl  -lc -lm -lpthread -ldl 
 ../top_tb up to date
 make[1]: Leaving directory '/tmp/dut/sim/csrc'
-CPU time: 2.818 seconds to compile + .555 seconds to elab + .359 seconds to link
+CPU time: 2.755 seconds to compile + .510 seconds to elab + .340 seconds to link
 Verdi KDB elaboration done and the database successfully generated: 0 error(s), 0 warning(s)
 
 [0;33mCompile finished with warnings:[0m
@@ -1435,7 +1435,7 @@ check_design
 ****************************************
 check_design summary:
 Version:     R-2020.09-SP4
-Date:        Tue Dec  5 02:42:11 2023
+Date:        Tue Dec  5 04:05:31 2023
 ****************************************
 
                    Name                                            Total
@@ -1855,13 +1855,13 @@ Information: Ungrouping hierarchy datapath/execute/alu_logic/multi_div 'multiply
    ELAPSED            WORST NEG   SETUP    DESIGN                              LEAKAGE   MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT            POWER      COST    
   --------- --------- --------- --------- --------- ------------------------- --------- -----------
-    0:01:47  150128.8      0.00       0.0    5040.7                           2212466.2500      0.00  
-    0:01:49  150112.9      0.08      83.5    5066.6                           2212062.7500      0.00  
+    0:01:46  150128.8      0.00       0.0    5040.7                           2212466.2500      0.00  
+    0:01:48  150112.9      0.08      83.5    5066.6                           2212062.7500      0.00  
 
   Beginning Constant Register Removal
   -----------------------------------
+    0:01:51  150272.2      0.37     377.0    5044.7                           2220526.0000      0.00  
     0:01:52  150272.2      0.37     377.0    5044.7                           2220526.0000      0.00  
-    0:01:53  150272.2      0.37     377.0    5044.7                           2220526.0000      0.00  
 
   Beginning Global Optimizations
   ------------------------------
@@ -1907,17 +1907,17 @@ Information: Ungrouping hierarchy datapath/execute/alu_logic/multi_div 'multiply
 
   Beginning Delay Optimization
   ----------------------------
-    0:02:04  126733.6      0.02      16.5    4362.3                           985650.8750      0.00  
-    0:02:04  126742.6      0.00       0.0    4362.3                           986252.5625      0.00  
-    0:02:04  126742.6      0.00       0.0    4362.3                           986252.5625      0.00  
+    0:02:03  126733.6      0.02      16.5    4362.3                           985650.8750      0.00  
+    0:02:03  126742.6      0.00       0.0    4362.3                           986252.5625      0.00  
+    0:02:03  126742.6      0.00       0.0    4362.3                           986252.5625      0.00  
     0:02:04  126739.2      0.00       0.0    4362.3                           986168.8125      0.00  
-    0:02:08  126638.1      0.00       0.0    4341.3                           983597.2500      0.00  
+    0:02:07  126638.1      0.00       0.0    4341.3                           983597.2500      0.00  
     0:02:09  126428.7      0.00       0.0    4332.6                           977835.1875      0.00  
 
   Beginning WLM Backend Optimization
   --------------------------------------
     0:02:18  125779.7      0.00       0.0    4283.2                           949536.8750      0.00  
-    0:02:19  125657.6      0.00       0.0    4282.1                           945303.5000      0.00  
+    0:02:18  125657.6      0.00       0.0    4282.1                           945303.5000      0.00  
     0:02:19  125657.6      0.00       0.0    4282.1                           945303.5000      0.00  
     0:02:19  125657.6      0.00       0.0    4282.1                           945303.5000      0.00  
     0:02:21  125300.4      0.00       0.0    4206.4                           919489.8125      0.00  
@@ -2031,24 +2031,24 @@ Information: Complementing port 'bimm_exec[1]' in design 'mp4datapath'.
     0:02:28  125663.7      0.00       0.0    2985.8                           928718.6250      0.00  
     0:02:28  125663.7      0.00       0.0    2985.8                           928718.6250      0.00  
     0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
-    0:02:30  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
+    0:02:29  125624.1      0.00       0.0    2988.3                           926511.3750      0.00  
 
                                   TOTAL                                                            
    ELAPSED            WORST NEG   SETUP    DESIGN                              LEAKAGE   MIN DELAY 
@@ -2096,8 +2096,8 @@ exit
 
 Memory usage for this session 248 Mbytes.
 Memory usage for this session including child processes 283 Mbytes.
-CPU usage for this session 165 seconds ( 0.05 hours ).
-Elapsed time for this session 175 seconds ( 0.05 hours ).
+CPU usage for this session 164 seconds ( 0.05 hours ).
+Elapsed time for this session 174 seconds ( 0.05 hours ).
 
 Thank you...
 rm -f  *.log
