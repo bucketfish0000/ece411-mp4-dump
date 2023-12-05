@@ -76,16 +76,28 @@ module multiply_and_divide(
         endcase
     end
 
-    multiplier_v2 multi(
+    // multiplier_v2 multi(
+    //     .clk(clk),
+    //     .rst(rst),
+    //     .start(start_multi),
+    //     .new_instruction(new_instruction),
+    //     .rs1(true_rs1),
+    //     .rs2(true_rs2),
+    //     .rd_low(multi_low),
+    //     .rd_high(multi_high),
+    //     .done(done_multi)
+    // );
+
+    multiplier markiplier(
         .clk(clk),
         .rst(rst),
         .start(start_multi),
         .new_instruction(new_instruction),
         .rs1(true_rs1),
         .rs2(true_rs2),
+        .done(done_multi),
         .rd_low(multi_low),
-        .rd_high(multi_high),
-        .done(done_multi)
+        .rd_high(multi_high)
     );
 
     divider_slow div_slow(
