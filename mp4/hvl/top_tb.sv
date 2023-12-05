@@ -76,8 +76,8 @@ module top_tb;
 
 
     //NOTE: number of mispredicts is half of this count since if_de_rst goes high for two cycles
-    /*  with btb and without prefetch is 1_7106 mispredicts/flush
-        without btb or prefetch 2_49f4*/
+    /*  with btb and without prefetch is x1_7106 mispredicts/flush
+        without btb or prefetch x2_49f4*/
     always_ff @( posedge clk , posedge rst ) begin : mispredict_counter
         if(rst) begin
             mispredict_count <= 32'h0;
@@ -187,7 +187,7 @@ module top_tb;
     end
 
     //without prefetch or btb:  1d_e6a1
-    //with btb and without prefetch: 1b_5b24
+    //with btb and without prefetch: 42b
     always_ff @( posedge clk, posedge rst ) begin : pf_used_counter
         if(rst) begin
             pf_used_count <= 32'h0;
